@@ -1,0 +1,11 @@
+wmsServiceClass: lsst.ctrl.bps.parsl.ParslService
+
+computeSite: slurm
+site:
+  slurm:
+    class: lsst.ctrl.bps.parsl.sites.Slurm
+    nodes: NUM_NODE
+    cores_per_node: CORE_PER_NODE
+    mem_per_node: MEM_PER_NODE
+    walltime: WALL_TIME
+    retries: 5
