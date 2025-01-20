@@ -13,8 +13,11 @@ from astropy.io import ascii
 from astropy.table import Table, hstack, vstack
 
 # Homebrew modules here
-from hsc.utilities import create_calibs, new_columns
-from hsc.gen_hsc_calibrations import fix_nan
+from .hsc.utilities import create_calibs, new_columns
+from .hsc.gen_hsc_calibrations import fix_nan
+
+# loading config
+#from ..configs.shear_calibration_config import 
 
 #TODO quality-check plots for verifying shears
 def draw_quality_check():
