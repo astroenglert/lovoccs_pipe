@@ -15,3 +15,10 @@ CAT_DB='/gpfs/data/idellant/Clusters/calib_catalog_repo/catalogs_new'
 # filepath to extinction; assumes fits w. extinction is stored in ${EXT_DB}/${CLN}.fits
 EXT_DB='/gpfs/data/idellant/Clusters/galactic_extinction_database/data_extinction_irsa'
 
+
+# == bash configurables for photo_z.sh == #
+
+# filepath to specz; looks for csv's stored in ${SPECZ_DB}/${CLN}_ned_select.csv
+SPECZ_DB='/gpfs/data/idellant/Clusters/spec_z_database'
+
+

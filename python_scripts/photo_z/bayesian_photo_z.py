@@ -8,8 +8,6 @@ from multiprocessing import Pool
 from importlib import resources as impresources
 from pathlib import Path
 
-flux_db = impresources.files('flux_cache')
-
 import numpy as np
 
 from scipy.integrate import cumulative_trapezoid as cumtrapz
@@ -23,35 +21,14 @@ from astropy.convolution import convolve, Gaussian1DKernel
 
 # homebrew-imports here
 # our default list of templates
-from sed_template import default_sed_list
-from filter_transmissions import DECamTransmission, SDSSTransmission, HSCTransmission
+from .sed_template import prior_dict
+from .filter_transmissions import implemented_transmissions
+from . import flux_cache
 
-#TODO overhaul this to a standard-IO
-def get_filter_map():
-    '''
-    This is a temporary function which outputs a hand-coded dictionary of column names mapping our catalog magnitudes to the correct header according to the filter_transmission. This requires no arguments, but in the future needs to be read from a config file
-    
-    Args:
-        None
-    
-    Returns:
-        filter_map: Dictionary; a dictionary which maps magnitudes to the appropriate filter in the transmission-object
-        error_tag: string; tag to append to a column to get the corresponding magnitude-error
+flux_db = impresources.files(flux_cache)
 
-    '''
-    
-    
-    filter_map = {
-                  'u':'u_cmodel_mag',
-                  'g':'g_cmodel_mag',
-                  'r':'r_cmodel_mag',
-                  'i':'i_cmodel_mag',
-                  'z':'z_cmodel_mag',
-                 }
-                 
-    error_tag = 'err'
-    
-    return filter_map, error_tag
+# configurables
+from ..configs.photo_z_config import filter_map, error_tag, external_cache, mod_chi2_cut, odds_cut, prior_choice
 
 
 # compute F00,F0T,FTT (Benitez+00 Eq. 9)
@@ -174,21 +151,26 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
         upper_dex = int(np.ceil( i / (interp_steps + 1) ))
         weight = ( i/ (interp_steps + 1) ) - lower_dex
         
-        sed = default_sed_list[lower_dex](trans,redshifts=redshifts,cosmology=cosmo)
-        sed_upper = default_sed_list[upper_dex](trans,redshifts=redshifts,cosmology=cosmo)
+        sed = template_list[lower_dex](trans,redshifts=redshifts,cosmology=cosmo)
+        sed_upper = template_list[upper_dex](trans,redshifts=redshifts,cosmology=cosmo)
         name = sed.sed_name
         name_upper = sed_upper.sed_name
         
-        #TODO properly search for a cache elsewhere on-disk, this will do for now
-        #TODO point to flux_cache folder in the package already (somehow...)
-        sed_cache = flux_db.joinpath(f'{name}_flux_cache.csv')
-        sed_cache_upper = flux_db.joinpath(f'{name_upper}_flux_cache.csv')
+        # check if an external_cache has been specified
+        if external_cache == None:
+            sed_cache = flux_db.joinpath(f'{name}_flux_cache.csv')
+            sed_cache_upper = flux_db.joinpath(f'{name_upper}_flux_cache.csv')
+        else:
+            sed_cache = external_cache + f'/{name}_flux_cache.csv'
+            sed_cache_upper = external_cache + f'/{name_upper}_flux_cache.csv'
         
-        if os.path.exists(sed_cache):
+        # if there aren't fluxes in that cache, then write them
+        if os.path.exists(sed_cache) & os.path.exists(sed_cache_upper):
             sed.load_flux_from_disk(sed_cache,trans)
             sed_upper.load_flux_from_disk(sed_cache_upper,trans)
         else:
             sed.write_flux_to_disk(sed_cache)
+            sed_upper.write_flux_to_disk(sed_cache)
         
         F00,FT0,FTT,interpolated_scaled_flux = compute_F(sed,table,filter_map,error_tag,sed_upper,weight,filter_template_zps=filter_template_zps)
         chi2T = F00[:,None] - ( (FT0**2)/(FTT) )
@@ -677,19 +659,13 @@ if __name__ == '__main__':
         print("python bayesian_photo_z.py catalog output_catalog_filename output_directory cores instrument [OPTIONAL: z_spec_header]")
         raise Exception("Improper Usage! Correct usage: python bayesian_photo_z.py catalog output_catalog_filename output_directory cores instrument [OPTIONAL: z_spec_header]")
     
-    #TODO should this dictionary come from our standard IO or be defined in filter_transmissions.py? I'm not sure, leaving it here for now
+
     # load the appropriate transmission system
-    filter_transmissions = {'decam':DECamTransmission, 'sdss':SDSSTransmission, 'hsc':HSCTransmission}
-    if instrument not in filter_transmissions:
+    if instrument not in implemented_transmissions:
         print(f'{instrument} is not in the dictionary of transmission systems!')
         raise Exception(f'{instrument} is not in the dictionary of transmission systems!')
     
-    #TODO move these configurables to a standard IO
-    mod_chi2_cut = 4
-    odds_cut = 0.95
-    
-    trans = filter_transmissions[instrument]()
-    filter_map,error_tag = get_filter_map()
+    trans = implemented_transmissions[instrument]()
     
     # loading the table
     table = ascii.read(table_filename)
@@ -705,9 +681,12 @@ if __name__ == '__main__':
     num_chunks = int(np.ceil(len(table)/chunk_size))
     split_table = [table[int(i*chunk_size):int((i+1)*chunk_size)] for i in range(num_chunks)]
     
+    # select templates with the approrpriate priors
+    template_list = prior_dict[prior_choice]
+    
     # lazy trick for passing all the necessary arguments, define a function to wrap this
     def compute_statistics_parallel(x):
-        out = compute_statistics(x,default_sed_list,trans,filter_map,error_tag,z_spec_header,interp_steps=2)
+        out = compute_statistics(x,template_list,trans,filter_map,error_tag,z_spec_header,interp_steps=2)
         print("Exiting pool...")
         return out
     

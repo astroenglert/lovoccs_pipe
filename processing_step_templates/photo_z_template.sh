@@ -21,6 +21,9 @@ cd ${CLUSTER_DIR}
 source ${LOAD_LSST}
 setup lsst_distrib
 
+# load bash configs
+source python_scripts/configs/processing_step_configs.sh
+
 # create an output directory for photometric_correction
 mkdir photo_z_output
 
@@ -30,19 +33,19 @@ mkdir photo_z_output
 # create a matched-catalog w. spec-z's
 #TODO this needs to be overhauled to a standard-IO
 #TODO here we cheat a little, specz ra/dec headers are the same as those used by default for decam (just ra/dec); should we create an "instrument" for ned-redshifts?
-SPECZ_CSV="/gpfs/data/idellant/Clusters/spec_z_database/${CLN}_ned_select.csv"
+SPECZ_CSV="${SPECZ_DB}/${CLN}_ned_select.csv"
 
 echo "Matching with the specz catalog"
-python python_scripts/misc/match_catalogs.py "${SPECZ_CSV}" "decam" "_spec" "photometric_correction_output/${CLN}_dered_dezp_gals.csv" "decam" "" "photo_z_output/${CLN}_dered_dezp_gals_matched_specz.csv" "0.2"
+python -m python_scripts.misc.match_catalogs "${SPECZ_CSV}" "decam" "_spec" "photometric_correction_output/${CLN}_dered_dezp_gals.csv" "decam" "" "photo_z_output/${CLN}_dered_dezp_gals_matched_specz.csv" "0.2"
 
 # run bpz on the matched_catalog
 echo "Running BPZ on the matched catalog"
-python python_scripts/photo_z/bayesian_photo_z.py "photo_z_output/${CLN}_dered_dezp_gals_matched_specz.csv" "${CLN}_dered_dezp_gals_matched_specz_zphot.csv" "photo_z_output/" "20" "decam" "z_spec"
+python -m python_scripts.photo_z.bayesian_photo_z "photo_z_output/${CLN}_dered_dezp_gals_matched_specz.csv" "${CLN}_dered_dezp_gals_matched_specz_zphot.csv" "photo_z_output/" "20" "decam" "z_spec"
 
 
 # Now run bpz on the entire catalog
 echo "Running BPZ on the entire catalog"
-python python_scripts/photo_z/bayesian_photo_z.py "photometric_correction_output/${CLN}_dered_dezp_gals.csv" "${CLN}_dered_dezp_zphot_gals.csv" "photo_z_output/" "20" "decam"
+python -m python_scripts.photo_z.bayesian_photo_z "photometric_correction_output/${CLN}_dered_dezp_gals.csv" "${CLN}_dered_dezp_zphot_gals.csv" "photo_z_output/" "20" "decam"
 
 
 

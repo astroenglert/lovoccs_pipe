@@ -4,8 +4,6 @@ import math
 from importlib import resources as impresources
 from pathlib import Path
 
-sed_db = impresources.files('SED_CWWSB')
-
 import numpy as np
 
 from scipy.special import gamma
@@ -13,6 +11,11 @@ from scipy.interpolate import interp1d
 
 from astropy.table import Table
 from astropy.io import ascii
+
+# homebrew modules below
+from . import SED_CWWSB
+
+sed_db = impresources.files(SED_CWWSB)
 
 class TemplateBase(ABC):
 
@@ -258,6 +261,7 @@ class TemplateBase(ABC):
     
     # get the flux along the redshifts for this template
     # how should this interface with the cache? Need to decide
+    #TODO somewhere there is a bug (some missing factor or something) in the code computing fluxes here that I introduced after computing the cached fluxes; this needs to be patched before trying to generate new cached fluxes
     def compute_flux(self,filter_transmissions=None,wavelength=None,redshift=None):
         
         if redshift is None:
@@ -426,5 +430,124 @@ default_sed_list = [
                     ssp25MyrZ008,
                     ssp5MyrZ008,
                    ]
+
+
+# Defining another set of our default templates, but with the COSMOS priors
+class ElB2004a_COSMOS(TemplateBase):
     
+    sed_filepath = sed_db.joinpath('El_B2004a.sed')
+    #sed_filepath = sed_db.joinpath('LePhare_Templates/CWW_E_ext.sed')
+    
+    sed_name = 'EL_B2004a'
+    
+    def get_template_prior(self,m0):
+        return self._hubble_template_priors(m0,1)
+    
+    def get_redshift_prior(self,m0,redshift=None):
+        return self._hubble_redshift_priors(m0,1,redshift)
+    
+class SbcB2004a_COSMOS(TemplateBase):
+    
+    sed_filepath = sed_db.joinpath('Sbc_B2004a.sed')
+    #sed_filepath = sed_db.joinpath('LePhare_Templates/CWW_Sbc_ext.sed')
+    
+    sed_name = 'Sbc_B2004a'
+    
+    def get_template_prior(self,m0):
+        return self._hubble_template_priors(m0,2)
+    
+    def get_redshift_prior(self,m0,redshift=None):
+        return self._hubble_redshift_priors(m0,2,redshift)
+
+class ScdB2004a_COSMOS(TemplateBase):
+    
+    sed_filepath = sed_db.joinpath('Scd_B2004a.sed')
+    #sed_filepath = sed_db.joinpath('LePhare_Templates/CWW_Scd_ext.sed')
+    
+    sed_name = 'Scd_B2004a'
+    
+    def get_template_prior(self,m0):
+        return self._hubble_template_priors(m0,2)
+    
+    def get_redshift_prior(self,m0,redshift=None):
+        return self._hubble_redshift_priors(m0,2,redshift)
+
+class ImB2004a_COSMOS(TemplateBase):
+    
+    sed_filepath = sed_db.joinpath('Im_B2004a.sed')
+    #sed_filepath = sed_db.joinpath('LePhare_Templates/CWW_Im_ext.sed')
+    
+    sed_name = 'Im_B2004a'
+    
+    def get_template_prior(self,m0):
+        return self._hubble_template_priors(m0,3)
+    
+    def get_redshift_prior(self,m0,redshift=None):
+        return self._hubble_redshift_priors(m0,3,redshift)
+
+class SB2B2004a_COSMOS(TemplateBase):
+    
+    sed_filepath = sed_db.joinpath('SB2_B2004a.sed')
+    #sed_filepath = sed_db.joinpath('LePhare_Templates/KIN_SB2_ext.sed')
+    
+    sed_name = 'SB2_B2004a'
+    
+    def get_template_prior(self,m0):
+        return self._hubble_template_priors(m0,3)
+    
+    def get_redshift_prior(self,m0,redshift=None):
+        return self._hubble_redshift_priors(m0,3,redshift)
+
+class SB3B2004a_COSMOS(TemplateBase):
+    
+    sed_filepath = sed_db.joinpath('SB3_B2004a.sed')
+    #sed_filepath = sed_db.joinpath('LePhare_Templates/KIN_SB3_ext.sed')
+    
+    sed_name = 'SB3_B2004a'
+    
+    def get_template_prior(self,m0):
+        return self._hubble_template_priors(m0,3)
+    
+    def get_redshift_prior(self,m0,redshift=None):
+        return self._hubble_redshift_priors(m0,3,redshift)
+
+class ssp25MyrZ008_COSMOS(TemplateBase):
+    
+    sed_filepath = sed_db.joinpath('ssp_25Myr_z008.sed')
+    
+    sed_name = 'ssp_25Myr_z008'
+    
+    def get_template_prior(self,m0):
+        return self._hubble_template_priors(m0,3)
+    
+    def get_redshift_prior(self,m0,redshift=None):
+        return self._hubble_redshift_priors(m0,3,redshift)
+
+class ssp5MyrZ008_COSMOS(TemplateBase):
+    
+    sed_filepath = sed_db.joinpath('ssp_5Myr_z008.sed')
+    
+    sed_name = 'ssp_5Myr_z008'
+    
+    def get_template_prior(self,m0):
+        return self._hubble_template_priors(m0,3)
+    
+    def get_redshift_prior(self,m0,redshift=None):
+        return self._hubble_redshift_priors(m0,3,redshift)
+
+# convenience variable containing our default list of templates
+# ordered based on galaxy-evolution
+cosmos_sed_list = [
+                    ElB2004a_COSMOS,
+                    SbcB2004a_COSMOS,
+                    ScdB2004a_COSMOS,
+                    ImB2004a_COSMOS,
+                    SB2B2004a_COSMOS,
+                    SB3B2004a_COSMOS,
+                    ssp25MyrZ008_COSMOS,
+                    ssp5MyrZ008_COSMOS,
+                   ]
+
+# dictionary of sed-list for given prior sets
+prior_dict = {'ngvs':default_sed_list,'cosmos':cosmos_sed_list}
 
