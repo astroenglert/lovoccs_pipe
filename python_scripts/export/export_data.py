@@ -8,9 +8,6 @@ import json
 from importlib import resources as impresources
 from pathlib import Path
 
-# for loading the default exports
-export_config = impresources.files('export_config')
-
 import numpy as np
 
 import astropy as ap
@@ -32,6 +29,10 @@ import pandas as pd
 import matplotlib.pyplot as pl
 
 from lsst.daf.butler import Butler
+
+# homebrew modules below
+from . import export_config
+export_config = impresources.files('export_config')
 
 
 def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['r_inst_psf_flux','r_inst_cmodel_flux'],compute_shapes=['sdss','sdss_psf','hsm','hsm_psf','i_sdss_psf']):
