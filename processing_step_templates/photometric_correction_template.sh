@@ -26,7 +26,7 @@ source ${LOAD_LSST}
 setup lsst_distrib
 
 # load filepaths from config
-source python_scripts/configs/filepath_database.py
+source python_scripts/configs/filepath_database.sh
 
 # create an output directory for photometric_correction
 mkdir photometric_correction_output
