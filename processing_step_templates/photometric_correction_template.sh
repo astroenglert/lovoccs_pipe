@@ -26,7 +26,7 @@ source ${LOAD_LSST}
 setup lsst_distrib
 
 # load filepaths from config
-source python_scripts/configs/filepath_database.sh
+source python_scripts/configs/processing_step_configs.sh
 
 # create an output directory for photometric_correction
 mkdir photometric_correction_output
@@ -72,13 +72,6 @@ python -m python_scripts.photometric_correction.zero_point "photometric_correcti
 
 python -m python_scripts.photometric_correction.zero_point "photometric_correction_output/${CLN}_dered.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "photometric_correction_output/${CLN}_dered_dezp.csv"
 
-
-# and lastly, render figures comparing our corrections with other refcats
-# this step is a little more painful, since we need to search for the existing refcats
-#TODO somehow this should really be wrapped in a config-option, e.g. some list of refcats should be stored
-# but until we implement that, a for loop over the possible catalogs and their corresponding instruments should do
-POSSIBLE_CATALOGS=("des_dr2" "legacy_survey_dr9" "ps1_dr1" "sm_dr1" "sm_dr2")
-INSTRUMENTS=("des" "legacy" "ps1" "sm" "sm")
 
 for DEX in ${!POSSIBLE_CATALOGS[@]}; do
     
