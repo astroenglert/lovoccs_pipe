@@ -176,6 +176,9 @@ colorterm_dictionary = {
                         'sdss':'/oscar/data/idellant/Clusters/color_term/SDSS_factor.csv',
                        }
 
+# the filepath pointing to a table of standard stars
+std_star_filename='/oscar/data/idellant/Clusters/color_term/sed_mag.csv'
+
 
 #TODO we should make things like the color-cuts used configurable by the user
 

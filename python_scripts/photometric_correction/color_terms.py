@@ -13,8 +13,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as pl
 
 # homebrew modules below
-from ..configs.photometric_correction_config import instrument_headers, std_star_headers, colorterm_dictionary
-from ..configs.filepath_database import std_star_filename
+from ..configs.photometric_correction_config import instrument_headers, std_star_headers, colorterm_dictionary, std_star_filename
 
 
 def get_instrument_headers(catalog_name):

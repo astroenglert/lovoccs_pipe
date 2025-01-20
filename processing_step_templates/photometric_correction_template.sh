@@ -25,15 +25,18 @@ cd ${CLUSTER_DIR}
 source ${LOAD_LSST}
 setup lsst_distrib
 
+# load filepaths from config
+source python_scripts/configs/filepath_database.py
+
 # create an output directory for photometric_correction
 mkdir photometric_correction_output
 
 
 # first, de-redden catalog and refcat
 # TODO how the filepaths here should come from a config rather than being hard-coded here
-EXT_IMAGE="/gpfs/data/idellant/Clusters/galactic_extinction_database/data_extinction_irsa/${CLN}.fits"
+EXT_IMAGE="${EXT_DB}/${CLN}.fits"
 INPUT_CAT="read_catalog_all_output/${CLN}_00-1111_all.csv"
-REF_CAT="${CALIB_CATALOG_REPO}/catalogs_new/${CLN}/${PHOTOM}_${PHOTOM_TAG}_${CLN}.csv"
+REF_CAT="${CAT_DB}/${CLN}/${PHOTOM}_${PHOTOM_TAG}_${CLN}.csv"
 
 echo "Running the extinction correction!"
 python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${INPUT_CAT} "photometric_correction_output/${CLN}_dered.csv" "decam"
@@ -82,7 +85,7 @@ for DEX in ${!POSSIBLE_CATALOGS[@]}; do
     # load the catalog and corresponding instrument
     #TODO these will need to be implemented with the IO
     CAT=${POSSIBLE_CATALOGS[$DEX]}
-    CAT_PATH="${CALIB_CATALOG_REPO}/catalogs_new/${CLN}/${CAT}_${CLN}.csv"
+    CAT_PATH="${CAT_DB}/${CLN}/${CAT}_${CLN}.csv"
     INS=${INSTRUMENTS[$DEX]}
     
     echo "Now comparing with ${CAT}"
