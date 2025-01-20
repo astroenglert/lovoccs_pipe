@@ -3,7 +3,7 @@ from abc import ABC
 from importlib import resources as impresources
 from pathlib import Path
 
-trans_db = impresources.files('transmission_database')
+trans_db = impresources.files(__package__).joinpath('transmission_database')
 
 import numpy as np
 

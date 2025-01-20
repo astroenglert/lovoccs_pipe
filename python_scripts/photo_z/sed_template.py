@@ -4,7 +4,7 @@ import math
 from importlib import resources as impresources
 from pathlib import Path
 
-sed_db = impresources.files('SED_CWWSB')
+sed_db = impresources.files(__package__).joinpath('SED_CWWSB')
 
 import numpy as np
 

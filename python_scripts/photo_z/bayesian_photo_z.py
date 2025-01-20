@@ -8,7 +8,7 @@ from multiprocessing import Pool
 from importlib import resources as impresources
 from pathlib import Path
 
-flux_db = impresources.files('flux_cache')
+flux_db = impresources.files(__package__).joinpath('flux_cache')
 
 import numpy as np
 

@@ -9,7 +9,7 @@ from importlib import resources as impresources
 from pathlib import Path
 
 # for loading the default exports
-export_config = impresources.files('export_config')
+export_config = impresources.files(__package__).joinpath('export_config')
 
 import numpy as np
 
