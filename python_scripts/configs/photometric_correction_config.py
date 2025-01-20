@@ -167,6 +167,15 @@ std_star_headers = {'decam' : {'u_psf_mag':'u_DECam',
                                },
                      }
 
+# a dictionary directing the code to colorterms stored on-disk
+colorterm_dictionary = {
+                        'des':'/oscar/data/idellant/Clusters/color_term/DES_factor.csv',
+                        'legacy':'/oscar/data/idellant/Clusters/color_term/DES_factor.csv',
+                        'ps1':'/oscar/data/idellant/Clusters/color_term/PS1_factor.csv',
+                        'sm':'/oscar/data/idellant/Clusters/color_term/SM_factor.csv',
+                        'sdss':'/oscar/data/idellant/Clusters/color_term/SDSS_factor.csv',
+                       }
+
 
 #TODO we should make things like the color-cuts used configurable by the user
 
