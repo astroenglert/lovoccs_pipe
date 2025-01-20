@@ -9,7 +9,8 @@ from astropy.table import Table
 import numpy as np
 
 #homebrew modules here, these will likely change in the future
-from color_terms import get_instrument_headers
+from .color_terms import get_instrument_headers
+from ..configs.photometric_correction_config import use_locus
 
 if __name__ == '__main__':
     
@@ -45,7 +46,7 @@ if __name__ == '__main__':
         # use ct_correction for everything EXCEPT u-band and Y-band (TODO manually skip the latter for now... )
         if band[0] == 'Y':
             catalog[band] = catalog[band]
-        elif band[0] == 'u':
+        elif band[0] in use_locus:
             catalog[band] = catalog[band] - sl_bias[band[0]][0]
             catalog[band + err_tag] = np.sqrt(catalog[band + err_tag]**2 + sl_bias[band[0]][1]**2)
         else:

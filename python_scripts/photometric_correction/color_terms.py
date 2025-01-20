@@ -12,10 +12,14 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as pl
 
-#TODO this should be overhauled with a general-IO
+# homebrew modules below
+from ..configs.photometric_correction_config import instrument_headers, std_star_headers
+from ..configs.filepath_database import colorterm_dictionary, std_star_filename
+
+
 def get_instrument_headers(catalog_name):
     '''
-    This is a temporary function which outputs a hand-coded dictionary of column names, eventually we need to replace this with a full solution which loads the appropriate configs from jsons or some other format.
+    Outputs a dictionary of column_names for a given catalog.
     
     Args:
       catalog_name: String; one of decam, des, sm, ps1, sdss from which to load the proper headers for a reference catalog
@@ -25,113 +29,14 @@ def get_instrument_headers(catalog_name):
     
     '''
 
-    #output_dict = None
-    if catalog_name == "decam":
-        output_dict = {'ra_name':'ra',
-                       'dec_name':'dec',
-                       'u_psf_mag':'u_psf_mag',
-                       'g_psf_mag':'g_psf_mag',
-                       'r_psf_mag':'r_psf_mag',
-                       'i_psf_mag':'i_psf_mag',
-                       'z_psf_mag':'z_psf_mag',
-                       'Y_psf_mag':'Y_psf_mag',
-                       'u_cmd_mag':'u_cmodel_mag',
-                       'g_cmd_mag':'g_cmodel_mag',
-                       'r_cmd_mag':'r_cmodel_mag',
-                       'i_cmd_mag':'i_cmodel_mag',
-                       'z_cmd_mag':'z_cmodel_mag',
-                       'Y_cmd_mag':'Y_cmodel_mag',
-                       }
-    
-    elif catalog_name == "des":
-        output_dict = {'ra_name':'ra',
-                       'dec_name':'dec',
-                       'u_psf_mag':None,
-                       'g_psf_mag':'wavg_mag_psf_g',
-                       'r_psf_mag':'wavg_mag_psf_r',
-                       'i_psf_mag':'wavg_mag_psf_i',
-                       'z_psf_mag':'wavg_mag_psf_z',
-                       'Y_psf_mag':'wavg_mag_psf_y',
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
-    
-    elif catalog_name == "sm":
-        output_dict = {'ra_name':'raj2000',
-                       'dec_name':'dej2000',
-                       'u_psf_mag':'v_psf',
-                       'g_psf_mag':'g_psf',
-                       'r_psf_mag':'r_psf',
-                       'i_psf_mag':'i_psf',
-                       'z_psf_mag':'z_psf',
-                       'Y_psf_mag':None,
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
-    
-    elif catalog_name == "ps1":
-        output_dict = {'ra_name':'RAJ2000',
-                       'dec_name':'DEJ2000',
-                       'u_psf_mag':None,
-                       'g_psf_mag':'gmag',
-                       'r_psf_mag':'rmag',
-                       'i_psf_mag':'imag',
-                       'z_psf_mag':'zmag',
-                       'Y_psf_mag':'ymag',
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
-    
-    elif catalog_name == "sdss":
-        output_dict = {'ra_name':'RA_ICRS',
-                       'dec_name':'DE_ICRS',
-                       'u_psf_mag':'upmag',
-                       'g_psf_mag':'gpmag',
-                       'r_psf_mag':'rpmag',
-                       'i_psf_mag':'ipmag',
-                       'z_psf_mag':'zpmag',
-                       'Y_psf_mag':None,
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
-    elif catalog_name == "legacy":
-        output_dict = {'ra_name':'ra',
-                       'dec_name':'dec',
-                       'u_psf_mag':None,
-                       'g_psf_mag':'mag_g',
-                       'r_psf_mag':'mag_r',
-                       'i_psf_mag':None,
-                       'z_psf_mag':'mag_z',
-                       'Y_psf_mag':None,
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
+    if catalog_name in instrument_headers.keys():
+        output_dict = instrument_headers[catalog_name]
     else:
         raise Exception(f'Dictionary not found for {catalog_name}')
     
     return output_dict
 
-#TODO overhaul this for standard IO
+
 def get_std_star_sed_mag_headers(catalog_name):
     '''
     Unfortunately, our table of the photometry for reference stars uses a different convention for the column headers, hence creating this function. For now, this is a temporary function which outputs a hand-coded dictionary of column names. eventually we need to replace this with a full solution which loads the appropriate configs from jsons or some other format. 
@@ -145,66 +50,8 @@ def get_std_star_sed_mag_headers(catalog_name):
     '''
 
     #output_dict = None
-    if catalog_name == "des" or catalog_name == "legacy" or catalog_name == "decam":
-        output_dict = {'u_psf_mag':'u_DECam',
-                       'g_psf_mag':'g_DECam',
-                       'r_psf_mag':'r_DECam',
-                       'i_psf_mag':'i_DECam',
-                       'z_psf_mag':'z_DECam',
-                       'Y_psf_mag':'Y_DECam',
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
-                       
-    elif catalog_name == "sm":
-        output_dict = {'u_psf_mag':'v_SM',
-                       'g_psf_mag':'g_SM',
-                       'r_psf_mag':'r_SM',
-                       'i_psf_mag':'i_SM',
-                       'z_psf_mag':'z_SM',
-                       'Y_psf_mag':None,
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
-    
-    elif catalog_name == "ps1":
-        output_dict = {'u_psf_mag':None,
-                       'g_psf_mag':'g_PS1',
-                       'r_psf_mag':'r_PS1',
-                       'i_psf_mag':'i_PS1',
-                       'z_psf_mag':'z_PS1',
-                       'Y_psf_mag':'y_PS1',
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
-    
-    elif catalog_name == "sdss":
-        output_dict = {'u_psf_mag':'u_SDSS',
-                       'g_psf_mag':'g_SDSS',
-                       'r_psf_mag':'r_SDSS',
-                       'i_psf_mag':'i_SDSS',
-                       'z_psf_mag':'z_SDSS',
-                       'Y_psf_mag':None,
-                       'u_cmd_mag':None,
-                       'g_cmd_mag':None,
-                       'r_cmd_mag':None,
-                       'i_cmd_mag':None,
-                       'z_cmd_mag':None,
-                       'Y_cmd_mag':None,
-                       }
-    
+    if catalog_name in std_star_headers.keys():
+        output_dict = std_star_headers[catalog_name]
     else:
         raise Exception(f'Dictionary not found for {catalog_name}')
     
@@ -218,7 +65,6 @@ def get_std_star_sed_mag_headers(catalog_name):
 # 3. compute residuals between color-term corrected catalog and refcat
 # 4. assume additive/linear bias and save it to an output file to be applied later
 
-#TODO all of this io will need to be overhauled!
 # will depend on refcat instrument!
 def load_color_terms(catalog_instr,refcat_instr):
     '''
@@ -231,15 +77,6 @@ def load_color_terms(catalog_instr,refcat_instr):
     Returns:
         colorterms: Astropy Table; Table with header specifying the band and n-th row specifying n-th order colorterm
     '''
-    
-    #TODO overhaul this dictionary later
-    colorterm_dictionary = {
-                            'des':'/oscar/data/idellant/Clusters/color_term/DES_factor.csv',
-                            'legacy':'/oscar/data/idellant/Clusters/color_term/DES_factor.csv',
-                            'ps1':'/oscar/data/idellant/Clusters/color_term/PS1_factor.csv',
-                            'sm':'/oscar/data/idellant/Clusters/color_term/SM_factor.csv',
-                            'sdss':'/oscar/data/idellant/Clusters/color_term/SDSS_factor.csv',
-                           }
     
     if refcat_instr not in colorterm_dictionary.keys():
         raise Exception(f'No colorterms for {refcat_instr}!')
@@ -260,7 +97,8 @@ def load_std_stars(instr):
         std_star_table: Astropy Table; Table containing the flux of reference stars for the catalog_instr and refcat_instr
     '''
     
-    std_star_filename = '/oscar/data/idellant/Clusters/color_term/sed_mag.csv'
+    if std_star_filename == None:
+        return None
     
     # loading the complete std_star_table and the corresponding headers
     std_star_table_complete = Table.read(std_star_filename)
@@ -393,14 +231,6 @@ def draw_residuals(matched_catalog,catalog_instr,refcat_instr,band,colorterms,ca
     band_refcat = matched_catalog[refcat_headers[band] + refcat_tag]
     band_catalog = matched_catalog[catalog_headers[band] + catalog_tag]
     
-    # next load in the standard stars
-    refcat_std_stars = load_std_stars(refcat_instr)
-    catalog_std_stars = load_std_stars(catalog_instr)
-    refcat_std_ct0 = refcat_std_stars[color[0]]
-    refcat_std_ct1 = refcat_std_stars[color[1]]
-    refcat_std_band = refcat_std_stars[band]
-    catalog_std_band = catalog_std_stars[band]
-    
     # filter-out NaN/inf
     select_plot = np.isfinite(ct_band0_refcat)
     select_plot &= np.isfinite(ct_band1_refcat)
@@ -418,14 +248,25 @@ def draw_residuals(matched_catalog,catalog_instr,refcat_instr,band,colorterms,ca
                     label='observation',
                     )
     
-    # draw the standard stars
-    ax.scatter((refcat_std_ct0 - refcat_std_ct1),
-               (catalog_std_band - refcat_std_band),
-               c='k',
-               alpha=0.5,
-               marker='^',
-               label='model',
-               )
+    # next load in the standard stars
+    refcat_std_stars = load_std_stars(refcat_instr)
+    catalog_std_stars = load_std_stars(catalog_instr)
+    
+    # check that the reference stars exist, if-so draw them as well
+    if (refcat_std_stars != None) and (catalog_std_stars != None):
+        refcat_std_ct0 = refcat_std_stars[color[0]]
+        refcat_std_ct1 = refcat_std_stars[color[1]]
+        refcat_std_band = refcat_std_stars[band]
+        catalog_std_band = catalog_std_stars[band]
+    
+        # draw the standard stars
+        ax.scatter((refcat_std_ct0 - refcat_std_ct1),
+                   (catalog_std_band - refcat_std_band),
+                   c='k',
+                   alpha=0.5,
+                   marker='^',
+                   label='model',
+                   )
     
     # draw the theoretical color-terms    
     coeffs = colorterms[filter_name]

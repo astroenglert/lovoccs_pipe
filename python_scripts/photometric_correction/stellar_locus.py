@@ -12,7 +12,7 @@ from astropy.table import Table
 from scipy.optimize import curve_fit
 
 #homebrew modules here, these will likely change in the future
-from color_terms import get_instrument_headers, get_std_star_sed_mag_headers, load_std_stars
+from .color_terms import get_instrument_headers, get_std_star_sed_mag_headers, load_std_stars
 
 def draw_color_plots(star_catalog,instr,x_color,y_color,ax,kwargs,select=None):
     '''
