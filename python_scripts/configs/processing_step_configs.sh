@@ -5,6 +5,7 @@
 # == bash configurables for photometric_correction.sh == #
 
 # a list of possible catalogs and the corresponding instruments
+# this is only used during photometric_correction.sh... tweaking the refcats in LSSTPipe requires tweaking the loops and options in run_steps_Gen3.sh 
 POSSIBLE_CATALOGS=("des_dr2" "legacy_survey_dr9" "ps1_dr1" "sm_dr1" "sm_dr2")
 INSTRUMENTS=("des" "legacy" "ps1" "sm" "sm")
 
