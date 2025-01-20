@@ -17,27 +17,8 @@ from astropy.wcs import WCS
 from photutils.segmentation import detect_sources, SourceCatalog
 
 # HOMEBREW MODULES BELOW
-from filters import implemented_filters
-
-#TODO overhaul this to a standard-IO
-def load_resolution():
-    '''
-    A temporary function for storing a hand-coded dictionary specifying the resolution of different instruments
-    
-    Args:
-        None
-    
-    Returns:
-        instrument_reslution: Dictionary; a dictionary containing the resolution for keyed instruments
-    
-    '''
-    
-    instrument_resolution = {
-                             'decam' : 0.263,
-                             'hsc' : 0.168,
-                            }
-    
-    return instrument_resolution
+from .filters import implemented_filters
+from ..configs.mass_map_config import instrument_resolution, quality_cuts, aperture_sizes, sn_columns, map_columns
     
 
 #TODO overhaul this to a standard-IO or function for running quality-cuts read from a config
@@ -55,8 +36,6 @@ def load_quality_cuts(table,quality_cuts=None):
     '''
         
     # default to cuts specified in LVI
-    #TODO is there a better way of formatting this information?
-    #TODO should the column-header to r_cmodel_magerr be generalized or left to the user to specify correctly?
     if quality_cuts == None:
         quality_cuts = [
                         ('r_cmodel_magerr','<',(np.log(10)/2.5)/5), # SN-cut written a little weird since dm ~ df/f
@@ -192,37 +171,7 @@ def detect_mass_peaks(Map_E,Map_B,Map_V,kwargs={'threshold':3,'npixels':25}):
     
     
     # collecting interesting statistics from E-mode
-    # keys are name for SourceCatalog object, values are what we'll name the columns
-    #TODO should these live inside this function or in __main__ to be passed as arguments?
-    sn_columns = {
-               'label':'SourceID',
-               'max_value':'SN_peak',
-               'maxval_xindex':'x_sn_max',
-               'maxval_yindex':'y_sn_max',
-               'xcentroid':'x_sn_centroid',
-               'ycentroid':'y_sn_centroid',
-               'covar_sigx2':'xx_sn_gauss',
-               'covar_sigxy':'xy_sn_gauss',
-               'covar_sigy2':'yy_sn_gauss',
-               'area':'area',
-               'orientation':'sn_theta',
-               'fwhm':'sn_fwhm',
-               'ellipticity':'sn_ellip',
-               }
-     
-    map_columns = {
-                'max_value':'Map_max',
-                'maxval_xindex':'x_ap_max',
-                'maxval_yindex':'y_ap_max',
-                'xcentroid':'x_ap_centroid',
-                'ycentroid':'y_ap_centroid',
-                'covar_sigx2':'xx_ap_gauss',
-                'covar_sigxy':'xy_ap_gauss',
-                'covar_sigy2':'yy_ap_gauss',
-                'orientation':'ap_theta',
-                'fwhm':'ap_fwhm',
-                'ellipticity':'ap_ellip',
-                }
+
     
     # collecting interesting statistics from E-mode, if any peaks exist
     if seg_E is not None:
@@ -338,7 +287,7 @@ if __name__ == '__main__':
     
     # read in the table, apply quality cuts, save the cut-table w/ an additional tag
     table = ascii.read(table_filename)
-    table = load_quality_cuts(table)
+    table = load_quality_cuts(table,quality_cuts=quality_cuts)
     basename = Path(table_filename).stem
     table.write(output_directory + basename + '_Map_cut.csv',format='ascii.csv',overwrite=True)
     
@@ -363,7 +312,7 @@ if __name__ == '__main__':
     y_grid_samples = np.arange(int(lower_patch[0])*4000, (int(lower_patch[0])*4000) + coadd_shape[0],sample_spacing) + sample_spacing/2 + centering_y/2
     y_grid,x_grid = np.meshgrid(y_grid_samples,x_grid_samples)
     
-    resolution_dict = load_resolution()
+    resolution_dict = instrument_resolution
     resolution = resolution_dict[instrument] # ("/px)
     
     # create the wcs for Map; subtract the lower-patch-index since the coadd-wcs has px 4000*LOWER_INDEX => 0
@@ -388,9 +337,6 @@ if __name__ == '__main__':
         weights = np.ones(len(x))/(0.365**2) # shape-weight is an inverse-variance, from previous studies e_rms ~ 0.365 
     else:
         weights = table['shape_weight'].value
-    
-    #TODO should we connect this to the IO?
-    aperture_sizes = np.arange(3000,30000,1000)
     
     # temporary helper function for parallelizing over Rs
     def compute_and_measure_parallel(aperture_size):

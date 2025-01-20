@@ -2,6 +2,7 @@
 # == This file is for storing filepaths to different folders (databases) which are used by lv_pipe == #
 # WARNING: This is read by Bash; so no spaces when defining variables!!!
 
+
 # == bash configurables for photometric_correction.sh == #
 
 # a list of possible catalogs and the corresponding instruments
@@ -20,5 +21,15 @@ EXT_DB='/gpfs/data/idellant/Clusters/galactic_extinction_database/data_extinctio
 
 # filepath to specz; looks for csv's stored in ${SPECZ_DB}/${CLN}_ned_select.csv
 SPECZ_DB='/gpfs/data/idellant/Clusters/spec_z_database'
+
+
+# == bash configurables for mass_map.sh == #
+
+#TODO change the structure of how we save xray data to make it friendlier for collaborators to use pipe
+# filepath to xray db; currently searches for ${XRAY_DB}/${CLN}/Chandra/broad_flux_smoothed.fits
+XRAY_DB='/gpfs/data/idellant/Clusters/Xray'
+
+
+
 
 
