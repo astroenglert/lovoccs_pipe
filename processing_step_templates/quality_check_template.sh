@@ -23,6 +23,9 @@ cd ${CLUSTER_DIR}
 source ${LOAD_LSST}
 setup lsst_distrib
 
+# load configs
+source python_scripts/configs/processing_step_configs.sh
+
 # create an output directory for photometric_correction
 mkdir quality_check_output
 
@@ -33,27 +36,26 @@ mkdir quality_check_output
 #TODO if we change to a more sophisticated star-gal separation (e.g. check spectra rather than just extendedness), this will need heavy adjustments since it's not dereddened
 INPUT_CAT="read_catalog_all_output/${CLN}_00-1111_all.csv"
 echo "separating stars and galaxies"
-python python_scripts/photometric_correction/separate_stars_galaxies.py "${INPUT_CAT}" "quality_check_output/${CLN}_stars.csv" "quality_check_output/${CLN}_gals.csv"
+python -m python_scripts.photometric_correction.separate_stars_galaxies "${INPUT_CAT}" "quality_check_output/${CLN}_stars.csv" "quality_check_output/${CLN}_gals.csv"
 
 
 # next apply the zero-point correction to both catalogs
 # really we apply the zp-correction here to be comparable w. refcats; but since we care about the signal post atm/optics, we skip adding the bias. I've created a modified version of zp-correction to handle this temporarily, really we should add a cln-option to the existing zp-correction script which disables the error-propagation
 
 echo "running zp"
-python python_scripts/photometric_correction/zero_point_skip_errors.py "quality_check_output/${CLN}_stars.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_stars.csv"
+python -m python_scripts.photometric_correction.zero_point_skip_errors "quality_check_output/${CLN}_stars.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_stars.csv"
 
-python python_scripts/photometric_correction/zero_point_skip_errors.py "quality_check_output/${CLN}_gals.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_gals.csv"
+python -m python_scripts.photometric_correction.zero_point_skip_errors "quality_check_output/${CLN}_gals.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_gals.csv"
 
 
 # next, match the star-catalog to Gaia for checking the photometry
-#TODO this should be read from a config somehow...
-REF_CAT="${CALIB_CATALOG_REPO}/catalogs_new/${CLN}/gaia_dr3_${CLN}.csv"
+REF_CAT="${CAT_DB}/${CLN}/gaia_dr3_${CLN}.csv"
 echo "matching gaia"
-python python_scripts/misc/match_catalogs.py "${REF_CAT}" "decam" "_ref" "quality_check_output/${CLN}_dezp_stars.csv" "decam" "_cat" "quality_check_output/${CLN}_dezp_stars_matched_gaia.csv" "0.2"
+python -m python_scripts.misc.match_catalogs "${REF_CAT}" "decam" "_ref" "quality_check_output/${CLN}_dezp_stars.csv" "decam" "_cat" "quality_check_output/${CLN}_dezp_stars_matched_gaia.csv" "0.2"
 
 
 # now everything can be passed to quality_check, which takes care of the plotting in one big, somewhat messy, python script
 echo "running quality_check.py"
-python python_scripts/quality_check/quality_check.py "quality_check_output/${CLN}_dezp_stars.csv" "quality_check_output/${CLN}_dezp_gals.csv" "quality_check_output/${CLN}_dezp_stars_matched_gaia.csv" "_cat" "_ref" "query_result_${CLN}.csv" "quality_check_output/" "decam" "${CLN}"
+python -m python_scripts.quality_check.quality_check "quality_check_output/${CLN}_dezp_stars.csv" "quality_check_output/${CLN}_dezp_gals.csv" "quality_check_output/${CLN}_dezp_stars_matched_gaia.csv" "_cat" "_ref" "query_result_${CLN}.csv" "quality_check_output/" "decam" "${CLN}"
 
 

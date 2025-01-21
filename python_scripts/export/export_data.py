@@ -32,7 +32,7 @@ from lsst.daf.butler import Butler
 
 # homebrew modules below
 from . import export_config
-export_config = impresources.files('export_config')
+export_config = impresources.files(export_config)
 
 
 def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['r_inst_psf_flux','r_inst_cmodel_flux'],compute_shapes=['sdss','sdss_psf','hsm','hsm_psf','i_sdss_psf']):
@@ -314,7 +314,7 @@ if __name__ == '__main__':
     cln = sys.argv[1]
     
     # create a butler to read/write data with
-    butler = Butler('test_repo/repo')
+    butler = Butler('repo/repo')
     
     # load dictionaries of flags and columns
     flag_flp = export_config.joinpath('object_flags.json')
@@ -347,7 +347,7 @@ if __name__ == '__main__':
         
     data_out = vstack(table_array)
     
-    data_out.write("read_catalog_all/{CLN}_00-1111_all.csv".format(CLN=cln), format="ascii.csv", overwrite=True)
+    data_out.write("read_catalog_all_output/{CLN}_00-1111_all.csv".format(CLN=cln), format="ascii.csv", overwrite=True)
     
     # by default, let's export fits of 2x2,4x4,6x6, and the 12x12 fov
     # avoid assuming a particular number of patches
