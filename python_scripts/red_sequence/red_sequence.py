@@ -28,25 +28,8 @@ from astropy.stats import sigma_clip
 
 from astroquery.ipac.ned import Ned
 
-#TODO overhaul this to a standard-IO
-def load_resolution():
-    '''
-    A temporary function for storing a hand-coded dictionary specifying the resolution of different instruments
-    
-    Args:
-        None
-    
-    Returns:
-        instrument_reslution: Dictionary; a dictionary containing the resolution for keyed instruments
-    
-    '''
-    
-    instrument_resolution = {
-                             'decam' : 0.263,
-                             'hsc' : 0.168,
-                            }
-    
-    return instrument_resolution
+# homebrew modules below
+from ..configs.red_sequence_config.py import instrument_resolution
 
 '''
 
@@ -274,8 +257,7 @@ if __name__ == '__main__':
     kde = kde*(sample_spacing**2)
     
     #TODO same problem from mass_map, these should probably be cleaned-up and wrapped in a function
-    resolution_dict = load_resolution()
-    resolution = resolution_dict[instrument] # ("/px)
+    resolution = instrument_resolution[instrument] # ("/px)
     
     # create the wcs for kde; subtract the lower-patch-index since the coadd-wcs has px 4000*LOWER_INDEX => 0
     # use pixel 0,0 as the crval

@@ -21,6 +21,6 @@ cd ${CLUSTER_DIR}
 source ${LOAD_LSST}
 setup lsst_distrib
 
-python python_scripts/export/export_data.py "${CLN}"
+python -m python_scripts.export.export_data "${CLN}"
 
 

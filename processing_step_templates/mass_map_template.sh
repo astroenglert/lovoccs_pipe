@@ -26,6 +26,9 @@ cd ${CLUSTER_DIR}
 source ${LOAD_LSST}
 setup lsst_distrib
 
+# load filepaths from config
+source python_scripts/configs/processing_step_configs.sh
+
 # create an output directory for photometric_correction
 mkdir mass_map_output
 
@@ -33,25 +36,24 @@ mkdir mass_map_output
 # this has two steps, run mass_map then draw the contours over the images!
 #TODO eventually I'd like to find a way to remove the call to the coadd here
 COADD="combine_patch_color_output/${CLN}_r33-88_deepCoadd.fits"
-python python_scripts/mass_map/mass_map.py "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "${COADD}" "schirmer" "100" "mass_map_output/" "20" "decam" #(3,3) patch number is optional, if using a different sized coadd for the wcs this may need to be changed
+python -m python_scripts.mass_map.mass_map "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "${COADD}" "schirmer" "100" "mass_map_output/" "20" "decam" #(3,3) patch number is optional, if using a different sized coadd for the wcs this may need to be changed
 
 
 # now draw contours
-#TODO is there a more systematic way of loading coadds of a general patch-size, other than changing these variables? Also XRay should be loaded from a config somewhere...
 COADD_R="combine_patch_color_output/${CLN}_i33-88_deepCoadd.fits"
 COADD_G="combine_patch_color_output/${CLN}_r33-88_deepCoadd.fits"
 COADD_B="combine_patch_color_output/${CLN}_g33-88_deepCoadd.fits"
-XRAY="/gpfs/data/idellant/Clusters/Xray/${CLN}/Chandra/broad_flux_smoothed.fits"
+XRAY="${XRAY_DB}/${CLN}/Chandra/broad_flux_smoothed.fits"
 
 # first just the mass_map over an inverse r-band image
-python python_scripts/render_data/overlay_contours_map_inv.py "${COADD_R}" "mass_map_output/Map_E_peak_catalog_schirmer.csv" "mass_map_output/" "mass_map_output/${CLN}_r_inv_Map.png"
+python -m python_scripts.render_data.overlay_contours_map_inv "${COADD_R}" "mass_map_output/Map_E_peak_catalog_schirmer.csv" "mass_map_output/" "mass_map_output/${CLN}_r_inv_Map.png"
 
 # then draw the mass_map over a color-image
-python python_scripts/render_data/overlay_contours_map_rgb.py "${COADD_R}" "${COADD_G}" "${COADD_B}" "mass_map_output/Map_E_peak_catalog_schirmer.csv" "mass_map_output/" "mass_map_output/${CLN}_irg_Map.png"
+python -m python_scripts.render_data.overlay_contours_map_rgb "${COADD_R}" "${COADD_G}" "${COADD_B}" "mass_map_output/Map_E_peak_catalog_schirmer.csv" "mass_map_output/" "mass_map_output/${CLN}_irg_Map.png"
 
 # check for a chandra image and draw the x-ray contours if they exist
 if [ -f "${XRAY}" ]; then
-    python python_scripts/render_data/overlay_contours_map_inv.py "${COADD_R}" "mass_map_output/Map_E_peak_catalog_schirmer.csv" "mass_map_output/" "mass_map_output/${CLN}_r_inv_Map_xray.png" "${XRAY}"
+    python -m python_scripts.render_data.overlay_contours_map_inv "${COADD_R}" "mass_map_output/Map_E_peak_catalog_schirmer.csv" "mass_map_output/" "mass_map_output/${CLN}_r_inv_Map_xray.png" "${XRAY}"
 fi
 
 

@@ -22,7 +22,7 @@ WALL_TIME=48:00:00 # default time is 2-days, may need to be adjusted for explora
 # == VARIABLES == #
 
 #update when complete
-AUTO_PIPELINE_DIR="/gpfs/data/idellant/englert_newPipelineDev/python_refractored/automatic_pipeline_gen3" #update when complete
+AUTO_PIPELINE_DIR="/gpfs/data/idellant/englert_newPipelineDev/lovoccs_pipe" #update when complete
 TEMPLATE_DIR="${AUTO_PIPELINE_DIR}/processing_step_templates"
 LOAD_PIPELINE_PATH="/gpfs/data/idellant/Clusters/gen3_processing/lsst_stack_v26_0_0/loadLSST.bash" # update to install in Clusters when complete
 CLUSTER_DIR="/gpfs/data/idellant/Clusters/gen3_processing/${CLUSTER_NAME}" #update when complete

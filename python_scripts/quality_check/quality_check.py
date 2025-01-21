@@ -27,6 +27,9 @@ from astropy.coordinates import SkyCoord
 
 from astroquery.ipac.ned import Ned
 
+# homebrew modules below
+from ..configs.quality_check_config import filter_map, instrument_resolution, quality_cuts, possible_bands
+
 '''
 This is for checking the quality of our measurements (e.g. noise from atm/optics)... to do this we pass magnitudes which are:
   - zp-corrected (consistent w/ refcats)
@@ -58,51 +61,6 @@ There is no real algorithm for this... instead it's just about drawing a few pre
 
 '''
 
-#TODO overhaul this to a standard-IO
-def load_filter_map():
-    '''
-    A temporary function for storing a hand-coded dictiopnary specifying the full name of each DECam filter
-    
-    Args:
-        None
-    
-    Returns:
-        ifilter_map: Dictionary; a dictionary of full filter names keyed by single-characters
-    
-    '''
-    
-    ifilter_map = {
-                   'u': "u DECam c0006 3500.0 1000.0",
-                   'g': "g DECam SDSS c0001 4720.0 1520.0",
-                   'r': "r DECam SDSS c0002 6415.0 1480.0",
-                   'i': "i DECam SDSS c0003 7835.0 1470.0",
-                   'z': "z DECam SDSS c0004 9260.0 1520.0",
-                   }
-    
-    return ifilter_map
-                   
-
-
-#TODO overhaul this to a standard-IO
-def load_resolution():
-    '''
-    A temporary function for storing a hand-coded dictionary specifying the resolution of different instruments
-    
-    Args:
-        None
-    
-    Returns:
-        instrument_reslution: Dictionary; a dictionary containing the resolution for keyed instruments
-    
-    '''
-    
-    instrument_resolution = {
-                             'decam' : 0.263,
-                             'hsc' : 0.168,
-                            }
-    
-    return instrument_resolution
-
 
 #TODO overhaul this to a standard-IO or function for running quality-cuts read from a config (this is cp'ed from mass_fit for now...)
 def load_quality_cuts(table,quality_cuts=None):
@@ -119,8 +77,6 @@ def load_quality_cuts(table,quality_cuts=None):
     '''
         
     # default to cuts specified in LVI
-    #TODO is there a better way of formatting this information?
-    #TODO should the column-header to r_cmodel_magerr be generalized (e.g. w/ standard-IO) or left to the user to specify correctly?
     if quality_cuts == None:
         quality_cuts = [
                         ('r_cmodel_magerr','<',(np.log(10)/2.5)/5), # SN-cut written a little weird since dm ~ df/f
@@ -175,8 +131,7 @@ def plot_mag_hist(star_catalog,gal_catalog,output_directory,fit_range=[23,24],ma
         None?
     
     '''
-    #TODO should this list of possible filters be part of generalized-IO somewhere?
-    possible_bands = ['u','g','r','i','z']
+    
     col_names = star_catalog.colnames
     
     # lazy-way of getting the number of bands which exist in the catalog
@@ -281,8 +236,7 @@ def plot_snr_mag_hist(star_catalog,gal_catalog,output_directory,SN_bins=[(9,11),
         None?
     
     '''
-    #TODO should this list of possible filters be part of generalized-IO somewhere?
-    possible_bands = ['u','g','r','i','z']
+    
     col_names = star_catalog.colnames
     
     # lazy-way of getting the number of bands which exist in the catalog
@@ -426,8 +380,7 @@ def plot_mag_magerr(star_catalog,gal_catalog,output_directory,mag_range=(17,27),
         None?
     
     '''
-    #TODO should this list of possible filters be part of generalized-IO somewhere?
-    possible_bands = ['u','g','r','i','z']
+
     col_names = star_catalog.colnames
     
     # lazy-way of getting the number of bands which exist in the catalog
@@ -612,11 +565,11 @@ def star_gal_correlation(star_catalog,gal_catalog,output_directory,cmodel_mag_cu
     
     # apply mag+lensing cut to the galaxy-catalog and select psf-stars
     gal_center_cut = gal_center[gal_center['r_cmodel_mag'] < cmodel_mag_cut]
-    gal_center_cut = load_quality_cuts(gal_center_cut)
+    gal_center_cut = load_quality_cuts(gal_center_cut,quality_cuts=quality_cuts)
     star_center_cut = star_center[star_center["psf_used"] == 1]
     
     # set everythign up to compute the correlations
-    cat_star = treecorr.Catalog(x=star_center_cut['x'], y=star_center_cut['y'], g1=star_center_cut['e1_sdss'], g2=star_center_cut['e2_sdss'])
+    cat_star = treecorr.Catalog(x=star_center_cut['x'], y=star_center_cut['y'], g1=star_center_cut['sdss_e1'], g2=star_center_cut['sdss_e2'])
     cat_galX = treecorr.Catalog(x=gal_center_cut['x'], y=gal_center_cut['y'], g1=gal_center_cut['e2'], g2=gal_center_cut['e2'])
     cat_gal10 = treecorr.Catalog(x=gal_center_cut['x'], y=gal_center_cut['y'], g1=np.zeros(len(gal_center_cut)), g2=gal_center_cut['e2'])
     cat_gal20 = treecorr.Catalog(x=gal_center_cut['x'], y=gal_center_cut['y'], g1=gal_center_cut['e1'], g2=np.zeros(len(gal_center_cut)))
@@ -692,12 +645,10 @@ def draw_psf(star_catalog,output_directory,resolution=0.263,max_sep = 13500,skym
     
     '''
     
-    # select stars used to measure the psf    
-    select_psf_stars = (star_catalog['psf_used'] == 1) & (np.sqrt((star_catalog['x'] - skymap_center[0])**2 + (star_catalog['y']-skymap_center[1])**2) < max_sep)
+    # select stars used to measure the psf
+    select_psf_stars = (star_catalog['psf_used'] == 'True') & (np.sqrt((star_catalog['x'] - skymap_center[0])**2 + (star_catalog['y']-skymap_center[1])**2) < max_sep)
     psf_stars = star_catalog[select_psf_stars]
     
-    #TODO should this list of possible filters be part of generalized-IO somewhere?
-    possible_bands = ['u','g','r','i','z']
     col_names = star_catalog.colnames
     
     # lazy-way of getting the number of bands which exist in the catalog
@@ -708,23 +659,28 @@ def draw_psf(star_catalog,output_directory,resolution=0.263,max_sep = 13500,skym
             num_bands += 1
             bands_in_catalog.append(i)
     
-    #TODO when we export more statistics from LSP, this should loop over rkron/sdss-shapes in all bands. But for now hard-code just r-band
+    
     for band in ('r'): # bands_in_catalog:
-        kron_radius = psf_stars['rkron']
-        e1 = psf_stars['e1_sdss']
-        e2 = psf_stars['e2_sdss']
+        
+        #kron_radius = psf_stars['rkron']
+        # new export includes sdss moments, so we can compute a fwhm
+        # we assume a moffat w. gamma = 2 and alpha = 1; can use these assumptions to compute the FWHM from moments
+        sigma = np.sqrt(psf_stars['sdss_xx'] + psf_stars['sdss_yy']) # equivalent radius/'sigma'
+        fwhm = 2*np.sqrt(np.log(2)) * sigma
+        e1 = psf_stars['sdss_e1']
+        e2 = psf_stars['sdss_e2']
         
         ra = psf_stars['ra']
         dec = psf_stars['dec']
         
         # plot select-visit-esque renders of the psf
         fig,ax = pl.subplots()
-        im = ax.scatter(ra,dec,marker='.',c=kron_radius*resolution,cmap='jet',alpha=0.4,vmin=0.25,vmax=1.1)
+        im = ax.scatter(ra,dec,marker='.',c=fwhm*resolution,cmap='jet',alpha=0.4,vmin=0.7,vmax=1.5)
         ax.set_xlabel("RA (deg)")
         ax.set_ylabel("DEC (deg)")
         fig.colorbar(im)
-        ax.set_title("Coadd Kron Radius [\"]")
-        fig.savefig(output_directory + "coadd_kron_radius.png",dpi=720,bbox_inches='tight')
+        ax.set_title("Coadd FWHM [\"]")
+        fig.savefig(output_directory + "coadd_fwhm_radius.png",dpi=720,bbox_inches='tight')
         pl.close()
         
         # draw quiver-plot showing ellipticity
@@ -744,17 +700,17 @@ def draw_psf(star_catalog,output_directory,resolution=0.263,max_sep = 13500,skym
         
         # draw a histogram of the fwhm
         fig,ax = pl.subplots()
-        median_kron_radius = np.nanmedian(kron_radius)*resolution
-        mean_kron_radius = np.nanmean(kron_radius)*resolution
-        std_kron_radius = np.nanstd(kron_radius)*resolution
+        median_fwhm_radius = np.nanmedian(fwhm)*resolution
+        mean_fwhm_radius = np.nanmean(fwhm)*resolution
+        std_fwhm_radius = np.nanstd(fwhm)*resolution
         
-        ax.hist(kron_radius*resolution,bins='auto',histtype='step')
-        ax.set_xlabel('Kron Radius [\"]')
+        ax.hist(fwhm*resolution,bins='auto',histtype='step')
+        ax.set_xlabel('Seeing [\"]')
         ax.set_ylabel('Count')
-        ax.set_title('Kron Radius Histogram')
-        ax.text(0.7,0.85,r"Median rkron: $%.2f$"%(median_kron_radius) + "\n" + r"Mean rkron: $%.2f$"%(mean_kron_radius) + "\n" + r"Std rkron: $%.2f$"%(std_kron_radius),transform=ax.transAxes)
-        ax.set_xlim((0.25,1.10))
-        fig.savefig(output_directory + "rkron_hist.png",dpi=720,bbox_inches='tight')
+        ax.set_title('Seeing Histogram')
+        ax.text(0.7,0.85,r"Median FWHM: $%.2f$"%(median_fwhm_radius) + "\n" + r"Mean FWHM: $%.2f$"%(mean_fwhm_radius) + "\n" + r"Std FWHM: $%.2f$"%(std_fwhm_radius),transform=ax.transAxes)
+        ax.set_xlim((0.7,1.5))
+        fig.savefig(output_directory + "fwhm_hist.png",dpi=720,bbox_inches='tight')
         pl.close()
         
         # draw a histogram of the ellip
@@ -772,7 +728,7 @@ def draw_psf(star_catalog,output_directory,resolution=0.263,max_sep = 13500,skym
         fig.savefig(output_directory + "ellip_hist.png",dpi=720,bbox_inches='tight')
         pl.close()
         
-        #TODO draw rkron/fwhm/moments against magnitude, good systematic check especially for BF
+        #TODO draw fwhm/moments against magnitude, good systematic check especially for BF
         
     return
 
@@ -793,8 +749,6 @@ def draw_visits(query_catalog,output_directory,cluster_name,instr_diameter=2.2,f
     
     '''
     
-    #TODO should this list of possible filters be part of generalized-IO somewhere?
-    possible_bands = ['u','g','r','i','z']
     col_names = star_catalog.colnames
     
     # lazy-way of getting the number of bands which exist in the catalog
@@ -817,7 +771,6 @@ def draw_visits(query_catalog,output_directory,cluster_name,instr_diameter=2.2,f
     exposure = query_catalog['exposure']
     scale = 1/np.cos(dec_cl*np.pi/180)
     
-    filter_map = load_filter_map()
     colors = cycle(['b','g','r','orange','brown'])
     
     
@@ -870,8 +823,6 @@ def draw_catalog(star_catalog,gal_catalog,output_directory,cluster_name,sn_cut=1
     
     '''
     
-    #TODO should this list of possible filters be part of generalized-IO somewhere?
-    possible_bands = ['u','g','r','i','z']
     col_names = star_catalog.colnames
     
     # lazy-way of getting the number of bands which exist in the catalog
@@ -946,7 +897,7 @@ if __name__ == '__main__':
     star_catalog = ascii.read(star_catalog_filename)
     gal_catalog = ascii.read(gal_catalog_filename)
     gaia_matched_catalog = ascii.read(gaia_matched_catalog_filename)
-    resolution = load_resolution()[instrument]
+    resolution = instrument_resolution[instrument]
     
     # draw figures for completeness-tests
     plot_mag_hist(star_catalog,gal_catalog,output_directory)

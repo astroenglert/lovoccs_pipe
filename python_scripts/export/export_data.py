@@ -3,23 +3,143 @@ import time
 import math
 import glob
 import sys
+import json
+
+from importlib import resources as impresources
+from pathlib import Path
 
 import numpy as np
 
 import astropy as ap
 import astropy.io.fits as pyfits
+import astropy.units as u
+
 from astropy.wcs import WCS
+
 from astropy.visualization import ManualInterval
 from astropy.visualization import AsinhStretch
 from astropy.visualization import LogStretch
 from astropy.visualization import make_lupton_rgb
-from astropy.table import Table
 
+from astropy.table import Table, vstack
+
+from astropy.coordinates import SkyCoord
 
 import pandas as pd
 import matplotlib.pyplot as pl
 
 from lsst.daf.butler import Butler
+
+# homebrew modules below
+from . import export_config
+export_config = impresources.files(export_config)
+
+
+def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['r_inst_psf_flux','r_inst_cmodel_flux'],compute_shapes=['sdss','sdss_psf','hsm','hsm_psf','i_sdss_psf']):
+    '''
+    A function for exporting data from a specified patch, given a dictionary of flags and columns. The formatting of the flag dictionaries is {"BAND:TABLE_NAME:COLUMN_NAME":"TRUE/FALSE"} and the column dictionaries are structured similarly" {"BAND:TABLE_NAME:COLUMN_NAME":"OUTPUT_COLUMN_NAME"}. This was done to make exporting custom measurements a bit easier (you're welcome Soren!).
+    
+    Args:
+        butler: LSST Butler; a butler for the repository you're exporting from
+        patch: int; an index specifying the patch-index to export from
+        flags: dict; a dictionary of flags used for filtering objects
+        columns: dict; a dictionary of columns to export
+        flux_types: array; a list of output fluxes to transform into magnitudes
+        compute_shapes: array; a list of moment-types to compute shapes for (xx,yy,xy -> e1/e2)
+    
+    Returns:
+        patch_table: Astropy Table; a table containing the specified columns
+    
+    '''
+    
+    patch_table = Table()
+    
+    # if the deepCoaddObj table doesn't exist, or the flags are missing, skip the patch!
+    try:
+        deepCoaddObj = butler.get('deepCoadd_obj',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch},collections='DECam/processing/coadd_3c')
+        
+        # collect the object flags
+        select_objects = np.ones(len(deepCoaddObj)).astype(bool)
+        for input_col,output_col in flags.items():
+            input_col = input_col.split(":")
+            if output_col == "False":
+                select_objects &= ~deepCoaddObj[input_col[1]][input_col[0]][input_col[2]]
+            else:
+                select_objects &= deepCoaddObj[input_col[1]][input_col[0]][input_col[2]]
+    
+    except:
+        # if the above fails, export an empty table
+        return patch_table
+    
+    # now select objects from the table and begin exporting
+    deepCoaddObj_selected = deepCoaddObj[select_objects]
+    table_size = len(deepCoaddObj_selected)
+    
+    # try exporting each column from deepCoaddObj, if it fails export an array of NaN
+    for input_col,output_col in columns.items():
+    
+        input_col = input_col.split(":")
+        try:
+            values = deepCoaddObj_selected[input_col[1]][input_col[0]][input_col[2]]
+        except:
+            print('Unable to export %s from %s in band %s... assigning NaN'%(input_col[2],input_col[1],input_col[0]))
+            values = np.full(table_size,np.nan)
+        
+        patch_table[output_col] = values
+        
+        #TODO should we separate these somewhere in the json? Or is this a sufficient way of identifying magnitudes?
+        if output_col in compute_magnitudes:
+            
+            # try to load photocalib for the band
+            try:
+                CoaddPhotoCalib = butler.get('deepCoadd_calexp.photoCalib',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch,'band':input_col[0]},collections='DECam/processing/coadd_3c')
+                mag = CoaddPhotoCalib.instFluxToMagnitudeArray(values.values,x=patch_table['x'].data,y=patch_table['y'].data) 
+                
+                # load the fluxerr for this band
+                #TODO is the standard to always add 'Err' to make error columns? If not this will need to be changed
+                fluxerr = deepCoaddObj_selected[input_col[1]][input_col[0]][input_col[2] + 'Err']
+                magerr = ( 2.5/np.log(10) ) * (fluxerr/values)
+            
+            except:
+                print('Unable to load the photocalib in band %s for patch %s'%(input_col[0],patch))
+                fluxerr = np.full(table_size,np.nan)
+                mag = np.full(table_size,np.nan)
+                magerr = np.full(table_size,np.nan)
+            
+            #TODO potential minor bug, this is only assigned if the magnitude is computed, should always be assigned
+            patch_table[output_col + 'err'] = fluxerr
+            
+            #TODO this is a lazy way of getting the flux-type, will need to change in the future
+            flux_type = output_col.split('_')[2]
+            patch_table[input_col[0] + '_' + flux_type + '_mag'] = mag
+            patch_table[input_col[0] + '_' + flux_type + '_magerr'] = magerr
+    
+    # finally, compute shapes
+    for shape in compute_shapes:
+        
+        xx = patch_table[shape + '_xx']
+        yy = patch_table[shape + '_yy']
+        xy = patch_table[shape + '_xy']
+        
+        patch_table[shape + '_e1'] = (xx - yy)/(xx + yy)
+        patch_table[shape + '_e2'] = (2*xy)/(xx + yy)
+    
+    # change the units of the ra/dec columns to degress
+    patch_table['ra'] = patch_table['ra'] * 180/np.pi
+    patch_table['dec'] = patch_table['dec'] * 180/np.pi
+    
+    # add a unique identifier
+    #TODO should we do LVS or LV[XRAY RANK NUM]; e.g. for A85 LVS 0039... v. LV3 0039...
+    coords = SkyCoord(ra=patch_table['ra'],dec=patch_table['dec'],unit='deg')
+    ra_str = coords.ra.to_string(u.hour,precision=2,sep='',pad=True)
+    dec_str = coords.dec.to_string(u.hour,precision=2,sep='',pad=True,alwayssign=True)
+    
+    object_id = np.char.add('LVS J',ra_str)
+    object_id = np.char.add(object_id,dec_str)
+    patch_table.add_column(object_id,name='ID',index=0)
+    
+    return patch_table
+
 
 # by default we clip and stretch the data before displaying it
 def display(mat, vmin, vmax, tag):
@@ -29,6 +149,7 @@ def display(mat, vmin, vmax, tag):
     mat_2 = stretch(mat_1)
 
     return mat_2
+
 
 # define a function here to load and save fits-files of a given patch range
 # will export the deepCoadd and deepCoadd_calexp (deepcoadd+final round bkg-subtraction)
@@ -183,7 +304,6 @@ def draw_rgb(R,G,B,patches,tag='deepCoadd',lupton=False):
     return True
 
 
-#TODO this should be refractored to export in a smarter way and pull column_list from a config file somewhere
 if __name__ == '__main__':
     
     # checking for correct usage
@@ -196,24 +316,14 @@ if __name__ == '__main__':
     # create a butler to read/write data with
     butler = Butler('repo/repo')
     
-    # Y band will (unless explicitly enabled) be disabled... but has to be output as NaN here since later steps
-    # depend explicitly (for some reason) on having an exact number of columns -_- rather than looking for headers
-    band_list = ['u', 'g', 'r', 'i', 'z', 'Y']
+    # load dictionaries of flags and columns
+    flag_flp = export_config.joinpath('object_flags.json')
+    cols_flp = export_config.joinpath('export_columns.json')
     
-    # creating a numpy array for storing all the data
-    column_list = ["ra", "dec", "x", "y", "e1", "e2", "res", "sigmae", "rkron", "extendedness", "blendedness", "psf_used", "e1_sdss", "e2_sdss", "e1_psf_sdss", "e2_psf_sdss", "e1_hsm", "e2_hsm", "e1_psf_hsm", "e2_psf_hsm", "i_e1_psf_sdss", "i_e2_psf_sdss"]
-    
-    # by default, gen3 only outputs fluxes
-    for band in band_list:
-        column_list.append(band + "_psf_mag")
-        column_list.append(band + "_psf_magerr")
-        column_list.append(band + "_cmodel_mag")
-        column_list.append(band + "_cmodel_magerr")
-
-    data = {}
-    for column in column_list:
-    # Use dictionary: string -> array to store columns of the catalog
-        data[column] = np.array([])
+    with open(flag_flp) as f:
+        flags = json.load(f)
+    with open(cols_flp) as f:
+        columns = json.load(f)
     
     # collect the patch indices for iterating through
     skymap = butler.get('skyMap',collections='skymaps',dataId={'instrument':'DECam','tract':0,'skymap':'{CLN}_skymap'.format(CLN=cln)})
@@ -221,170 +331,24 @@ if __name__ == '__main__':
     # this is just a lazy trick for getting the tract-obj from the skymap
     for tract in skymap:
         print(skymap.config)
-
+    
     # I'm writing this such that we can, in principle, change the num of patches
     # since it's not explicitly fixed at being 12x12 (altho it almost always should be)
     xIndex = tract.getNumPatches()[0]
     yIndex = tract.getNumPatches()[1]
     numPatches = xIndex*yIndex
     
+    table_array = []
     for patch in range(numPatches):
         
-        # first I need to load the deepCoadd_obj for the patch
-        try:
-            # if this doesn't load or r-band doesn't exist, we skip it!
-            deepCoaddObj = butler.get('deepCoadd_obj',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch},collections='DECam/processing/coadd_3c')
-            refTable = deepCoaddObj['ref']['r']
-            Sources = deepCoaddObj['forced_src']['r']
-            Coadd = deepCoaddObj['meas']['r']
-    
-        except:
-            print("No r-band in {PATCH}, skipping...".format(PATCH=patch))
-            continue
-
-        isPrimary = refTable['detect_isPrimary']
-        Extendedness = Sources["base_ClassificationExtendedness_value"]
-        isGoodFlux = ~Sources["modelfit_CModel_flag"]    
-        isGoodFlux &= ~Sources["base_PsfFlux_flag"]    
-        selected = isPrimary & isGoodFlux
+        compute_magnitudes = ['u_inst_psf_flux','u_inst_cmodel_flux','g_inst_psf_flux','g_inst_cmodel_flux','r_inst_psf_flux','r_inst_cmodel_flux','i_inst_psf_flux','i_inst_cmodel_flux','z_inst_psf_flux','z_inst_cmodel_flux']
+        tab = export_patch_data(butler,patch,flags,columns,cln=cln,compute_magnitudes=compute_magnitudes,compute_shapes=['sdss','sdss_psf','hsm','hsm_psf','i_sdss_psf'])
+        table_array.append(tab)
         
-        RA = Sources["coord_ra"]/np.pi*180
-        DEC = Sources["coord_dec"]/np.pi*180
-    
-        X = Coadd["base_SdssCentroid_x"]
-        Y = Coadd["base_SdssCentroid_y"]
-        isGoodPosition = ~Coadd["base_SdssCentroid_flag"]
-        selected &= isGoodPosition
-        
-        E1 = Coadd["ext_shapeHSM_HsmShapeRegauss_e1"]
-        E2 = Coadd["ext_shapeHSM_HsmShapeRegauss_e2"]
-    
-        RES = Coadd["ext_shapeHSM_HsmShapeRegauss_resolution"]
-        SIGMAE = Coadd["ext_shapeHSM_HsmShapeRegauss_sigma"]
-    
-        RKRON = Coadd["ext_photometryKron_KronFlux_radius"]
-        
-        # 0 for isolated objects, strongly blended -> 1
-        Blendedness = Coadd["base_Blendedness_abs"]
-        
-        #--------------------------------------------
-        PSF_USED = Coadd["calib_psf_used"] * 1
-        
-        SDSS_SHAPE_I11 = Coadd['base_SdssShape_xx']
-        SDSS_SHAPE_I12 = Coadd['base_SdssShape_xy']
-        SDSS_SHAPE_I22 = Coadd['base_SdssShape_yy']
-        E1_SDSS = (SDSS_SHAPE_I11 - SDSS_SHAPE_I22) / (SDSS_SHAPE_I11 + SDSS_SHAPE_I22)
-        E2_SDSS = 2. * SDSS_SHAPE_I12 / (SDSS_SHAPE_I11 + SDSS_SHAPE_I22)
-        
-        #--------------------------------------------
-        SDSS_PSF_I11 = Coadd['base_SdssShape_psf_xx']
-        SDSS_PSF_I12 = Coadd['base_SdssShape_psf_xy']
-        SDSS_PSF_I22 = Coadd['base_SdssShape_psf_yy']
-        E1_PSF_SDSS = (SDSS_PSF_I11 - SDSS_PSF_I22) / (SDSS_PSF_I11 + SDSS_PSF_I22)
-        E2_PSF_SDSS = 2. * SDSS_PSF_I12 / (SDSS_PSF_I11 + SDSS_PSF_I22)
-        
-        HSM_SHAPE_I11 = Coadd['ext_shapeHSM_HsmSourceMoments_xx']
-        HSM_SHAPE_I12 = Coadd['ext_shapeHSM_HsmSourceMoments_xy']
-        HSM_SHAPE_I22 = Coadd['ext_shapeHSM_HsmSourceMoments_yy']
-        E1_HSM = (HSM_SHAPE_I11 - HSM_SHAPE_I22) / (HSM_SHAPE_I11 + HSM_SHAPE_I22)
-        E2_HSM = 2. * HSM_SHAPE_I12 / (HSM_SHAPE_I11 + HSM_SHAPE_I22)
-        
-        HSM_PSF_I11 = Coadd['ext_shapeHSM_HsmPsfMoments_xx']
-        HSM_PSF_I12 = Coadd['ext_shapeHSM_HsmPsfMoments_xy']
-        HSM_PSF_I22 = Coadd['ext_shapeHSM_HsmPsfMoments_yy']
-        E1_PSF_HSM = (HSM_PSF_I11 - HSM_PSF_I22) / (HSM_PSF_I11 + HSM_PSF_I22)
-        E2_PSF_HSM = 2. * HSM_PSF_I12 / (HSM_PSF_I11 + HSM_PSF_I22)
-        
-        try:
-            
-            # try to collect the i-band shapes for shear calibration
-            iCoadd = deepCoaddObj['meas']['i']
-            I_SDSS_PSF_I11 = iCoadd['base_SdssShape_psf_xx']
-            I_SDSS_PSF_I12 = iCoadd['base_SdssShape_psf_xy']
-            I_SDSS_PSF_I22 = iCoadd['base_SdssShape_psf_yy']
-            I_E1_PSF_SDSS = (I_SDSS_PSF_I11 - I_SDSS_PSF_I22) / (I_SDSS_PSF_I11 + I_SDSS_PSF_I22)
-            I_E2_PSF_SDSS = 2. * I_SDSS_PSF_I12 / (I_SDSS_PSF_I11 + I_SDSS_PSF_I22)
-        
-        except:
-            
-            print("No i-band in {PATCH}, setting psf-shape to NaN...".format(PATCH=patch))
-            I_E1_PSF_SDSS = np.full_like(selected, np.nan, dtype=np.double)
-            I_E2_PSF_SDSS = np.full_like(selected, np.nan, dtype=np.double)
-
-        # now collecting the photometry
-        for band in band_list:
-            
-            try:
-                Sources = deepCoaddObj['forced_src'][band]
-                CoaddPhotoCalib = butler.get('deepCoadd_calexp.photoCalib',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch,'band':band},collections='DECam/processing/coadd_3c')
-            except:
-                print("No photocalib or source catalog for {BAND} in {PATCH}, setting to NaN...".format(BAND=band,PATCH=patch))
-                data[band + "_psf_mag"] = np.append( data[band + "_psf_mag"], np.full_like(selected[selected], np.nan, dtype=np.double) )
-                data[band + "_psf_magerr"] = np.append( data[band + "_psf_magerr"], np.full_like(selected[selected], np.nan, dtype=np.double) )
-                data[band + "_cmodel_mag"] = np.append( data[band + "_cmodel_mag"], np.full_like(selected[selected], np.nan, dtype=np.double) )
-                data[band + "_cmodel_magerr"] = np.append( data[band + "_cmodel_magerr"], np.full_like(selected[selected], np.nan, dtype=np.double) )
-                continue
-            
-            #TODO this is all correct... but omits error in the scale
-            # shouldn't be an issue (scale is fixed by mzp=27 and measurement error is dom noise)
-            # but eventually we should fix this
-            Psf_Mags = CoaddPhotoCalib.instFluxToMagnitudeArray(Sources["slot_PsfFlux_instFlux"].values,x=Sources["base_SdssCentroid_x"].values,y=Sources["base_SdssCentroid_y"].values) 
-            CModel_Mags = CoaddPhotoCalib.instFluxToMagnitudeArray(Sources["modelfit_CModel_instFlux"].values,x=Sources["base_SdssCentroid_x"].values,y=Sources["base_SdssCentroid_y"].values) 
-            
-            data[band + "_psf_mag"] = np.append( data[band + "_psf_mag"], Psf_Mags[selected].value )
-            data[band + "_psf_magerr"] = np.append( data[band + "_psf_magerr"], ( 2.5/np.log(10) ) * Sources[selected]["slot_PsfFlux_instFluxErr"]/Sources[selected]["slot_PsfFlux_instFlux"] )
-            data[band + "_cmodel_mag"] = np.append( data[band + "_cmodel_mag"], CModel_Mags[selected].value )
-            data[band + "_cmodel_magerr"] = np.append( data[band + "_cmodel_magerr"], ( 2.5/np.log(10) ) * Sources[selected]["modelfit_CModel_instFluxErr"]/Sources[selected]["modelfit_CModel_instFlux"] )
-            
-        data["ra"] = np.append(data["ra"], RA[selected])
-        data["dec"] = np.append(data["dec"], DEC[selected])
-        
-        data['x'] = np.append(data['x'], X[selected])
-        data['y'] = np.append(data['y'], Y[selected])
-        data["e1"] = np.append(data["e1"], E1[selected])
-        data["e2"] = np.append(data["e2"], E2[selected])
-        data["res"] = np.append(data["res"], RES[selected])
-        data["sigmae"] = np.append(data["sigmae"], SIGMAE[selected])
-        data["rkron"] = np.append(data["rkron"], RKRON[selected])
-        
-        data["extendedness"] = np.append(data["extendedness"], Extendedness[selected])
-        data["blendedness"] = np.append(data["blendedness"], Blendedness[selected])
-        
-        data["psf_used"] = np.append(data["psf_used"], PSF_USED[selected])
-        
-        data["e1_sdss"] = np.append(data["e1_sdss"], E1_SDSS[selected])
-        data["e2_sdss"] = np.append(data["e2_sdss"], E2_SDSS[selected])
-        
-        data["e1_psf_sdss"] = np.append(data["e1_psf_sdss"], E1_PSF_SDSS[selected])
-        data["e2_psf_sdss"] = np.append(data["e2_psf_sdss"], E2_PSF_SDSS[selected])
-        
-        data["e1_hsm"] = np.append(data["e1_hsm"], E1_HSM[selected])
-        data["e2_hsm"] = np.append(data["e2_hsm"], E2_HSM[selected])
-        
-        data["e1_psf_hsm"] = np.append(data["e1_psf_hsm"], E1_PSF_HSM[selected])
-        data["e2_psf_hsm"] = np.append(data["e2_psf_hsm"], E2_PSF_HSM[selected])
-        
-        data["i_e1_psf_sdss"] = np.append(data["i_e1_psf_sdss"], I_E1_PSF_SDSS[selected])
-        data["i_e2_psf_sdss"] = np.append(data["i_e2_psf_sdss"], I_E2_PSF_SDSS[selected])
-    
-    print("\n\n" + '#'*30 + "\nBuilding output table...")
-    
-    data_out = Table()
-    
-    for column in column_list:
-        print("Column %s: len: %s"%(column, len(data[column]) ) )
-        
-        data_out[column] = data[column]
-    
-    # need to overhaul this with a better system eventually...
-    # Self-defined id (starting from 1)
-    data_out["idn"] = np.array([i for i in range(1, len(data_out)+1) ])
+    data_out = vstack(table_array)
     
     data_out.write("read_catalog_all_output/{CLN}_00-1111_all.csv".format(CLN=cln), format="ascii.csv", overwrite=True)
     
-    # That takes care of the old "read_catalog_all" step from our old pipeline
-    # read merge full will not be carred over since those catalogs can be easily queried by the butler
-
     # by default, let's export fits of 2x2,4x4,6x6, and the 12x12 fov
     # avoid assuming a particular number of patches
     patch_22 = [np.arange(int(xIndex/2)-1,int(xIndex/2)+1),np.arange(int(yIndex/2)-1,int(yIndex/2)+1)]

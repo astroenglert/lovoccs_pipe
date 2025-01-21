@@ -9,7 +9,8 @@ from astropy.table import Table
 from astropy.coordinates import SkyCoord
 
 # homebrew modules here
-from color_terms import get_instrument_headers
+from .color_terms import get_instrument_headers
+from ..configs.photometric_correction_config import ebv_dictionary
 
 def get_extinction(ext_img,coords,catalog,ext_map='IRSA_EBV'):
     '''
@@ -57,7 +58,7 @@ def get_extinction(ext_img,coords,catalog,ext_map='IRSA_EBV'):
     # returns the cut catalog and EBV to be applied to each coordinate
     return cut_catalog,ebv
 
-#TODO we need to generalize this to load information from a config file
+
 def load_extinction_transformation(instrument,band,ext_map='IRSA_EBV'):
     '''
     To apply an extinction correction, we have to transform the EBV into the correct term for a given band. Eventually we'll set this function up so that it loads from a proper config file, rather than the harcoded coefficients below.
@@ -68,29 +69,16 @@ def load_extinction_transformation(instrument,band,ext_map='IRSA_EBV'):
         ext_map: String; OPTIONAL; this specifies the ext_map. Not in use outside the default for now
     
     Returns:
-        ext[band]: Float; the correction to go from EBV extinction to extinction in the appropriate band
+        extinction_coefficient: Float; the correction to go from EBV extinction to extinction in the appropriate band
     
     '''
     
-    # for simplicity, I'm using the filter and type of magnitude as the headers... eventually we'll need a proper solution
-    decam_ext = {'u_psf_mag':3.86,'g_psf_mag':3.11,'r_psf_mag':2.09,'i_psf_mag':1.53,'z_psf_mag':1.17,'Y_psf_mag':1.02,'u_cmd_mag':3.86,'g_cmd_mag':3.11,'r_cmd_mag':2.09,'i_cmd_mag':1.53,'z_cmd_mag':1.17,'Y_cmd_mag':1.02}
-    ps1_ext = {'u_psf_mag':None,'g_psf_mag':3.08,'r_psf_mag':2.20,'i_psf_mag':1.63,'z_psf_mag':1.28,'Y_psf_mag':1.07}
-    sm_ext = {'u_psf_mag':3.92,'g_psf_mag':2.89,'r_psf_mag':2.22,'i_psf_mag':1.55,'z_psf_mag':1.17,'Y_psf_mag':None}
-    sdss_ext = {'u_psf_mag':4.16,'g_psf_mag':3.20,'r_psf_mag':2.21,'i_psf_mag':1.64,'z_psf_mag':1.22,'Y_psf_mag':None}
-    
-    if ext_map=='IRSA_EBV':
-        if instrument=='des' or instrument=='decam' or instrument=='legacy':
-            return decam_ext[band]
-        elif instrument=='ps1':
-            return ps1_ext[band]
-        elif instrument=='sm':
-            return sm_ext[band]
-        elif instrument=='sdss':
-            return sdss_ext[band]
-        else:
-            raise Exception(f'No transformation from {ext_map} to {instrument}_{band}')
+    if ext_map == 'IRSA_EBV':
+        extinction_coefficient = ebv_dictionary[instrument][band]
     else:
         raise Exception(f'No map {exp_map}')
+    
+    return extinction_coefficient
     
 # apply the extinction correction to a catalog and return the dereddened version
 def apply_extinction(catalog,catalog_name,ext_img,ext_map='IRSA_EBV'):

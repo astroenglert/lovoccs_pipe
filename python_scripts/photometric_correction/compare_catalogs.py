@@ -15,7 +15,7 @@ import matplotlib.pyplot as pl
 from scipy.stats import norm
 
 # homebrew modules here
-from color_terms import get_instrument_headers, apply_color_terms, load_color_terms
+from .color_terms import get_instrument_headers, apply_color_terms, load_color_terms
 
 # for this, I want two use-cases:
 # 1. Comparing a single band in a matched catalog

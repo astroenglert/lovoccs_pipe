@@ -1,0 +1,6 @@
+{
+    "r:ref:detect_isPrimary":"True",
+    "r:forced_src:modelfit_CModel_flag":"False",
+    "r:forced_src:base_PsfFlux_flag":"False",
+    "r:meas:base_SdssCentroid_flag":"False"
+}   

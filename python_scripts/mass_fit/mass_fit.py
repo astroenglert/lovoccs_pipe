@@ -29,28 +29,10 @@ from photutils.segmentation import detect_sources, SourceCatalog
 from astroquery.ipac.ned import Ned
 
 # HOMEBREW MODULES BELOW
-from shear_profiles import implemented_profiles, shear_nfw, sigma_crit
+from .shear_profiles import implemented_profiles, shear_nfw, sigma_crit
 
-
-#TODO overhaul this to a standard-IO
-def load_resolution():
-    '''
-    A temporary function for storing a hand-coded dictionary specifying the resolution of different instruments
-    
-    Args:
-        None
-    
-    Returns:
-        instrument_reslution: Dictionary; a dictionary containing the resolution for keyed instruments
-    
-    '''
-    
-    instrument_resolution = {
-                             'decam' : 0.263,
-                             'hsc' : 0.168,
-                            }
-    
-    return instrument_resolution
+# loading configs
+from ..configs.mass_fit_config import instrument_resolution, quality_cuts
 
 #TODO overhaul this to a standard-IO or function for running quality-cuts read from a config
 def load_quality_cuts(table,quality_cuts=None):
@@ -377,7 +359,7 @@ if __name__ == '__main__':
     
     # load and cut the table
     table = ascii.read(table_filename)
-    table = load_quality_cuts(table)
+    table = load_quality_cuts(table,quality_cuts=quality_cuts)
     basename = Path(table_filename).stem
     table.write(output_directory + basename + '_mass_fit_cut.csv',format='ascii.csv',overwrite=True)
 
@@ -387,7 +369,7 @@ if __name__ == '__main__':
     realizations = 1000
     
     # load resolution
-    resolution_dict = load_resolution()
+    resolution_dict = instrument_resolution
     resolution = resolution_dict[instrument] # ("/px)
     rad_per_px = (resolution) * np.pi/(180*3600)
     

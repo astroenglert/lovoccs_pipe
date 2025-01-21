@@ -3,11 +3,14 @@ from abc import ABC
 from importlib import resources as impresources
 from pathlib import Path
 
-trans_db = impresources.files('transmission_database')
-
 import numpy as np
 
 from scipy.interpolate import interp1d
+
+# homebrew modules below
+from . import transmission_database
+
+trans_db = impresources.files(transmission_database)
 
 # rename this, maybe to FilterSetBase, nor sure
 # by writing an abstract class, it'll be easier to expand all of our processing to different sets of filters
@@ -153,8 +156,8 @@ class SDSSTransmission(TransmissionBase):
     
     pass
 
-    
-
+# dictionary of implemented transmission systems
+implemented_transmissions = {'decam':DECamTransmission, 'sdss':SDSSTransmission, 'hsc':HSCTransmission}
 
 
 
