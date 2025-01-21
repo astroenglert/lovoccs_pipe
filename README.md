@@ -1,5 +1,5 @@
 # lovoccs_pipe
-A pipeline for processing DECam data taken by the Local Volume Complete Cluster Survey (LoVoCCS)
+A pipeline for processing DECam observations for the Local Volume Complete Cluster Survey (LoVoCCS).
 
 This pipeline is built to walk the user through specific "processing steps" to go from raw images of galaxy clusters stored on the [NOIRLab Science Archive](https://astroarchive.noirlab.edu/) to lensing science. Going from raw data to coadds is carried out via a user's installation of the [LSST Science Pipelines](https://pipelines.lsst.io/) (LSP) and going from coadds/catalogs to lensing products is carried out through our own 'homebrewed' scripts. This build is compatible with LSP `v26_0_0` and relies on a modified version of the DECam Data Release Pipeline: `DRP-LoVoCCS.yaml`.
 
