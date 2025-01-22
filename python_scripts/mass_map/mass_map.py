@@ -269,7 +269,7 @@ if __name__ == '__main__':
         instrument = sys.argv[7]
         lower_patch = (3,3)
         
-    elif len(sys.argv) == 8:
+    elif len(sys.argv) == 9:
     
         table_filename = sys.argv[1]
         coadd_filename = sys.argv[2]
