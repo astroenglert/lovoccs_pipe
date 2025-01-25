@@ -29,4 +29,12 @@ quality_cuts = [
                ]
 
 
+# options for bootstrapping the peak px in mass_map
+# bootstrap the peak position?
+bootstrap_peak = True
+
+# filter options for mass_map calls
+map_filter = 'schirmer'
+
+
 

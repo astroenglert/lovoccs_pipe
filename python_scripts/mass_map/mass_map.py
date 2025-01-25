@@ -144,6 +144,59 @@ def compute_mass_map(x_grid,y_grid,x,y,g1,g2,weights,q_filter,filter_kwargs={}):
     return Map_E, Map_B, Map_V
 
 
+def compute_sn_px(x_sample,y_sample,x,y,g1,g2,weights,q_filter,filter_kwargs={}):
+    '''
+    Computes the SN-ratio at a specific pixel on the coadd
+    
+    Args:
+        x_sample: float; the x-coordinate to evaluate Map at
+        y_sample: float; the y-coordinate to evaluate Map at
+        x; Numpy array; the shear x for each object
+        y; Numpy array; the shear y for each object
+        g1; Numpy array; the shear g1 for each object
+        g2; Numpy array; the shear g2 for each object
+        weights: Numpy array; the weight for each object's shear
+        q_filter; function; the filter-function used to compute Map
+        kwargs; dict; kwargs passed to w_filter
+    
+    Returns:
+        sn: float; the signal-to-noise ratio at this pixel
+
+    '''
+
+    if 'aperture_size' not in filter_kwargs:
+        filter_area = np.pi * (8000)**2
+    else:
+        filter_area = np.pi * filter_kwargs['aperture_size']**2
+    
+    # an extra catch for an objects assigned NaN g1/g2
+    #TODO should these be removed during shear calibration?
+    nan_catch = np.isfinite(g1) & np.isfinite(g2)
+    x = x[nan_catch]
+    y = y[nan_catch]
+    g1 = g1[nan_catch]
+    g2 = g2[nan_catch]
+    weights = weights[nan_catch]
+    
+
+    delta_x = x_sample - x
+    delta_y = y_sample - y
+    radius = np.sqrt(delta_x**2 + delta_y**2)
+    theta = np.arctan2(delta_y,delta_x)
+    g_T = -g1*np.cos(2*theta) - g2*np.sin(2*theta)
+    g_mag = g1**2 + g2**2
+    
+    filter_values = q_filter(radius,**filter_kwargs)
+    
+    weight_sum = np.sum(weights)
+    
+    Map_E = np.sum(filter_values*g_T*weights)*filter_area/weight_sum
+    Map_V = np.sum( (filter_values**2)*g_mag*(weights**2) )*(filter_area**2)/(2*(weight_sum**2))
+    sn = Map_E/np.sqrt(Map_V)
+    
+    return sn
+
+
 #TODO For now, we're just using photutils but should we do something more sophisticated? Deblending for sub-peaks?
 def detect_mass_peaks(Map_E,Map_B,Map_V,kwargs={'threshold':3,'npixels':25}):
     '''
