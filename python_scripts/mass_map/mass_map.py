@@ -404,6 +404,7 @@ if __name__ == '__main__':
         # and save the outputs
         fig.savefig(output_directory + f'Map_SN_Rs_{smoothing}.png',bbox_inches='tight',dpi=720)
         write_to_fits(Map_E,Map_B,Map_V,Map_wcs,output_directory + f'Map_{filter_name}_{smoothing}.fits')
+        pl.close() # close the figure
         
     # and lastly save the master Map tables
     Map_E_table.write(output_directory + f'Map_E_peak_catalog_{filter_name}.csv',format='ascii.csv',overwrite=True)
