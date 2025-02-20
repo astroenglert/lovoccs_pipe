@@ -170,7 +170,7 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
             sed_upper.load_flux_from_disk(sed_cache_upper,trans)
         else:
             sed.write_flux_to_disk(sed_cache)
-            sed_upper.write_flux_to_disk(sed_cache)
+            sed_upper.write_flux_to_disk(sed_cache_upper)
         
         F00,FT0,FTT,interpolated_scaled_flux = compute_F(sed,table,filter_map,error_tag,sed_upper,weight,filter_template_zps=filter_template_zps)
         chi2T = F00[:,None] - ( (FT0**2)/(FTT) )
