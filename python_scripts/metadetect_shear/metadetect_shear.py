@@ -515,7 +515,7 @@ def apply_apodized_bright_mask(exp, noise_exp, bright_info, EXPAND_RAD=16, AP_RA
     exp.mask.array[:,:] |= expanded_bmask_bad
     if noise_exp != None:
         noise_exp.mask.array[:,:] |= expanded_bmask
-        noise_exp.mask.array[:,:] |= expanded_bmask
+        noise_exp.mask.array[:,:] |= expanded_bmask_bad
     
     return
 
