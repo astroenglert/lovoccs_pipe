@@ -287,7 +287,6 @@ class ShearCoaddTask(PipelineTask):
         elif self.config.do_noise:
             
             # if gaussian field is disabled, do a simple model
-            #TODO there is something wrong with the simple model, its scale always seems to be off
             noise_image = simple_noise(coadd, 1 - mask_array, gen=generator)
         
         else:
@@ -305,8 +304,9 @@ class ShearCoaddTask(PipelineTask):
         
         # one last thing, clear the detection masks since detection will be re-run!
         # shamelessly taken from lsst.meas.algorithms.detection
-        mask = coadd.getMask()
-        mask &= ~(mask.getPlaneBitMask("DETECTED") | mask.getPlaneBitMask("DETECTED_NEGATIVE"))
+        # not needed, detection clears det mask before re-detecting
+        #mask = coadd.getMask()
+        #mask &= ~(mask.getPlaneBitMask("DETECTED") | mask.getPlaneBitMask("DETECTED_NEGATIVE"))
         
         # fifth run the shear algorithm from metadetect (shear_exp)
         shear_exp, shear_noise_exp = create_shear_exp(coadd, noise_image)
@@ -453,6 +453,7 @@ def apply_apodized_bright_mask(exp, noise_exp, bright_info, EXPAND_RAD=16, AP_RA
     afwImage.Mask.addMaskPlane('BRIGHT_EXPANDED')
     bright = afwImage.Mask.getPlaneBitMask('BRIGHT')
     bright_expanded = afwImage.Mask.getPlaneBitMask('BRIGHT_EXPANDED')
+    bad = afwImage.Mask.getPlaneBitMask('BAD')
     
     # collect the wcs and origin of the exp coordinate system
     wcs = exp.getWcs()
@@ -481,11 +482,13 @@ def apply_apodized_bright_mask(exp, noise_exp, bright_info, EXPAND_RAD=16, AP_RA
     exp.image.array[msk] *= ap_mask[msk]
     exp.variance.array[msk] = 1e8 #np.inf
     exp.mask.array[msk] |= bright
+    exp.mask.array[msk] |= bad
     
     if noise_exp != None:
         noise_exp.image.array[msk] *= ap_mask[msk]
         noise_exp.variance.array[msk] = 1e8 #np.inf
         noise_exp.mask.array[msk] |= bright
+        noise_exp.mask.array[msk] |= bad
     
     # build the expanded mask as well
     expanded_bmask = make_foreground_bmask(
@@ -497,10 +500,22 @@ def apply_apodized_bright_mask(exp, noise_exp, bright_info, EXPAND_RAD=16, AP_RA
         mask_bit_val=bright_expanded,
     )
     
+    # this is computationally cheap, lazy solution is to just change the mask_bit to bad 
+    expanded_bmask_bad = make_foreground_bmask(
+        xm=xm,
+        ym=ym,
+        rm=rm + EXPAND_RAD,
+        dims=dims,
+        symmetrize=False,
+        mask_bit_val=bad,
+    )
+    
     # apply the extended mask
-    exp.mask.array[msk] |= expanded_bmask[msk]
+    exp.mask.array[:,:] |= expanded_bmask
+    exp.mask.array[:,:] |= expanded_bmask_bad
     if noise_exp != None:
-        noise_exp.mask.array[msk] |= expanded_bmask[msk]
+        noise_exp.mask.array[:,:] |= expanded_bmask
+        noise_exp.mask.array[:,:] |= expanded_bmask
     
     return
 
@@ -523,6 +538,7 @@ def apply_apodized_edge_mask(exp, noise_exp, AP_RAD=1.5):
     # create new mask planes to ignore during detection later
     afwImage.Mask.addMaskPlane('APODIZED_EDGE')
     edge = afwImage.Mask.getPlaneBitMask('APODIZED_EDGE')
+    bad = afwImage.Mask.getPlaneBitMask('BAD')
     
     # now create the actual mask
     ap_mask = np.ones_like(exp.image.array)
@@ -533,11 +549,13 @@ def apply_apodized_edge_mask(exp, noise_exp, AP_RAD=1.5):
     exp.image.array[msk] *= ap_mask[msk]
     exp.variance.array[msk] = 1e8 #np.inf
     exp.mask.array[msk] |= edge
+    exp.mask.array[msk] |= bad
     
     if noise_exp != None:
         noise_exp.image.array[msk] *= ap_mask[msk]
         noise_exp.variance.array[msk] = 1e8 #np.inf
         noise_exp.mask.array[msk] |= edge
+        noise_exp.mask.array[msk] |= bad
     
     return
 

@@ -50,7 +50,7 @@ tasks:
     class: lsst.pipe.tasks.makeWarp.MakeWarpTask
     config:
       # These configs match obs_subaru, to facilitate 1:1 comparisons between DECam and HSC
-      matchingKernelSize: 29
+      matchingKernelSize: 21
       modelPsf.defaultFwhm: 7.7
       warpAndPsfMatch.warp.warpingKernelName: lanczos5
       coaddPsf.warpingKernelName: lanczos5
@@ -64,7 +64,7 @@ tasks:
         config.select.maxScaledSizeScatter=None
         config.select.maxPsfTraceRadiusDelta=None
   templateGen:
-    class: lsst.pipe.tasks.assembleCoadd.CompareWarpAssembleCoaddTask
+    class: lsst.drp.tasks.assemble_coadd.CompareWarpAssembleCoaddTask
     config:
       # These configs match obs_subaru, to facilitate 1:1 comparisons between DECam and HSC
       matchingKernelSize: 29
@@ -84,7 +84,7 @@ tasks:
         from lsst.pipe.tasks.selectImages import PsfWcsSelectImagesTask
         config.select.retarget(PsfWcsSelectImagesTask)
   assembleCoadd:
-    class: lsst.pipe.tasks.assembleCoadd.CompareWarpAssembleCoaddTask
+    class: lsst.drp.tasks.assemble_coadd.CompareWarpAssembleCoaddTask
     config:
       # These configs match obs_subaru, to facilitate 1:1 comparisons between
       # DECam and HSC
@@ -136,6 +136,8 @@ tasks:
     class: lsst.jointcal.JointcalTask
     config:
       connections.inputSourceTableVisit: preSourceTable_visit
+  metaShear:
+    class: metadetect_shear.metadetect_shear.ShearCoaddTask
 subsets:
   step0:
     subset:
@@ -241,6 +243,23 @@ subsets:
       We create a separate sky-corrected stack for LSB science.
       This is still in-development, so the default configs are not embedded
       here in the yaml quite-yet.
-      
-      
+  
+  step4a:
+    subset:
+      - metaShear
+    description: |
+      Run shearing for metadetect!
+  
+  step4b:
+    subset:
+      - detection
+      - mergeDetections
+      - deblend
+      - measure
+      - mergeMeasurements
+      - forcedPhotCoadd
+      - writeObjectTable
+    description: |
+      Run detection/measurements for metadetect! I'll export data directly from the object table
+
   # Steps 4-7 are not currently implemented in this DECam DRP processing pipeline.
