@@ -13,7 +13,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="cluster_dir" # UPDATE LATER
-PY_SCRIPTS="/gpfs/data/idellant/Clusters/gen3_processing/testing_pipeline/A85_metadetect/lovoccs_pipe/python_scripts"
+PY_SCRIPTS="py_scripts"
 SHEARTYPE="shear_type"
 
 # navigate to .../cluster_name
