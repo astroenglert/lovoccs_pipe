@@ -13,6 +13,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="/gpfs/data/idellant/englert_newPipelineDev/A85" # UPDATE LATER
+PY_SCRIPTS="py_scripts"
 
 # navigate to .../cluster_name
 cd ${CLUSTER_DIR}
@@ -20,6 +21,9 @@ cd ${CLUSTER_DIR}
 # initalize the LSP (LSST Science Pipeline)
 source ${LOAD_LSST}
 setup lsst_distrib
+
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 
 # prevent implicit multithreading (otherwise tasks compete for resources)
 export OMP_NUM_THREADS=1

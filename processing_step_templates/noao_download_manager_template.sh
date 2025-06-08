@@ -12,7 +12,8 @@
 # TEXT REPLACED FOR TEMPLATES
 CLN="cluster_name" 
 LOAD_LSST="load_pipeline_path" 
-CLUSTER_DIR="cluster_dir" 
+CLUSTER_DIR="cluster_dir"
+PY_SCRIPTS="py_scripts"
 
 # navigate to .../A85
 cd ${CLUSTER_DIR}
@@ -21,6 +22,9 @@ mkdir -p raws
 # initalize the LSP (LSST Science Pipeline)
 source ${LOAD_LSST}
 setup lsst_distrib
+
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 
 # clear previous download tasks (if they exist)
 rm raws/download_task_*.sh
