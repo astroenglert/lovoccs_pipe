@@ -47,6 +47,12 @@ echo Blasting directWarp
 butler prune-datasets repo/repo --find-all --unstore --datasets directWarp* --no-confirm DECam/processing/*
 echo Blasting overscanRaw
 butler prune-datasets repo/repo --find-all --unstore --datasets overscanRaw --no-confirm DECam/processing/*
+echo "Blasting coadds from metadetect (they're easy to recalculate)"
+butler prune-datasets repo/repo --find-all --unstore --datasets deep_1p_Coadd --no-confirm DECam/processing/*
+butler prune-datasets repo/repo --find-all --unstore --datasets deep_1m_Coadd --no-confirm DECam/processing/*
+butler prune-datasets repo/repo --find-all --unstore --datasets deep_2p_Coadd --no-confirm DECam/processing/*
+butler prune-datasets repo/repo --find-all --unstore --datasets deep_2m_Coadd --no-confirm DECam/processing/*
+butler prune-datasets repo/repo --find-all --unstore --datasets deep_noshear_Coadd --no-confirm DECam/processing/*
 
 # the above steps leave the director structures behind, recursively delete to clear them (save the INODES)
 rm -r repo/repo/DECam/processing/*/*/postISRCCD
@@ -59,6 +65,11 @@ rm -r repo/repo/DECam/processing/*/*/deepCoadd_directWarp
 rm -r repo/repo/DECam/processing/*/*/deepCoadd_psfMatchedWarp
 rm -r repo/repo/DECam/processing/*/*/directWarp*
 rm -r repo/repo/DECam/processing/*/*/overscanRaw*
+rm -r repo/repo/DECam/processing/meta_4a/*/deep_1p_Coadd*
+rm -r repo/repo/DECam/processing/meta_4a/*/deep_1m_Coadd*
+rm -r repo/repo/DECam/processing/meta_4a/*/deep_2p_Coadd*
+rm -r repo/repo/DECam/processing/meta_4a/*/deep_2m_Coadd*
+rm -r repo/repo/DECam/processing/meta_4a/*/deep_noshear_Coadd*
 
 # zip-up the submit directory to save the INODES
 zip -rm submit.zip submit
