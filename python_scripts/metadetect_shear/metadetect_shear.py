@@ -168,7 +168,6 @@ class ShearCoaddConfig(PipelineTaskConfig, pipelineConnections=ShearCoaddConnect
         default=True,
     )
     
-    #TODO more in the future?
 
 
 # I'm using the metadetection_shear from tickets/DM-40513 as a base for this
@@ -298,7 +297,6 @@ class ShearCoaddTask(PipelineTask):
         apply_apodized_edge_mask(coadd, noise_image, AP_RAD=1.5)
         
         # fourth select and apodize-mask bright stars (apply_apodized_bright_mask and collect_bright_stars)
-        #TODO I still need to test these!
         bright_info = collect_bright_stars(ref_cat, filter_name='phot_g_mean_mag', min_radius=5)
         apply_apodized_bright_mask(coadd, noise_image, bright_info, EXPAND_RAD=16, AP_RAD=1.5)
         

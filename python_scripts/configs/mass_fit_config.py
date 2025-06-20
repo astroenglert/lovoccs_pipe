@@ -21,7 +21,7 @@ quality_cuts = [
                 ('g1','<',2),
                 ('g2','<',2), # and these two together are equivalent to |g| < 2
                 ('mod_chi2','<',4), # beware, in our old catalogs this is named chi2_mod, new is mod_chi2
-                ('odds','>',0.95),
+                ('odds','>',0.7),
                 ('z_phot','>',0.15), #TODO should this be cluster-dependant?
                 ('z_phot','<',1.4),
                 ('r_cmodel_mag','<',26),
@@ -31,7 +31,7 @@ quality_cuts = [
 
 # options for bootstrapping the peak px in mass_map
 # bootstrap the peak position?
-bootstrap_peak = True
+bootstrap_peak = False
 
 # filter options for mass_map calls
 map_filter = 'schirmer'

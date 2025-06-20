@@ -47,9 +47,9 @@ python -m python_scripts.photometric_correction.separate_stars_galaxies "${INPUT
 # really we apply the zp-correction here to be comparable w. refcats; but since we care about the signal post atm/optics, we skip adding the bias. I've created a modified version of zp-correction to handle this temporarily, really we should add a cln-option to the existing zp-correction script which disables the error-propagation
 
 echo "running zp"
-python -m python_scripts.photometric_correction.zero_point_skip_errors "quality_check_output/${CLN}_stars.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_stars.csv"
+python -m python_scripts.photometric_correction.zero_point "quality_check_output/${CLN}_stars.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_stars.csv" "0"
 
-python -m python_scripts.photometric_correction.zero_point_skip_errors "quality_check_output/${CLN}_gals.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_gals.csv"
+python -m python_scripts.photometric_correction.zero_point "quality_check_output/${CLN}_gals.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_gals.csv" "0"
 
 
 # next, match the star-catalog to Gaia for checking the photometry

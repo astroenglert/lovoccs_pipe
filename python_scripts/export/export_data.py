@@ -53,11 +53,11 @@ def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['
     '''
     
     patch_table = Table()
-    
+    print(f'Trying to export Patch {patch}')
     # if the deepCoaddObj table doesn't exist, or the flags are missing, skip the patch!
     try:
         deepCoaddObj = butler.get(dataset_type,dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch},collections=collections)
-        
+
         # collect the object flags
         select_objects = np.ones(len(deepCoaddObj)).astype(bool)
         for input_col,output_col in flags.items():
@@ -68,6 +68,7 @@ def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['
                 select_objects &= deepCoaddObj[input_col[1]][input_col[0]][input_col[2]]
     
     except:
+        print(f'Failed to export Patch {patch}, skipping...')
         # if the above fails, export an empty table
         return patch_table
     
@@ -92,7 +93,7 @@ def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['
             
             # try to load photocalib for the band
             try:
-                CoaddPhotoCalib = butler.get('deepCoadd_calexp.photoCalib',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch,'band':input_col[0]},collections='DECam/processing/coadd_3c')
+                CoaddPhotoCalib = butler.get('deepCoadd_calexp.photoCalib',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch,'band':input_col[0]},collections=collections)
                 mag = CoaddPhotoCalib.instFluxToMagnitudeArray(values.values,x=patch_table['x'].data,y=patch_table['y'].data) 
                 
                 # load the fluxerr for this band

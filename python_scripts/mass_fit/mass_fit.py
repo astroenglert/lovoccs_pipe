@@ -388,7 +388,7 @@ def draw_plots_map(cluster_center_x,cluster_center_y,peak_sn,resolution,output_d
 if __name__ == '__main__':
     
     # collecting arguments from cln
-    if len(sys.argv) == 8:
+    if len(sys.argv) == 9:
 
         table_filename = sys.argv[1]
         Map_table_filename = sys.argv[2]
@@ -397,9 +397,10 @@ if __name__ == '__main__':
         output_directory = sys.argv[5]
         cores = int(sys.argv[6])
         instrument = sys.argv[7]
+        apply_cuts = int(sys.argv[8])
         lower_patch = (3,3)
         
-    elif len(sys.argv) == 9:
+    elif len(sys.argv) == 10:
     
         table_filename = sys.argv[1]
         Map_table_filename = sys.argv[2]
@@ -408,7 +409,8 @@ if __name__ == '__main__':
         output_directory = sys.argv[5]
         cores = int(sys.argv[6])
         instrument = sys.argv[7]
-        lower_patch = sys.argv[8].split(',')
+        apply_cuts = int(sys.argv[8])
+        lower_patch = sys.argv[9].split(',')
     
     else:
     
@@ -417,7 +419,8 @@ if __name__ == '__main__':
     
     # load and cut the table
     table = ascii.read(table_filename)
-    table = load_quality_cuts(table,quality_cuts=quality_cuts)
+    if apply_cuts:
+        table = load_quality_cuts(table,quality_cuts=quality_cuts)
     basename = Path(table_filename).stem
     #table.write(output_directory + basename + '_mass_fit_cut.csv',format='ascii.csv',overwrite=True)
 

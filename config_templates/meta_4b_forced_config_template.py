@@ -8,7 +8,7 @@ config.measurement.plugins['base_CircularApertureFlux'].radii=[12.0]
 # run undeblended measurements necessary
 config.measurement.undeblended.names=['base_PsfFlux']
 
-# disable aperture corrections
+# allow apcorr for psf_flux
 config.doApCorr=True
 config.applyApCorr.doFlagApCorrFailures=True
 

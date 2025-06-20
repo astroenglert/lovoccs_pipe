@@ -36,7 +36,7 @@ mkdir mass_map_output
 # this has two steps, run mass_map then draw the contours over the images!
 #TODO eventually I'd like to find a way to remove the call to the coadd here
 COADD="combine_patch_color_output/${CLN}_r33-88_deepCoadd.fits"
-python -m python_scripts.mass_map.mass_map "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "${COADD}" "schirmer" "100" "mass_map_output/" "20" "decam" #(3,3) patch number is optional, if using a different sized coadd for the wcs this may need to be changed
+python -m python_scripts.mass_map.mass_map "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "${COADD}" "schirmer" "100" "mass_map_output/" "20" "decam" "1" #(3,3) patch number is optional, if using a different sized coadd for the wcs this may need to be changed
 
 
 # now draw contours

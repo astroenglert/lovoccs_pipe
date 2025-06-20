@@ -311,7 +311,7 @@ def write_to_fits(Map_E,Map_B,Map_V,wcs,output_filename):
 if __name__ == '__main__':
     
     # collecting arguments from cln
-    if len(sys.argv) == 8:
+    if len(sys.argv) == 9:
 
         table_filename = sys.argv[1]
         coadd_filename = sys.argv[2]
@@ -320,9 +320,10 @@ if __name__ == '__main__':
         output_directory = sys.argv[5]
         cores = int(sys.argv[6])
         instrument = sys.argv[7]
+        apply_cuts = int(sys.argv[8])
         lower_patch = (3,3)
         
-    elif len(sys.argv) == 9:
+    elif len(sys.argv) == 10:
     
         table_filename = sys.argv[1]
         coadd_filename = sys.argv[2]
@@ -331,7 +332,8 @@ if __name__ == '__main__':
         output_directory = sys.argv[5]
         cores = int(sys.argv[6])
         instrument = sys.argv[7]
-        lower_patch = sys.argv[8].split(',')
+        apply_cuts = int(sys.argv[8])
+        lower_patch = sys.argv[9].split(',')
     
     else:
     
@@ -340,9 +342,10 @@ if __name__ == '__main__':
     
     # read in the table, apply quality cuts, save the cut-table w/ an additional tag
     table = ascii.read(table_filename)
-    table = load_quality_cuts(table,quality_cuts=quality_cuts)
-    basename = Path(table_filename).stem
-    table.write(output_directory + basename + '_Map_cut.csv',format='ascii.csv',overwrite=True)
+    if apply_cuts:
+        table = load_quality_cuts(table,quality_cuts=quality_cuts)
+        basename = Path(table_filename).stem
+        table.write(output_directory + basename + '_Map_cut.csv',format='ascii.csv',overwrite=True)
     
     # load the aperture/filter
     q_filter = implemented_filters[filter_name]
