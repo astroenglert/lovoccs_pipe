@@ -13,6 +13,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="cluster_dir" # UPDATE LATER
+PY_SCRIPTS="py_scripts"
 PHOTOM="photom_ref" # the refcat used for photometric_correction, e.g. ps1/sdss/legacy/des
 PHOTOM_TAG="photom_dr" # tag specifying information about the data-release of the photom-refcat
 #TODO Pass this via run_steps rather than hard-coded
@@ -24,6 +25,9 @@ cd ${CLUSTER_DIR}
 # initalize the LSP (LSST Science Pipeline)
 source ${LOAD_LSST}
 setup lsst_distrib
+
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 
 # load filepaths from config
 source python_scripts/configs/processing_step_configs.sh

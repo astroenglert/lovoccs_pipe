@@ -15,6 +15,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path" # REPLACE WITH load_pipeline_path FOR TEMPLATE
 CLUSTER_DIR="cluster_dir"
+PY_SCRIPTS="py_scripts"
 
 # navigate to cluster directory
 cd ${CLUSTER_DIR}
@@ -22,6 +23,9 @@ cd ${CLUSTER_DIR}
 # initalize the LSP (LSST Science Pipeline)
 source ${LOAD_LSST}
 setup lsst_distrib
+
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 
 # in-case a previous list/out.txt exists, delete it
 # this may cause problems later if this script is used multiple times... watch out for that
