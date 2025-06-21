@@ -48,7 +48,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
     fig,ax = pl.subplots(2)
     
     res_bins = np.linspace(min_res,1,20)
-    mean, edges, num = binned_statistic(x=res,values=g1,bins=res_bins)
+    mean, edges, num = binned_statistic(x=res,values=g1,bins=res_bins,statistic=np.nanmean)
     std, edges, num = binned_statistic(x=res,values=g1,bins=res_bins,statistic=stderr)
     edges = (edges[1:] + edges[:-1])/2
     
@@ -56,7 +56,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
     ax[0].set_ylim((-0.1,0.1))
     ax[0].set_ylabel("$ \overline{g_1} $")
     
-    mean, edges, num = binned_statistic(x=res,values=g2,bins=res_bins)
+    mean, edges, num = binned_statistic(x=res,values=g2,bins=res_bins,statistic=np.nanmean)
     std, edges, num = binned_statistic(x=res,values=g2,bins=res_bins,statistic=stderr)
     edges = (edges[1:] + edges[:-1])/2
     
@@ -123,7 +123,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
 
 
 # this wraps the hsc correction into a single function call, in-case we want to test it further\
-#TODO not sure why this isn't working, something way down in griddata is breaking, someone should fix this
+#TODO this keeps outputting nothing but zeros for resp/m/c; I might ask Soren to fix this since his build for SI/sledgehammer is working
 def apply_hsc_correction(table):
     '''
     This is apples the hsc sbear correction algorithm (built for HSC-SSP). In our testing this doesn't work great for DECam, but it got us through the first two papers and worked well-enough!
@@ -135,7 +135,22 @@ def apply_hsc_correction(table):
         output_table: Astropy Table; a table containing information from the shear calibration and the reduced-shears themselves.
     '''
 
-    #TODO overhaul the hard-coded column-names for standard-IO
+    #TODO when Peiran finalizes those cuts to maximize optimize mass_map/mass_fit, I'll create a function here
+    # unfortunately, I have to run cuts at this stage
+    e = table['e1']**2 + table['e2']**2
+    select = np.isfinite(e)
+    select &= (e < 4)
+    select &= table['r_cmodel_mag'] < 26
+    select &= table['r_cmodel_mag'] > 17
+    select &= table["r_cmodel_magerr"] < 1.08574/5
+    select &= table['z_phot'] > 0.15
+    select &= table['z_phot'] < 1.4
+    select &= table['res'] > 0.3
+    select &= table['sigmae'] < 0.4
+    select &= table['blendedness'] < 0.42
+    
+    table = table[select]
+
     shear_information = create_calibs(table)
 
     # Fix NaN/inf values, which could result from some NaN/inf values in the input catalog.
@@ -143,14 +158,13 @@ def apply_hsc_correction(table):
     for entry in new_columns:
         fix_nan(shear_information, entry)
     
-    e1 = shear_information["e1"] 
-    e2 = shear_information["e2"]
+    e1 = table["e1"] 
+    e2 = table["e2"]
     e_rms = shear_information["rms_e_d"]
     
     m = shear_information["shear_m"]
     c1 = shear_information["shear_c1"]
     c2 = shear_information["shear_c2"]
-    
     weight = shear_information["shape_weight"]
     
     R = 1. - np.sum(weight * e_rms ** 2.)/np.sum(weight)
@@ -170,6 +184,8 @@ def apply_hsc_correction(table):
 
     shear_information['g1'] = g1
     shear_information['g2'] = g2
+    print(g1)
+    print(g2)
     
     shear_information['g1_0'] = g1_0
     shear_information['g2_0'] = g2_0

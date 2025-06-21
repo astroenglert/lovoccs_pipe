@@ -70,8 +70,8 @@ def get_psf_ellip(catalog):
 #        psf_mxy = catalog['ishape_sdss_psf_ixy']
 #    return (psf_mxx - psf_myy) / (psf_mxx + psf_myy), 2. * \
 #        psf_mxy / (psf_mxx + psf_myy)
-    e1_psf_sdss = catalog["sdss_psf_e1"]
-    e2_psf_sdss = catalog["sdss_psf_e2"]
+    e1_psf_sdss = catalog["e1_psf_sdss"]
+    e2_psf_sdss = catalog["e2_psf_sdss"]
     return e1_psf_sdss, e2_psf_sdss
 
 def get_sigma_e_model(catalog):
