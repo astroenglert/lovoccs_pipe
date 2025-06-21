@@ -6,6 +6,7 @@ from multiprocessing import Pool
 import numpy as np
 
 from scipy.integrate import cumulative_trapezoid as cumtrapz
+from scipy.stats import binned_statistic
 
 import matplotlib.pyplot as pl
 
@@ -16,15 +17,109 @@ from astropy.table import Table, hstack, vstack
 from .hsc.utilities import create_calibs, new_columns
 from .hsc.gen_hsc_calibrations import fix_nan
 
-# loading config
-#from ..configs.shear_calibration_config import 
 
-#TODO quality-check plots for verifying shears
-def draw_quality_check():
+# quality-check plots for verifying shears
+def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
+    """
     
+    Args:
+      tab: Astropy Table; table to take shapes from
+      output_directory: String; string pointing to the directory to write files
+      min_res: float; minimum resolvedness used
+      max_blend: float; maximum blendedness used
     
+    Returns:
+      None
     
-    pass
+    """
+    
+    # load shears and other statistics
+    g1 = tab['g1']
+    g2 = tab['g2']
+    res = tab['res']
+    sn = (2.5/np.log(10)) * (1/tab['r_cmodel_magerr'])
+    blend = tab['blendedness']
+    
+    # define a helper function to get stderr
+    stderr = lambda x : np.nanstd(x)/np.sqrt(np.sum(np.isfinite(x)))
+    
+    # bin and draw the quality plots!
+    # first lets do resolvedness
+    fig,ax = pl.subplots(2)
+    
+    res_bins = np.linspace(min_res,1,20)
+    mean, edges, num = binned_statistic(x=res,values=g1,bins=res_bins)
+    std, edges, num = binned_statistic(x=res,values=g1,bins=res_bins,statistic=stderr)
+    edges = (edges[1:] + edges[:-1])/2
+    
+    ax[0].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
+    ax[0].set_ylim((-0.1,0.1))
+    ax[0].set_ylabel("$ \overline{g_1} $")
+    
+    mean, edges, num = binned_statistic(x=res,values=g2,bins=res_bins)
+    std, edges, num = binned_statistic(x=res,values=g2,bins=res_bins,statistic=stderr)
+    edges = (edges[1:] + edges[:-1])/2
+    
+    ax[1].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
+    ax[1].set_ylim((-0.1,0.1))
+    ax[1].set_ylabel("$ \overline{g_2} $")
+    
+    ax[0].set_title("Shear v. Resolvedness")
+    ax[1].set_xlabel('Resolvedness')
+    fig.savefig(output_directory + 'shear_v_res.png',bbox_inches='tight',dpi=720)
+    
+    # next let's do the SN
+    fig,ax = pl.subplots(2)
+    
+    sn_bins = np.logspace(1,3,20)
+    mean, edges, num = binned_statistic(x=sn,values=g1,bins=sn_bins,statistic=np.nanmean)
+    std, edges, num = binned_statistic(x=sn,values=g1,bins=sn_bins,statistic=stderr)
+    edges = (edges[1:] + edges[:-1])/2
+    
+    ax[0].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
+    ax[0].set_ylim((-0.1,0.1))
+    ax[0].set_ylabel("$ \overline{g_1} $")
+    ax[0].set_xscale('log')
+    
+    mean, edges, num = binned_statistic(x=sn,values=g2,bins=sn_bins,statistic=np.nanmean)
+    std, edges, num = binned_statistic(x=sn,values=g2,bins=sn_bins,statistic=stderr)
+    edges = (edges[1:] + edges[:-1])/2
+    
+    ax[1].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
+    ax[1].set_ylim((-0.1,0.1))
+    ax[1].set_ylabel("$ \overline{g_2} $")
+    ax[1].set_xscale('log')
+    
+    ax[0].set_title("Shear v. SN")
+    ax[1].set_xlabel('SN')
+    fig.savefig(output_directory + 'shear_v_sn.png',bbox_inches='tight',dpi=720)
+    
+    # and finally do this w. respect to the blendedness
+    fig,ax = pl.subplots(2)
+    
+    blend_bins = np.linspace(0,max_blend,10)
+    mean, edges, num = binned_statistic(x=blend,values=g1,bins=blend_bins,statistic=np.nanmean)
+    std, edges, num = binned_statistic(x=blend,values=g1,bins=blend_bins,statistic=stderr)
+    edges = (edges[1:] + edges[:-1])/2
+    
+    ax[0].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
+    ax[0].set_ylim((-0.1,0.1))
+    ax[0].set_ylabel("$ \overline{g_1} $")
+    
+    mean, edges, num = binned_statistic(x=blend,values=g2,bins=blend_bins,statistic=np.nanmean)
+    std, edges, num = binned_statistic(x=blend,values=g2,bins=blend_bins,statistic=stderr)
+    edges = (edges[1:] + edges[:-1])/2
+    
+    ax[1].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
+    ax[1].set_ylim((-0.1,0.1))
+    ax[1].set_ylabel("$ \overline{g_2} $")
+    
+    ax[0].set_title("Shear v. Blendedness")
+    ax[1].set_xlabel('Blendedness')
+    fig.savefig(output_directory + 'shear_v_blend.png',bbox_inches='tight',dpi=720)
+    
+    return
+
 
 
 # this wraps the hsc correction into a single function call, in-case we want to test it further\
@@ -119,15 +214,15 @@ calibration_methods = {'hsc':apply_hsc_correction,'naive':naive_responsivity_cor
 if __name__ == '__main__':
     
     # check cln for arguments
-    if len(sys.argv)!=4:
-        print("python calibrate_shears.py catalog output_catalog_filename calibration_method")
-        raise Exception("Improper Usage! Correct usage: python calibrate_shears.py catalog output_catalog_filename calibration_method")
+    if len(sys.argv)!=5:
+        print("python calibrate_shears.py catalog output_directory output_catalog_filename calibration_method")
+        raise Exception("Improper Usage! Correct usage: python calibrate_shears.py catalog output_directory output_catalog_filename calibration_method")
         
     # collecting arguments from cln
-    #TODO include an output-directory for figures?
     table_filename = sys.argv[1]
-    output_catalog_filename = sys.argv[2]
-    calib = sys.argv[3]
+    output_directory = sys.argv[2]
+    output_catalog_filename = sys.argv[3]
+    calib = sys.argv[4]
     
     if calib not in calibration_methods:
         print(f'WARNING: {calib} is not one of the allowed calibration methods, quitting the script now!')
@@ -141,8 +236,10 @@ if __name__ == '__main__':
     
     output_table = hstack([table,shear_table])
     
+    quality_check(output_table,output_directory)
+    
     # save the output table to disk
-    output_table.write(output_catalog_filename,format='ascii.csv',overwrite=True)
+    output_table.write(output_directory + output_catalog_filename,format='ascii.csv',overwrite=True)
 
 
 

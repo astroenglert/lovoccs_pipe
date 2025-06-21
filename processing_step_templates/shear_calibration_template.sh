@@ -30,5 +30,5 @@ mkdir shear_calibration_output
 
 
 # this processing step just requires running calibrate_shears.py to produce the g1/g2
-python -m python_scripts.shear_calibration.calibrate_shears "photo_z_output/${CLN}_dered_dezp_zphot_gals.csv" "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "naive"
+python -m python_scripts.shear_calibration.calibrate_shears "photo_z_output/${CLN}_dered_dezp_zphot_gals.csv" "shear_calibration_output/" "${CLN}_dered_dezp_zphot_scal_gals.csv" "naive"
 
