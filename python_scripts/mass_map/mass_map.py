@@ -388,7 +388,7 @@ if __name__ == '__main__':
     g1 = table['g1'].value
     g2 = table['g2'].value
     
-    #TODO this should probably be moved to the naive shear_calibration
+    # I've patched this, but I'll leave it here just in-case as a catch-all
     if 'shape_weight' not in table.colnames:
         weights = np.ones(len(x))/(0.365**2) # shape-weight is an inverse-variance, from previous studies e_rms ~ 0.365 
     else:

@@ -100,7 +100,8 @@ def naive_responsivity_correction(table,c=0,m=0):
     e1 = table['e1']
     e2 = table['e2']
     
-    #TODO eventually we should compute this for our dataset properly, this is just a placeholder
+    # this is a naive calibration since it uses an established somewhat ad-hoc value for the resp
+    # leave it to metadetect/hsc-calib to do this propery
     responsivity = 1-(0.365)**2
     
     g1 = (e1/(2*responsivity))
@@ -108,6 +109,7 @@ def naive_responsivity_correction(table,c=0,m=0):
     
     output_table['g1'] = (g1 - c)/(1+m)
     output_table['g2'] = (g2 - c)/(1+m)
+    output_table['shape_weight'] = np.ones(len(e1))/(0.365**2)
     
     return output_table
 
