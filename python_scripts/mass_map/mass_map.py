@@ -297,6 +297,42 @@ def write_to_fits(Map_E,Map_B,Map_V,wcs,output_filename):
     hdul.writeto(output_filename,overwrite=True)
     
     return
+
+
+def draw_mass_map(Map_E,Map_B,Map_V,y_grid_samples,x_grid_samples,smoothing):
+    '''
+    
+    A helper function to render our nice mass_map plots
+    
+    Args:
+        Map_E: MxN array; mass aperture map E-mode
+        Map_B: MxN array; mass aperture map B-mode
+        Map_V: MxN array; mass aperture map variance
+        y_grid_samples: array; array containing the y-coordinates where Map is evaluated
+        x_grid_samples: array; array containing the x-coordinates where Map is evaluated
+        smoothing: float; the smoothing used for this mass map
+    Returns:
+        fig: matplotlib Figure; figure containing the plot
+        (ax1,ax2): tuple of axes; a tuple containing the matplotlib axes
+    '''
+    
+    fig,(ax1,ax2) = pl.subplots(1,2,figsize=(10,6))
+    im = ax1.imshow(Map_E/np.sqrt(Map_V), vmin=-3, vmax=6, extent=[np.min(y_grid_samples), np.max(y_grid_samples), np.min(x_grid_samples), np.max(x_grid_samples) ],origin='lower')
+    im = ax2.imshow(Map_B/np.sqrt(Map_V), vmin=-3, vmax=6, extent=[np.min(y_grid_samples), np.max(y_grid_samples), np.min(x_grid_samples), np.max(x_grid_samples) ],origin='lower')
+    cbar = fig.colorbar(im, ax=(ax1,ax2), orientation="horizontal")
+    cbar.ax.set_xlabel("S/N")
+    ax1.set_xlabel('x [pix]')
+    ax1.set_ylabel('y [pix]')
+    ax2.set_xlabel('x [pix]')
+    ax2.set_ylabel('y [pix]')
+    
+    ax1.set_title('E-Mode (Tangent)')
+    ax2.set_title('B-Mode (Cross)')
+
+    fig.suptitle(r"Aperture Mass S/N Map with $R_{\rm{ap}}$ = %.0f px"%(smoothing))
+    
+    return fig, (ax1,ax2)
+
     
 # okay, that's all the preliminaries done, here is the outline
 # problem, how do I define a wcs? I can define the grid in px-coordinates very easily
@@ -409,7 +445,8 @@ if __name__ == '__main__':
     Map_B_table = Table()
     
     # unpack the outputs
-    #TODO wrap unpacking outputs in a separate function
+    # I think unpacking in this manner is acceptable...
+    # but I will wrap the drawing mass-map function into a separate call
     for i in range(len(aperture_sizes)):
         
         smoothing = aperture_sizes[i]
@@ -423,20 +460,7 @@ if __name__ == '__main__':
         
         
         # Draw pretty pictures first
-        fig,(ax1,ax2) = pl.subplots(1,2,figsize=(10,6))
-        im = ax1.imshow(Map_E/np.sqrt(Map_V), vmin=-3, vmax=6, extent=[np.min(y_grid_samples), np.max(y_grid_samples), np.min(x_grid_samples), np.max(x_grid_samples) ],origin='lower')
-        im = ax2.imshow(Map_B/np.sqrt(Map_V), vmin=-3, vmax=6, extent=[np.min(y_grid_samples), np.max(y_grid_samples), np.min(x_grid_samples), np.max(x_grid_samples) ],origin='lower')
-        cbar = fig.colorbar(im, ax=(ax1,ax2), orientation="horizontal")
-        cbar.ax.set_xlabel("S/N")
-        ax1.set_xlabel('x [pix]')
-        ax1.set_ylabel('y [pix]')
-        ax2.set_xlabel('x [pix]')
-        ax2.set_ylabel('y [pix]')
-        
-        ax1.set_title('E-Mode (Tangent)')
-        ax2.set_title('B-Mode (Cross)')
-        
-        fig.suptitle(r"Aperture Mass S/N Map with $R_{\rm{ap}}$ = %.0f px"%(smoothing))
+        fig, (ax1, ax2) = draw_mass_map(Map_E,Map_B,Map_V,y_grid_samples,x_grid_samples,smoothing)
         
         # then update the table and draw the peaks
         # E-Mode
@@ -456,6 +480,12 @@ if __name__ == '__main__':
             ax2.scatter(int(lower_patch[1])*4000 + b_table['x_sn_max']*sample_spacing,int(lower_patch[1])*4000 + b_table['y_sn_max']*sample_spacing,s=10,marker='x')
             b_table['SourceID'] = np.char.add(b_table['SourceID'].astype(str),'_' + str(smoothing)) # append the schirmer radius to make a unique source-ID
             Map_B_table = vstack([Map_B_table,b_table])
+        
+        # rescale to the correct xlim/ylim
+        ax1.set_xlim((np.min(x_grid_samples), np.max(x_grid_samples)))
+        ax1.set_ylim((np.min(y_grid_samples), np.max(y_grid_samples)))
+        ax2.set_xlim((np.min(x_grid_samples), np.max(x_grid_samples)))
+        ax2.set_ylim((np.min(y_grid_samples), np.max(y_grid_samples)))
         
         # and save the outputs
         fig.savefig(output_directory + f'Map_SN_Rs_{smoothing}.png',bbox_inches='tight',dpi=720)

@@ -457,7 +457,7 @@ if __name__ == '__main__':
     g2_observed = table['g2']
     zS = table['z_phot'] #z_b in our old catalogs
 
-    #TODO this should probably be moved to the naive shear_calibration
+    # moved to shear calibration, I'll leave this here just in case
     if 'shape_weight' not in table.colnames:
         weights = np.ones(len(table))/(0.365**2) # shape-weight is an inverse-variance, from previous studies e_rms ~ 0.365 
     else:
