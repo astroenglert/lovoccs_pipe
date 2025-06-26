@@ -32,7 +32,7 @@ mkdir red_sequence_output
 # two steps here, run red_sequence.py then draw the contours
 COADD="combine_patch_color_output/${CLN}_r33-88_deepCoadd.fits"
 echo "mapping the rs..."
-python -m python_scripts.red_sequence.red_sequence "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "${COADD}" "100" "500" "red_sequence_output/" "decam" #"3,3" assumed, needs to be specififed if using a different set of patches
+python -m python_scripts.red_sequence.red_sequence "photo_z_output/${CLN}_dered_dezp_zphot_gals.csv" "${COADD}" "100" "200" "red_sequence_output/" "decam" "3,3" "${CLN}" "photo_z_output/${CLN}_dered_dezp_gals_matched_specz.csv" "z_spec"
 
 # and finally render the density
 echo "rendering contours..."
