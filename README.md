@@ -7,4 +7,4 @@ To get started with processing, from the directory you want to process in, clone
 
 
 # Citations
-Works that make use of this pipeline should cite [Fu et al. 2021](https://doi.org/10.3847/1538-4357/ac68e8) and Englert et al. (In Prep), citations for LSP should also be included (see [Citing and acknowledging the LSST Science Pipelines](https://pipelines.lsst.io/#citing-and-acknowledging-the-lsst-science-pipelines)).
+Works that make use of this pipeline should cite [Fu et al. 2021](https://doi.org/10.3847/1538-4357/ac68e8), [Englert et al. (2025)](https://ui.adsabs.harvard.edu/abs/2025AAS...24541207E/abstract), and [Englert, Dell'Antonio, Montes (2025)](https://ui.adsabs.harvard.edu/abs/2025arXiv250523551E/abstract). Citations for LSP should also be included (see [Citing and acknowledging the LSST Science Pipelines](https://pipelines.lsst.io/#citing-and-acknowledging-the-lsst-science-pipelines)).
