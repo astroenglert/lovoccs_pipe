@@ -3,10 +3,14 @@ import numpy as np
 
 # == config for red_sequence.py == #
 
+# cut for SN
+sn_cut = 10
+
 # tolerance for selecting cluster-members
 zspec_tolerance = 0.01
 
-# filter map for specifying columns
+# filter map for specifying columns, and tag for errors
+error_tag = 'err'
 filter_map = {
               'u':'u_cmodel_mag',
               'g':'g_cmodel_mag',

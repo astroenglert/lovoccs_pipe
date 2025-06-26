@@ -35,7 +35,7 @@ from astropy.cosmology import FlatLambdaCDM
 cosmo = FlatLambdaCDM(H0=70,Om0=0.3)
 
 # homebrew modules below
-from ..configs.red_sequence_config import instrument_resolution, filter_map, color_bins_gr, color_bins_ri, mag_bins, zspec_tolerance, scale_upper_mag, z_pedestal
+from ..configs.red_sequence_config import instrument_resolution, filter_map, error_tag, color_bins_gr, color_bins_ri, mag_bins, zspec_tolerance, scale_upper_mag, z_pedestal, sn_cut
 from ..misc.match_catalogs import match_catalogs
 
 '''
@@ -92,7 +92,6 @@ def fit_RS_for_colors(gal_table,output_directory,color_0='g_cmodel_mag',color_1=
     ax.scatter(ref_mag,colors,marker='.',s=3,alpha=0.4)
     
     # first let's bin the objects in ref_mag
-    #TODO there is probably a nicer numpy-array like way of doing this
     median_color = []
     midpoints = (fitting_bins[1:] + fitting_bins[:-1])/2
     include_bin = []
@@ -333,10 +332,6 @@ if __name__ == '__main__':
     
         raise Exception("Improper Usage! Correct usage: python red_sequence.py gal_table coadd grid_resolution bandwidth output_directory instrument lower_patch")
     
-    #TODO keep this sn-cut here, but move it to a config-file
-    #TODO filter for NaN's a-priori as well
-    sn_cut = 10
-    
     # collect the cluster info
     ned_result = Ned.query_object(cluster_name)
     ra_cl = ned_result[0]['RA']
@@ -354,11 +349,11 @@ if __name__ == '__main__':
     gal_table = ascii.read(gal_table_filename)
     
     # get ready to filter out low-sn detections
-    cut_sn = (1/gal_table[filter_map['r'] + 'err'] > sn_cut*np.log(10)/2.5)
+    cut_sn = (1/gal_table[filter_map['r'] + error_tag] > sn_cut*np.log(10)/2.5)
     
     # just in-case, filter any NaN's in g/r/i
     cut_nan = np.isfinite(gal_table[filter_map['r']]) & np.isfinite(gal_table[filter_map['g']]) & np.isfinite(gal_table[filter_map['i']])
-    cut_nan &= np.isfinite(gal_table[filter_map['r'] + 'err']) & np.isfinite(gal_table[filter_map['g'] + 'err']) & np.isfinite(gal_table[filter_map['i'] + 'err'])
+    cut_nan &= np.isfinite(gal_table[filter_map['r'] + error_tag]) & np.isfinite(gal_table[filter_map['g'] + error_tag]) & np.isfinite(gal_table[filter_map['i'] + error_tag])
     
     # and lastly select w/in 1-deg of the cluster center
     coord = SkyCoord(ra=gal_table['ra'],dec=gal_table['dec'],unit='degree')
@@ -397,9 +392,9 @@ if __name__ == '__main__':
         gal_table_specz = ascii.read(specz_cat_filename)
         
         # now filter for SN, NaN
-        cut_sn = (1/gal_table_specz[filter_map['r'] + 'err'] > sn_cut*np.log(10)/2.5)
+        cut_sn = (1/gal_table_specz[filter_map['r'] + error_tag] > sn_cut*np.log(10)/2.5)
         cut_nan = np.isfinite(gal_table_specz[filter_map['r']]) & np.isfinite(gal_table_specz[filter_map['g']]) & np.isfinite(gal_table_specz[filter_map['i']])
-        cut_nan &= np.isfinite(gal_table_specz[filter_map['r'] + 'err']) & np.isfinite(gal_table_specz[filter_map['g'] + 'err']) & np.isfinite(gal_table_specz[filter_map['i'] + 'err'])
+        cut_nan &= np.isfinite(gal_table_specz[filter_map['r'] + error_tag]) & np.isfinite(gal_table_specz[filter_map['g'] + error_tag]) & np.isfinite(gal_table_specz[filter_map['i'] + error_tag])
         
         # and lastly select w/in 1-deg of the cluster center
         coord = SkyCoord(ra=gal_table_specz['ra'],dec=gal_table_specz['dec'],unit='degree')
