@@ -53,7 +53,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
     edges = (edges[1:] + edges[:-1])/2
     
     ax[0].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
-    ax[0].set_ylim((-0.1,0.1))
+    #ax[0].set_ylim((-0.1,0.1))
     ax[0].set_ylabel("$ \overline{g_1} $")
     
     mean, edges, num = binned_statistic(x=res,values=g2,bins=res_bins,statistic=np.nanmean)
@@ -61,7 +61,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
     edges = (edges[1:] + edges[:-1])/2
     
     ax[1].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
-    ax[1].set_ylim((-0.1,0.1))
+    #ax[1].set_ylim((-0.1,0.1))
     ax[1].set_ylabel("$ \overline{g_2} $")
     
     ax[0].set_title("Shear v. Resolvedness")
@@ -77,7 +77,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
     edges = (edges[1:] + edges[:-1])/2
     
     ax[0].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
-    ax[0].set_ylim((-0.1,0.1))
+    #ax[0].set_ylim((-0.1,0.1))
     ax[0].set_ylabel("$ \overline{g_1} $")
     ax[0].set_xscale('log')
     
@@ -86,7 +86,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
     edges = (edges[1:] + edges[:-1])/2
     
     ax[1].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
-    ax[1].set_ylim((-0.1,0.1))
+    #ax[1].set_ylim((-0.1,0.1))
     ax[1].set_ylabel("$ \overline{g_2} $")
     ax[1].set_xscale('log')
     
@@ -103,7 +103,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
     edges = (edges[1:] + edges[:-1])/2
     
     ax[0].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
-    ax[0].set_ylim((-0.1,0.1))
+    #ax[0].set_ylim((-0.1,0.1))
     ax[0].set_ylabel("$ \overline{g_1} $")
     
     mean, edges, num = binned_statistic(x=blend,values=g2,bins=blend_bins,statistic=np.nanmean)
@@ -111,7 +111,7 @@ def quality_check(tab,output_directory,min_res=0.3,max_blend=0.4):
     edges = (edges[1:] + edges[:-1])/2
     
     ax[1].errorbar(x=edges,y=mean,yerr=std,capsize=3,fmt='.')
-    ax[1].set_ylim((-0.1,0.1))
+    #ax[1].set_ylim((-0.1,0.1))
     ax[1].set_ylabel("$ \overline{g_2} $")
     
     ax[0].set_title("Shear v. Blendedness")
@@ -134,22 +134,6 @@ def apply_hsc_correction(table):
     Returns:
         output_table: Astropy Table; a table containing information from the shear calibration and the reduced-shears themselves.
     '''
-
-    #TODO when Peiran finalizes those cuts to maximize optimize mass_map/mass_fit, I'll create a function here
-    # unfortunately, I have to run cuts at this stage
-    e = table['e1']**2 + table['e2']**2
-    select = np.isfinite(e)
-    select &= (e < 4)
-    select &= table['r_cmodel_mag'] < 26
-    select &= table['r_cmodel_mag'] > 17
-    select &= table["r_cmodel_magerr"] < 1.08574/5
-    select &= table['z_phot'] > 0.15
-    select &= table['z_phot'] < 1.4
-    select &= table['res'] > 0.3
-    select &= table['sigmae'] < 0.4
-    select &= table['blendedness'] < 0.42
-    
-    table = table[select]
 
     shear_information = create_calibs(table)
 
@@ -189,7 +173,7 @@ def apply_hsc_correction(table):
     
     shear_information['g1_0'] = g1_0
     shear_information['g2_0'] = g2_0
-    
+        
     return shear_information
 
 
@@ -247,10 +231,38 @@ if __name__ == '__main__':
     # load the table from disk
     table = ascii.read(table_filename)
     
+    # for hsc calibration, we need to run quality cuts a-priori to get a reliable calibration
+    if calib == 'hsc':
+        
+        # unfortunately, I have to run cuts at this stage for HSC calibration to run properly
+        # further cuts can be implemented in mass_map, but these are the bare-minimum needed to get a consistent calibration
+        e = np.sqrt(table['e1']**2 + table['e2']**2)
+        select = np.isfinite(e)
+        select &= (e < 4)
+        select &= (e > 0)
+        select &= table['r_cmodel_mag'] < 26
+        select &= table['r_cmodel_mag'] > 17
+        select &= table["r_cmodel_magerr"] < 1.08574/5
+        #select &= table['z_b'] > 0.15 # for checking a gen2 catalog!
+        #select &= table['z_b'] > 0.15 # for checking a gen2 catalog!
+        select &= table['z_phot'] > 0.15
+        select &= table['z_phot'] < 1.4
+        select &= table['res'] > 0.3
+        select &= table['sigmae'] < 0.4
+        select &= table['blendedness'] < 0.42
+    
+        table = table[select]
+    
     # use the appropriate shear-calibration algorithm to get an updated table
     shear_table = calibration_methods[calib](table)
     
     output_table = hstack([table,shear_table])
+    
+    if calib == 'hsc':
+        # run a final cut on g1/g2
+        final_select = np.sqrt(output_table['g1']**2 + output_table['g2']**2) < 2
+        output_table = output_table[final_select] 
+
     
     quality_check(output_table,output_directory)
     

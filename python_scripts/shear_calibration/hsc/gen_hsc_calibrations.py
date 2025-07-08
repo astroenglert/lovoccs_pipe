@@ -5,13 +5,12 @@ import sys
 from . import utilities
 from .utilities import new_columns
 
-#TODO is it a good practice to override catalog values here to zero? How does that impact/change what the calibration does? I thought it used statistics of the entire sample and if we're padding it with zeros that may not be good.....
 def fix_nan(catalog, key):
     """
     Routine to fix NaN entries.
     """
     x = catalog[key]
-    mask = np.isfinite(x)
+    mask = np.isnan(x) | np.isinf(x)
     n_fix = mask.astype(int).sum()
     if n_fix > 0:
         catalog[key][mask] = 0.
