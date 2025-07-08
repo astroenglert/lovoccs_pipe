@@ -31,12 +31,9 @@ export MKL_NUM_THREADS=1
 
 # build the pipeline; default configs are embedded in DRP-LoVoCCS.yaml
 pipetask build -p DRP-LoVoCCS.yaml#step3a -s ${CLUSTER_DIR}/pipeline_yamls/DRP_step3a.yaml
-#    -C assembleCoadd:configs/coadd_3a_assemble_config.py \
-#    -C makeWarp:configs/coadd_3a_makewarp_config.py \
-#    -C detection:configs/coadd_3a_detection_config.py \
-#    -C deblend:configs/coadd_3a_deblend_config.py \
 
-# step3a assembleCoadd, detect, deblend
+# step3a assembleCoadd
+# broken into a separate step due to frequent memory issues...
 bps submit -b repo/repo \
     -i DECam/processing/quality_detectors_g,DECam/processing/quality_detectors_i,DECam/processing/quality_detectors_r,DECam/processing/quality_detectors_u,DECam/processing/quality_detectors_z,\
 DECam/processing/final_visit_summary_g,DECam/processing/final_visit_summary_i,DECam/processing/final_visit_summary_r,DECam/processing/final_visit_summary_u,DECam/processing/final_visit_summary_z,\

@@ -122,16 +122,33 @@ tasks:
     class: lsst.pipe.tasks.postprocess.WriteRecalibratedSourceTableTask
     config:
       connections.outputCatalog: source
+  selectDeepCoaddVisits:
+    class: lsst.pipe.tasks.selectImages.BestSeeingSelectVisitsTask
+    config:
+      # we want to use all vists and ignore any psf-cuts since those were done earlier
+      # also include all exposures regardless of any partial-overlaps
+      python: |
+        config.maxPsfFwhm: 100
+        config.nVisitsMax: -1
+        config.doConfirmOverlap = False
   deblend:
     class: lsst.pipe.tasks.deblendCoaddSourcesPipeline.DeblendCoaddSourcesMultiTask
     config:
       # large ellipticals in cluster fields can exceed the default blending cutoffs
+      # these are mostly needed for lsst-scale processing, we can take our time deblending these large footprints
       python: |
-        config.multibandDeblend.maxFootprintArea=int(3e6)
-        config.multibandDeblend.maxAreaTimesPeaks=int(6e8)
+        config.multibandDeblend.maxFootprintArea=-1
+        config.multibandDeblend.maxAreaTimesPeaks=-1
         config.multibandDeblend.maxFootprintSize=-1
         config.multibandDeblend.minFootprintAxisRatio=-1
-        config.multibandDeblend.maxSpectrumCutoff=int(3e7)
+        config.multibandDeblend.maxSpectrumCutoff=-1
+  measure:
+    class: lsst.pipe.tasks.multiBand.MeasureMergedCoaddSourcesTask
+    config:
+      # disable matches to the refcats so we can run these neatly in parallel
+      python: |
+        config.doMatchSources=False
+        config.doWriteMatchesDenormalized=False
   jointcal:
     class: lsst.jointcal.JointcalTask
     config:
@@ -208,37 +225,31 @@ subsets:
       
   step3a:
     subset:
+      - selectDeepCoaddVisits
       - makeWarp
       - assembleCoadd
-      - detection
-      - mergeDetections
-      - deblend
     description: |
-      The first portion of DRP-step3.
+      Just stack the exposures first!
   
   step3b:
     subset:
+      - detection
+      - mergeDetections
+      - deblend
       - measure
-    description: |
-      Since LoVoCCs uses separate reference catalogs depending on the band, 
-      we have to run detection separately and clobber the outputs.
-  
-  step3c:
-    subset:
       - writeObjectTable
       - mergeMeasurements
       - forcedPhotCoadd
       - transformObjectTable
       - consolidateObjectTable
     description: |
-      Merging and finalizing the coadded object table.
+      Now begin processing everything properly.
   
-  step3d:
+  step3c:
     subset:
       - skyCorr
       - makeWarp
       - assembleCoadd
-      - detection
     description: |
       We create a separate sky-corrected stack for LSB science.
       This is still in-development, so the default configs are not embedded

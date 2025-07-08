@@ -22,12 +22,13 @@ WALL_TIME=48:00:00 # default time is 2-days, may need to be adjusted for explora
 # == VARIABLES == #
 
 #update when complete
-AUTO_PIPELINE_DIR="/gpfs/data/idellant/englert_newPipelineDev/lovoccs_pipe" #update when complete
+AUTO_PIPELINE_DIR="/gpfs/data/idellant/Clusters/gen3_processing/testing_pipeline/A85_metadetect/lovoccs_pipe" #update when complete
 TEMPLATE_DIR="${AUTO_PIPELINE_DIR}/processing_step_templates"
-LOAD_PIPELINE_PATH="/gpfs/data/idellant/Clusters/gen3_processing/lsst_stack_v26_0_0/loadLSST.bash" # update to install in Clusters when complete
-CLUSTER_DIR="/gpfs/data/idellant/Clusters/gen3_processing/${CLUSTER_NAME}" #update when complete
+LOAD_PIPELINE_PATH="/gpfs/data/idellant/Clusters/gen3_processing/lsst_stack_v28_0_1/loadLSST.bash" # update to install in Clusters when complete
+CLUSTER_DIR="/gpfs/data/idellant/Clusters/gen3_processing/testing_pipeline/A85_metadetect" #update when complete
 PROCESSING_STEP_DIR="${CLUSTER_DIR}/processing_step"
 CALIB_CATALOG_REPO="/gpfs/data/idellant/Clusters/calib_catalog_repo"
+
 
 # == INITIALIZE LSP == #
 
@@ -108,7 +109,7 @@ download_raw () {
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/noao_download_manager_template.sh > ${PROCESSING_STEP_DIR}/noao_download_manager.sh
 
 	# pass the current lsst_pipeline and cluster_dir into the script
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/noao_download_manager.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/noao_download_manager.sh
 
 	echo "Submitting to slurm..."
 	sbatch ${PROCESSING_STEP_DIR}/noao_download_manager.sh
@@ -127,7 +128,7 @@ check_raws () {
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/check_raws_template.sh > ${PROCESSING_STEP_DIR}/check_raws.sh
 
 	# pass the current lsst_pipeline and cluster_dir into the script
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/check_raws.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/check_raws.sh
 
 	echo "Submitting to slurm..."
 	sbatch ${PROCESSING_STEP_DIR}/check_raws.sh
@@ -147,7 +148,7 @@ move_corrupt_raws () {
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/move_corrupt_raws_template.sh > ${PROCESSING_STEP_DIR}/move_corrupt_raws.sh
 
 	# pass the current lsst_pipeline and cluster_dir into the script
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/move_corrupt_raws.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/move_corrupt_raws.sh
 
 	echo "Now running..."
 	bash ${PROCESSING_STEP_DIR}/move_corrupt_raws.sh
@@ -191,7 +192,7 @@ ingest_data () {
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/ingest_data_template.sh > ${PROCESSING_STEP_DIR}/ingest_data.sh
 
 	# pass the current lsst_pipeline and cluster_dir into the script
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/ingest_data.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/ingest_data.sh
 
 	echo "Submitting to slurm..."
 	sbatch ${PROCESSING_STEP_DIR}/ingest_data.sh
@@ -348,7 +349,7 @@ process_ccd () {
 		# pass the cluster name and band into the template
 		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/process_ccd_template.sh > ${PROCESSING_STEP_DIR}/process_ccd_${BAND}.sh
 		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/process_ccd_${BAND}.sh
-		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/process_ccd_${BAND}.sh
+		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/process_ccd_${BAND}.sh
 
 		# echo "Submitting to slurm..."
 		# sbatch ${PROCESSING_STEP_DIR}/process_ccd_${BAND}.sh
@@ -390,7 +391,7 @@ check_visit () {
 		# pass the cluster name into the template
 		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/check_visit_template.sh > ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh
 		# pass the current lsst_pipeline into the template
-		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh
+		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh
 		# pass the band being processed into the template
 		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh
 		sed -i "s/fwhm_cut/${FWHM}/g" ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh		
@@ -405,7 +406,7 @@ check_visit () {
 		# pass the cluster name into the template
 		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/check_visit_template.sh > ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh
 		# pass the current lsst_pipeline into the template
-		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh
+		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh
 		# pass the band being processed into the template
 		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh
 		sed -i "s/fwhm_cut/${FWHM_r}/g" ${PROCESSING_STEP_DIR}/check_visit_${BAND}.sh		
@@ -442,7 +443,7 @@ select_visit () {
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/select_visit_template.sh > ${PROCESSING_STEP_DIR}/select_visit.sh
 
 	# pass the current lsst_pipeline into the template
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/select_visit.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/select_visit.sh
 
 	# passing the fwhm/ellip cuts to select_visit
 	sed -i "s/fwhm_cut_r/${FWHM_r}/g" ${PROCESSING_STEP_DIR}/select_visit.sh
@@ -470,7 +471,7 @@ visit_summary () {
 		# pass the cluster name and band into the template
 		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/visit_summary_template.sh > ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
 		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
-		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
+		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
 
 		# echo "Submitting to slurm..."
 		# sbatch ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
@@ -630,7 +631,7 @@ jointcal () {
 		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/jointcal_template.sh > ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 		sed -i "s/photom_ref/${CATALOG}/g" ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
-		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
+		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 
 		echo "Submitting to slurm..."
 		sbatch ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
@@ -691,7 +692,7 @@ final_visit_summary () {
 		
 		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/final_visit_summary_template.sh > ${PROCESSING_STEP_DIR}/final_visit_summary_${BAND}.sh
 		# pass the current lsst_pipeline into the template
-		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/final_visit_summary_${BAND}.sh
+		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/final_visit_summary_${BAND}.sh
 		# pass the band being processed into the template
 		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/final_visit_summary_${BAND}.sh
 		
@@ -748,7 +749,7 @@ coadd_3a () {
 	# cp ${AUTO_PIPELINE_DIR}/config_templates/coadd_3a_detection_config_template.py "${CLUSTER_DIR}/configs/coadd_3a_detection_config.py"
 
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3a_template.sh > ${PROCESSING_STEP_DIR}/coadd_3a.sh
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/coadd_3a.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3a.sh
 	
 	echo "Submitting to slurm..."
 	sbatch ${PROCESSING_STEP_DIR}/coadd_3a.sh
@@ -787,118 +788,20 @@ coadd_3b () {
 
 	echo "Running STEP 13: coadd_3b"
 	
-	# neither coadd_3b nor 3c have the same memory failures...
-	# but since measure and forcedPhotom (3c) take so long to run, it's more efficient to evenly distribute resources
-	echo "Creating new BPS config..."
+	# coadd_3b used to be quite painful, but with the catalog-matching disabled it runs as one BIG step :)
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3b_template.sh > ${PROCESSING_STEP_DIR}/coadd_3b.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3b.sh
 	
-	ALLOC=$((CORES/(5*2)))
-	MEM_ALLOC=$((RAM/(5*2)))
-	# two nodes by default for coadd_3b
-	echo "Allocating 2 nodes, ${ALLOC} cores, and ${MEM_ALLOC} GB of RAM per node for each band"
-	bps_config_formatter 2 ${ALLOC} ${MEM_ALLOC} "48:00:00" "_coadd3b"
 	
-	# because different clusters pull from various catalogs, separate configs are created for each band
-	# the for-loops here are a little lazy... but there isn't any tangible benefit to handling it more neatly
-	# CATALOG is the photometry catalog, BAND is the band to process using this catalog
-	for INPUT in "$@"; do
-		CATALOG=${INPUT/%,*/}
-		BAND=${INPUT/#*,/}
-		
-		# ps1 formatting
-		if [ "${CATALOG}" == "ps1" ]; then
-			PS1_BANDS=('g' 'r' 'i' 'z' 'y')
-			PS1_MAPS=('gmag' 'rmag' 'imag' 'zmag' 'ymag')
-			
-			for i in ${!PS1_BANDS[@]}; do
-				if [ "${PS1_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}" "${PS1_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: PS1 does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		# sky-mapper dr1 formatting
-		if [ "${CATALOG}" == "sm_dr1" ]; then
-			SM1_BANDS=('u' 'g' 'r' 'i' 'z')
-			SM1_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
-			SM1_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
-			
-			for i in ${!SM1_BANDS[@]}; do
-				if [ "${SM1_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}_${SM1_CAT_BANDS[$i]}" "${SM1_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: SM_DR1 does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		# sky-mapper dr2 formatting
-		if [ "${CATALOG}" == "sm_dr2" ]; then
-			SM2_BANDS=('u' 'g' 'r' 'i' 'z')
-			SM2_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
-			SM2_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
-			
-			for i in ${!SM2_BANDS[@]}; do
-				if [ "${SM2_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}_${SM2_CAT_BANDS[$i]}" "${SM2_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: SM_DR2 does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		# sdss formatting
-		if [ "${CATALOG}" == "sdss" ]; then
-			SDSS_BANDS=('u')
-			SDSS_MAPS=('upmag')
-			
-			for i in ${!SDSS_BANDS[@]}; do
-				if [ "${SDSS_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}" "${SDSS_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 0 ]; then echo "ERROR: SDSS does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		if [ "${CATALOG}" == "des_dr2" ]; then
-			DES_BANDS=('g' 'r' 'i' 'z' 'y')
-			DES_MAPS=('wavg_mag_psf_g' 'wavg_mag_psf_r' 'wavg_mag_psf_i' 'wavg_mag_psf_z' 'wavg_mag_psf_y')
-			
-			for i in ${!DES_BANDS[@]}; do
-				if [ "${DES_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}" "${DES_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: DES does not contain ${BAND}"; return; fi
-			done
-		fi
-
-		# pass the cluster name and band into the template
-		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3b_template.sh > ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh
-		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh
-		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh
-
-		echo "Submitting to slurm..."
-		
-		# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish.
-		# but since coadd_3b has such a long runtime... it's a little bit better to submit these as separate tasks rather than dependencies
-		#if [ -z "$JOBID" ]; then
-		#	JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh)
-		#	echo "Submitted coadd_3b_${BAND} with ${JOBID}"
-		#else
-		#	JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh)
-		#	echo "Submitted coadd_3b_${BAND} with ${JOBID}"
-		#fi
-		
-		sbatch ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh
-		sleep 20m
+	echo "Submitting to slurm..."
+	sbatch ${PROCESSING_STEP_DIR}/coadd_3b.sh
+	prompt_wait
 
 	done
 
 }
 
+#TODO this step is now deprecated, remove after verifying that the new coadd_3a/coadd_3b/coadd_3c all work correctly
 # STEP 14: finish-up drp#step3 (merge,forcedPhoto,consolidateTable)
 
 coadd_3c () {
@@ -906,7 +809,7 @@ coadd_3c () {
 	echo "Running STEP 14: coadd_3c"
 
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3c_template.sh > ${PROCESSING_STEP_DIR}/coadd_3c.sh
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/coadd_3c.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3c.sh
 	
 	echo "Submitting to slurm..."
 	sbatch ${PROCESSING_STEP_DIR}/coadd_3c.sh
@@ -916,15 +819,15 @@ coadd_3c () {
 
 # STEP 15: produce a separate skycorr stack and detect sources on it
 
-coadd_3d () {
+coadd_3c () {
 
 	echo "Running STEP 15: coadd_3d"
 
 	# copying the config templates to the cluster-config folder, for now we have no custom configs to pass to these
-	cp ${AUTO_PIPELINE_DIR}/config_templates/coadd_3d_skycorr_config_template.py "${CLUSTER_DIR}/configs/coadd_3d_skycorr_config.py"
+	cp ${AUTO_PIPELINE_DIR}/config_templates/coadd_3c_skycorr_config_template.py "${CLUSTER_DIR}/configs/coadd_3c_skycorr_config.py"
 
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3d_template.sh > ${PROCESSING_STEP_DIR}/coadd_3d.sh
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/coadd_3d.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3d.sh
 	
 	echo "Submitting to slurm..."
 	sbatch ${PROCESSING_STEP_DIR}/coadd_3d.sh
@@ -939,7 +842,7 @@ export_data () {
 	echo "Running STEP 16: export_data"
 
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/export_data_template.sh > ${PROCESSING_STEP_DIR}/export_data.sh
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/export_data.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/export_data.sh
 
 	# create a mock-up of the gen2 directory structure w/ calexps and cats
 	mkdir read_catalog_all_output
@@ -963,7 +866,7 @@ photometric_correction () {
 
     sed "s/cluster_name/${CLUSTER_NAME}/g; s/photom_ref/${REFCAT_INSTRUMENT}/g; s/photom_dr/${REFCAT_DATA_RELEASE}/g" ${TEMPLATE_DIR}/photometric_correction_template.sh > ${PROCESSING_STEP_DIR}/photometric_correction.sh
     
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/photometric_correction.sh
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/photometric_correction.sh
     
     echo "Submitting sbatch script..."
     sbatch ${PROCESSING_STEP_DIR}/photometric_correction.sh
@@ -982,7 +885,7 @@ photo_z () {
 
     sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/photo_z_template.sh > ${PROCESSING_STEP_DIR}/photo_z.sh
     
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/photo_z.sh
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/photo_z.sh
     
     echo "Submitting sbatch script..."
     sbatch ${PROCESSING_STEP_DIR}/photo_z.sh
@@ -1001,7 +904,7 @@ shear_calibration () {
 
     sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/shear_calibration_template.sh > ${PROCESSING_STEP_DIR}/shear_calibration.sh
     
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/shear_calibration.sh
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/shear_calibration.sh
     
     echo "Submitting sbatch script..."
     sbatch ${PROCESSING_STEP_DIR}/shear_calibration.sh
@@ -1020,7 +923,7 @@ mass_map () {
 
     sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/mass_map_template.sh > ${PROCESSING_STEP_DIR}/mass_map.sh
     
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/mass_map.sh
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/mass_map.sh
     
     echo "Submitting sbatch script..."
     sbatch ${PROCESSING_STEP_DIR}/mass_map.sh
@@ -1038,7 +941,7 @@ mass_fit () {
 
     sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/mass_fit_template.sh > ${PROCESSING_STEP_DIR}/mass_fit.sh
     
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/mass_fit.sh
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/mass_fit.sh
     
     echo "Submitting sbatch script..."
     sbatch ${PROCESSING_STEP_DIR}/mass_fit.sh
@@ -1057,7 +960,7 @@ quality_check () {
 
     sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/quality_check_template.sh > ${PROCESSING_STEP_DIR}/quality_check.sh
     
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/quality_check.sh
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/quality_check.sh
     
     echo "Submitting sbatch script..."
     sbatch ${PROCESSING_STEP_DIR}/quality_check.sh
@@ -1075,7 +978,7 @@ red_sequence () {
 
     sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/red_sequence_template.sh > ${PROCESSING_STEP_DIR}/red_sequence.sh
     
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/red_sequence.sh
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/red_sequence.sh
     
     echo "Submitting sbatch script..."
     sbatch ${PROCESSING_STEP_DIR}/red_sequence.sh
@@ -1085,7 +988,97 @@ red_sequence () {
  
 }
 
-# STEP 24: gotta blast
+# STEP 24: meta_4a
+
+meta_4a () {
+
+	echo "Running STEP 24: meta_4a"
+
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta4a_template.sh > ${PROCESSING_STEP_DIR}/meta_4a.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_4a.sh
+	
+	echo "Submitting to slurm..."
+	sbatch ${PROCESSING_STEP_DIR}/meta_4a.sh
+	prompt_wait
+
+}
+
+# STEP 25: meta_4b
+
+meta_4b () {
+
+	echo "Running STEP 26: meta_4b"
+	
+	
+	# copying over the config templates, for now these are customized
+	cp ${AUTO_PIPELINE_DIR}/config_templates/meta_4b_forced_config_template.py "${CLUSTER_DIR}/configs/meta_4b_forced_config.py"
+	cp ${AUTO_PIPELINE_DIR}/config_templates/meta_4b_measure_config_template.py "${CLUSTER_DIR}/configs/meta_4b_measure_config.py"
+	
+	for SHEARTYPE in "noshear" "1p" "1m" "2p" "2m"; do
+	
+		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta4b_template.sh > ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh
+		
+		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh
+		sed -i "s/shear_type/${SHEARTYPE}/g" ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh
+	
+		echo "Submitting to slurm..."
+	
+		if [ -z "$JOBID" ]; then
+			JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh)
+			echo "Submitted meta_4b_${SHEARTYPE} with ${JOBID}"
+		else
+			JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh)
+			echo "Submitted meta_4b_${SHEARTYPE} with ${JOBID}"
+		fi
+
+	done
+	
+	prompt_wait
+
+}
+
+# STEP 26: export metadetect data
+
+meta_export () {
+
+	echo "Running STEP 26: meta_export"
+
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_export_template.sh > ${PROCESSING_STEP_DIR}/meta_export.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_export.sh
+
+	# create a mock-up of the gen2 directory structure w/ calexps and cats
+	mkdir metadetect_export
+
+	sbatch ${PROCESSING_STEP_DIR}/meta_export.sh
+}
+
+# STEP 27: process metadetect data
+
+meta_processing () {
+
+	echo "Running STEP 27: meta_processing"
+
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_processing_template.sh > ${PROCESSING_STEP_DIR}/meta_processing.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_processing.sh
+
+	mkdir metadetect_processing
+
+	sbatch ${PROCESSING_STEP_DIR}/meta_processing.sh
+}
+
+# STEP 28: lensing w. metadetect
+
+meta_lensing () {
+
+	echo "Running STEP 28: meta_processing"
+
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_lensing_template.sh > ${PROCESSING_STEP_DIR}/meta_lensing.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_lensing.sh
+
+	sbatch ${PROCESSING_STEP_DIR}/meta_lensing.sh
+}
+
+# STEP 29: gotta blast
 
 gotta_blast () {
 
@@ -1094,7 +1087,7 @@ gotta_blast () {
     xmax=$3
     ymax=$4
     
-    prompt "Running STEP 24: gotta_blast"
+    prompt "Running STEP 29: gotta_blast"
     
     read -p "Are you sure? Deletion cannot be undone!" -n 1 -r
     echo    # (optional) move to a new line
@@ -1104,7 +1097,7 @@ gotta_blast () {
     
     sed "s/cluster_name/${CLUSTER_NAME}/g; s/xmin/${xmin}/g; s/ymin/${ymin}/g; s/xmax/${xmax}/g; s/ymax/${ymax}/g" ${TEMPLATE_DIR}/gotta_blast_template.sh > ${PROCESSING_STEP_DIR}/gotta_blast.sh
 
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/gotta_blast.sh
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/gotta_blast.sh
 
     echo "Submitting sbatch script..."
     sbatch ${PROCESSING_STEP_DIR}/gotta_blast.sh
@@ -1113,31 +1106,6 @@ gotta_blast () {
     sleep 5s
  
 }
-
-# STEP 24: triaxiality
-
-#TODO fix SExtractor configs so this works
-triaxiality () {
-
-    xmin=$1
-    ymin=$2
-    xmax=$3
-    ymax=$4
-    
-    prompt "Running STEP 24: triaxiality"
-
-    sed "s/cluster_name/${CLUSTER_NAME}/g; s/xmin/${xmin}/g; s/ymin/${ymin}/g; s/xmax/${xmax}/g; s/ymax/${ymax}/g" ${TEMPLATE_DIR}/triaxiality_template.sh > ${PROCESSING_STEP_DIR}/triaxiality.sh
-
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/triaxiality.sh
-
-    echo "Submitting sbatch script..."
-    #sbatch ${PROCESSING_STEP_DIR}/triaxiality.sh
-    prompt_wait
-    
-    sleep 5s
- 
-}
-
 
 # == RUNNING STEPS == #
 
@@ -1272,7 +1240,7 @@ triaxiality () {
 #export_data
 
 
-# == Processing with LSSTPipe is done and scripts only take a few minutes to run from here on == #
+# == Processing with LSSTPipe is mostly done and scripts only take a few minutes to run from here on == #
 
 
 #STEP17 NOTES:
@@ -1291,7 +1259,7 @@ triaxiality () {
 # Once we have a corrected catalog, it's time to identify galaxies in the field and estimate their redshift.
 # For this we use a Bayesian PhotoZ algorithm.
 
-photo_z
+#photo_z
 
 
 #STEP19 NOTES:
@@ -1333,7 +1301,24 @@ photo_z
 #red_sequence
 
 
-#STEP24 NOTES:
+# == Briefly going back to LSSTPipe for running metadetect! == #
+
+
+#STEP24-28 NOTES:
+# these steps run our implementation of metadetect
+# meta_4a runs the shears on our coadds
+# and meta_4b runs detect/deblend/measure on them, which we can use to build a robust calibration
+# meta_export collects all of the outputs from the 5 different versions of our coadds
+# meta_processing/meta_lensing finally process those coadds and run the lensing portion (including shear-calibration!)
+
+#meta_4a
+#meta_4b
+#meta_export
+#meta_processing
+#meta_lensing
+
+
+#STEP29 NOTES:
 # blast intermediate collections and other datasets, then zip the submit-directory
 
 #gotta_blast
@@ -1400,6 +1385,29 @@ ap_pipe () {
 
 }
 
+# STEP TODO: triaxiality
+
+#TODO fix SExtractor configs so this works
+triaxiality () {
+
+    xmin=$1
+    ymin=$2
+    xmax=$3
+    ymax=$4
+    
+    prompt "Running STEP 24: triaxiality"
+
+    sed "s/cluster_name/${CLUSTER_NAME}/g; s/xmin/${xmin}/g; s/ymin/${ymin}/g; s/xmax/${xmax}/g; s/ymax/${ymax}/g" ${TEMPLATE_DIR}/triaxiality_template.sh > ${PROCESSING_STEP_DIR}/triaxiality.sh
+
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/triaxiality.sh
+
+    echo "Submitting sbatch script..."
+    #sbatch ${PROCESSING_STEP_DIR}/triaxiality.sh
+    prompt_wait
+    
+    sleep 5s
+ 
+}
 
 
 
