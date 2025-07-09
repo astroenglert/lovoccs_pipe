@@ -31,6 +31,16 @@ export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 
 # generate xtalksources 
+# before generating these, check if they've been created (process_ccd can be troublesome and recreating the xtalksources w. every iteration can lead to issues
+
+# dump the query into a variable to read
+OUT="$(butler query-collections repo/repo DECam/processing/xtalksources_${BAND})"
+
+# if the chained collection does not exist, then compute the crosstalk sources
+# bash is annoying for this type of thing and the cln-interface for LSP isn't meant to be used this way...
+# but the alternative is writing a dedicated python script to run all this
+if ! [[ ${OUT} == *"DECam/processing/xtalksources_r"*"CHAINED"* ]]; then
+
 bps submit -b repo/repo \
     -i DECam/raw/all,\
 DECam/calib,DECam/calib/certified,DECam/calib/curated/19700101T000000Z,DECam/calib/unbounded \
@@ -38,6 +48,8 @@ DECam/calib,DECam/calib/certified,DECam/calib/curated/19700101T000000Z,DECam/cal
     -p DRP-LoVoCCS.yaml#step0 \
     -d "instrument='DECam' AND band='${BAND}'" \
     ${CLUSTER_DIR}/configs/bps_config.yaml
+
+fi
 
 # build the pipeline with our custom-configs
 pipetask build -p DRP-LoVoCCS.yaml#step1 \
