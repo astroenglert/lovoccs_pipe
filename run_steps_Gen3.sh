@@ -821,16 +821,16 @@ coadd_3c () {
 
 coadd_3c () {
 
-	echo "Running STEP 15: coadd_3d"
+	echo "Running STEP 15: coadd_3dc"
 
 	# copying the config templates to the cluster-config folder, for now we have no custom configs to pass to these
 	cp ${AUTO_PIPELINE_DIR}/config_templates/coadd_3c_skycorr_config_template.py "${CLUSTER_DIR}/configs/coadd_3c_skycorr_config.py"
 
-	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3d_template.sh > ${PROCESSING_STEP_DIR}/coadd_3d.sh
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3d.sh
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3c_template.sh > ${PROCESSING_STEP_DIR}/coadd_3c.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3c.sh
 	
 	echo "Submitting to slurm..."
-	sbatch ${PROCESSING_STEP_DIR}/coadd_3d.sh
+	sbatch ${PROCESSING_STEP_DIR}/coadd_3c.sh
 	prompt_wait
 
 }
