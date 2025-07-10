@@ -34,11 +34,6 @@ tasks:
       connections.newBFKernel: bfk
       doBrighterFatter: true
       
-  calibrate:
-    class: lsst.pipe.tasks.calibrate.CalibrateTask
-    config:
-      photoCal.match.referenceSelection.magLimit.fluxField: i_flux
-      photoCal.match.referenceSelection.magLimit.maximum: 22.0
   updateVisitSummary:
     class: lsst.drp.tasks.update_visit_summary.UpdateVisitSummaryTask
     config:
@@ -155,6 +150,12 @@ tasks:
       connections.inputSourceTableVisit: preSourceTable_visit
   metaShear:
     class: metadetect_shear.metadetect_shear.ShearCoaddTask
+  calibrate:
+    class: custom_pipetasks.calibrate.CalibrateTask
+    config:
+      photoCal.match.referenceSelection.magLimit.fluxField: i_flux
+      photoCal.match.referenceSelection.magLimit.maximum: 22.0
+
 subsets:
   step0:
     subset:
