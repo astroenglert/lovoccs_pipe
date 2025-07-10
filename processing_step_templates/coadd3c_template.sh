@@ -29,7 +29,7 @@ export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 export OMP_NUM_THREADS=1
 
 # build the pipeline with our custom-configs
-pipetask build -p DRP-LoVoCCS.yaml#step3d \
+pipetask build -p DRP-LoVoCCS.yaml#step3c \
     -C skyCorr:${CLUSTER_DIR}/configs/coadd_3c_skycorr_config.py \
     -c makeWarp:doApplySkyCorr=True \
     -s ${CLUSTER_DIR}/pipeline_yamls/DRP_step3c.yaml
