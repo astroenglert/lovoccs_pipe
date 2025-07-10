@@ -43,7 +43,7 @@ if ! [[ ${OUT} == *"DECam/processing/xtalksources_r"*"CHAINED"* ]]; then
 
 bps submit -b repo/repo \
     -i DECam/raw/all,\
-DECam/calib,DECam/calib/certified,DECam/calib/curated/19700101T000000Z,DECam/calib/unbounded \
+DECam/calib/curated,DECam/calib/certified,DECam/calib/curated/curated/19700101T000000Z,DECam/calib/curated/unbounded \
     -o DECam/processing/xtalksources_${BAND} \
     -p DRP-LoVoCCS.yaml#step0 \
     -d "instrument='DECam' AND band='${BAND}'" \
@@ -63,7 +63,7 @@ butler register-dataset-type repo/repo icSrc_schema SourceCatalog
 # process_ccd
 bps submit -b repo/repo \
     -i DECam/raw/all,\
-DECam/calib,DECam/calib/certified,DECam/calib/curated/19700101T000000Z,DECam/calib/unbounded,\
+DECam/calib/curated,DECam/calib/certified,DECam/calib/curated/curated/19700101T000000Z,DECam/calib/curated/unbounded,\
 DECam/processing/xtalksources_${BAND},refcats \
     -o DECam/processing/calexp_${BAND} \
     -p ${CLUSTER_DIR}/pipeline_yamls/DRP_step1_${BAND}.yaml \

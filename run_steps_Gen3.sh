@@ -178,7 +178,7 @@ initialize_repo () {
 	butler register-instrument repo/repo lsst.obs.decam.DarkEnergyCamera
 	
 	# write instrument-specific calibration frames to the repository (only a few MB)
-	butler write-curated-calibrations repo/repo lsst.obs.decam.DarkEnergyCamera
+	butler write-curated-calibrations --label curated repo/repo lsst.obs.decam.DarkEnergyCamera
 
 }
 
@@ -797,8 +797,6 @@ coadd_3b () {
 	sbatch ${PROCESSING_STEP_DIR}/coadd_3b.sh
 	prompt_wait
 
-	done
-
 }
 
 #TODO this step is now deprecated, remove after verifying that the new coadd_3a/coadd_3b/coadd_3c all work correctly
@@ -1112,7 +1110,7 @@ gotta_blast () {
 #STEP0 NOTES: 
 # After copying and pasting run_steps_Gen3 into a directory with the Cluster Name, create_output creates a series of folders and python scripts. This only takes a few seconds to run
 
-#create_output
+create_output
 
 
 #STEP1 NOTES: 
