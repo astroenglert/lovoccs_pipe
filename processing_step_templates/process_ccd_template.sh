@@ -39,7 +39,7 @@ OUT="$(butler query-collections repo/repo DECam/processing/xtalksources_${BAND})
 # if the chained collection does not exist, then compute the crosstalk sources
 # bash is annoying for this type of thing and the cln-interface for LSP isn't meant to be used this way...
 # but the alternative is writing a dedicated python script to run all this
-if ! [[ ${OUT} == *"DECam/processing/xtalksources_r"*"CHAINED"* ]]; then
+if ! [[ ${OUT} == *"DECam/processing/xtalksources_${BAND}"*"CHAINED"* ]]; then
 
 bps submit -b repo/repo \
     -i DECam/raw/all,\

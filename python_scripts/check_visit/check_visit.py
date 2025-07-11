@@ -21,7 +21,7 @@ from astropy.coordinates import SkyCoord
 from lsst.daf.butler import Butler
 
 # create a summary of a given visit
-def summary_from_stars(visit,detectors,psf_flag='calib_psf_used',band=band):
+def summary_from_stars(visit,detectors,psf_flag='calib_psf_used',band='r'):
     s = time.time()
     print("Now summarizing exposure number {visit}".format(visit=visit))
     # columns for final dataframe returned at the end
@@ -193,7 +193,7 @@ if __name__ == '__main__':
         # collect the correct arguments
         arguments = []
         for visit in process_visits:
-            arguments.append((visit,exposure_detectors[visit]))
+            arguments.append((visit,exposure_detectors[visit],'calib_psf_used',band))
             
         # create a pool for parallelization
         with Pool(len(process_visits)) as pool:
