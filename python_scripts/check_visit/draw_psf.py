@@ -178,7 +178,7 @@ if __name__ == '__main__':
         # collect the correct arguments
         arguments = []
         for visit in process_visits:
-            arguments.append((visit,band))
+            arguments.append((visit,band,fwhm_cut,ellip_cut))
             
         # create a pool for parallelization
         with Pool(len(process_visits)) as pool:
