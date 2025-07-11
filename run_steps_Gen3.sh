@@ -237,7 +237,7 @@ process_ccd_psf_formatter () {
 	U_PSF_ITER=1
 	U_MIN_FLUX=100
 	DEFAULT_FLUX=4000
-	PSF_MODEL='piff'
+	PSF_MODEL='psfex'
 	
 	# pass different min-flux for psf-candidates depending on the band
 	# u-band is generally much fainter than rgizY
