@@ -31,7 +31,7 @@ def colorbar(mappable):
     plt.sca(last_axes)
     return cbar
 
-def draw_psf(visit,band=band,fwhm_cut=fwhm_cut,ellip_cut=ellip_cut,res=120):
+def draw_psf(visit,band='r',fwhm_cut=3.8,ellip_cut=0.1,res=120):
     
     visit_summary_filepath = "check_visit/summary_tables/{band}_visit_{exp}_summary.csv".format(band=band,exp=visit)
     
