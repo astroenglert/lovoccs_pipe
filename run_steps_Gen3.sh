@@ -452,7 +452,7 @@ select_visit () {
 	sed -i "s/ellip_cut/${ELLIP}/g" ${PROCESSING_STEP_DIR}/select_visit.sh
 
 	# copying the skymap configs
-	cp ${AUTO_PIPELINE_DIR}/config_templates/skymap_config.py ${CLUSTER_DIR}/configs/skymap_config.py
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${AUTO_PIPELINE_DIR}/config_templates/skymap_config_template.py > ${CLUSTER_DIR}/configs/skymap_config.py
 
 	echo "Submitting to slurm..."
 	sbatch ${PROCESSING_STEP_DIR}/select_visit.sh
