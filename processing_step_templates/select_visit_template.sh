@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --time=48:00:00
-#SBATCH --mem=50GB
+#SBATCH --mem=200GB
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=5
 #SBATCH -J select_visit_cluster_name
