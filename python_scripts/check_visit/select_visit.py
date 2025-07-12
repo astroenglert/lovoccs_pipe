@@ -344,8 +344,14 @@ if __name__ == '__main__':
     
     where_string = where_string[:-2] + ")"
     
-    refs = butler.registry.queryDatasets(dataset_types,collections='DECam/processing/calexp_{band}'.format(band=band),where=where_string)
-    
+    # register the collection and associate the datasets
     butler.registry.registerCollection("DECam/processing/quality_detectors_{band}".format(band=band))
+    refs = butler.registry.queryDatasets(dataset_types,collections='DECam/processing/calexp_{band}'.format(band=band),where=where_string,findFirst=True)
     butler.registry.associate("DECam/processing/quality_detectors_{band}".format(band=band),refs)
+    
+    # eventually DM will move way from registry, when/if it becomes depricated the code-snippet below will collect the datasets
+    #for dtype in dataset_types:
+        #refs = butler.query_datasets(dtype,collections='DECam/processing/calexp_{band}'.format(band=band),where=where_string,find_first=True)
+        #butler.registry.associate("DECam/processing/quality_detectors_{band}".format(band=band),refs)
+
     
