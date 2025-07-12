@@ -174,9 +174,10 @@ if __name__ == '__main__':
         detector_query = butler.registry.queryDimensionRecords('detector',datasets='calexp',collections='DECam/processing/calexp_{band}'.format(band=band),dataId={'instrument' : 'DECam' , 'visit' : id})
         
         # collect those detectors together and add them to the dictionary
+        # select unique detectors in case the above query picks up on multiple run collections chained to DECam/processing/calexp_{band}; the butler will take care of selecting the most recent collection when getting the dataset
         for result in detector_query:
             detectors.append(result.id)
-        exposure_detectors[id] = detectors
+        exposure_detectors[id] = np.unique(detectors)
         
     # I can only run up to 20 visits in parallel at a time...
     # so split the visits into (nearly) groups of 20
