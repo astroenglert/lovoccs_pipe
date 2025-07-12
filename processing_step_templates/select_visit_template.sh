@@ -51,7 +51,8 @@ done
 echo "Creating the skymap..."
 
 # create the skymap
-butler make-discrete-skymap -C configs/skymap_config.py --collections DECam/processing/quality_detectors_u,DECam/processing/quality_detectors_g,DECam/processing/quality_detectors_i,DECam/processing/quality_detectors_r,DECam/processing/quality_detectors_z --skymap-id "${CLN}_skymap" repo/repo DECam
+#butler make-discrete-skymap -C configs/skymap_config.py --collections DECam/processing/quality_detectors_u,DECam/processing/quality_detectors_g,DECam/processing/quality_detectors_i,DECam/processing/quality_detectors_r,DECam/processing/quality_detectors_z --skymap-id "${CLN}_skymap" repo/repo DECam
+butler register-skymap -C configs/skymap_config.py repo/repo
 
 
 echo "Plotting the skymap..."
