@@ -36,7 +36,7 @@ pipetask build -p DRP-LoVoCCS.yaml#step2b \
 # using pipetask didn't yield an increase in runtime AND caused read/write errors
 # so going back to bps for this
 bps submit -b repo/repo \
-    -i DECam/calib/unbounded,DECam/processing/visit_summary_${BAND},refcats \
+    -i DECam/calib/curated/unbounded,DECam/processing/visit_summary_${BAND},refcats \
     -o DECam/processing/jointcal_${BAND} \
     -p ${CLUSTER_DIR}/pipeline_yamls/DRP_step2b_${BAND}.yaml \
     -d "instrument='DECam' AND band='${BAND}' AND skymap='${CLN}_skymap'" \
