@@ -1085,7 +1085,97 @@ red_sequence () {
  
 }
 
-# STEP 24: gotta blast
+# STEP 24: meta_4a
+
+meta_4a () {
+
+	echo "Running STEP 24: meta_4a"
+
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta4a_template.sh > ${PROCESSING_STEP_DIR}/meta_4a.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_4a.sh
+	
+	echo "Submitting to slurm..."
+	sbatch ${PROCESSING_STEP_DIR}/meta_4a.sh
+	prompt_wait
+
+}
+
+# STEP 25: meta_4b
+
+meta_4b () {
+
+	echo "Running STEP 26: meta_4b"
+	
+	
+	# copying over the config templates, for now these are customized
+	cp ${AUTO_PIPELINE_DIR}/config_templates/meta_4b_forced_config_template.py "${CLUSTER_DIR}/configs/meta_4b_forced_config.py"
+	cp ${AUTO_PIPELINE_DIR}/config_templates/meta_4b_measure_config_template.py "${CLUSTER_DIR}/configs/meta_4b_measure_config.py"
+	
+	for SHEARTYPE in "noshear" "1p" "1m" "2p" "2m"; do
+	
+		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta4b_template.sh > ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh
+		
+		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh
+		sed -i "s/shear_type/${SHEARTYPE}/g" ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh
+	
+		echo "Submitting to slurm..."
+	
+		if [ -z "$JOBID" ]; then
+			JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh)
+			echo "Submitted meta_4b_${SHEARTYPE} with ${JOBID}"
+		else
+			JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/meta_4b_${SHEARTYPE}.sh)
+			echo "Submitted meta_4b_${SHEARTYPE} with ${JOBID}"
+		fi
+
+	done
+	
+	prompt_wait
+
+}
+
+# STEP 26: export metadetect data
+
+meta_export () {
+
+	echo "Running STEP 26: meta_export"
+
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_export_template.sh > ${PROCESSING_STEP_DIR}/meta_export.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_export.sh
+
+	# create a mock-up of the gen2 directory structure w/ calexps and cats
+	mkdir metadetect_export
+
+	sbatch ${PROCESSING_STEP_DIR}/meta_export.sh
+}
+
+# STEP 27: process metadetect data
+
+meta_processing () {
+
+	echo "Running STEP 27: meta_processing"
+
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_processing_template.sh > ${PROCESSING_STEP_DIR}/meta_processing.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_processing.sh
+
+	mkdir metadetect_processing
+
+	sbatch ${PROCESSING_STEP_DIR}/meta_processing.sh
+}
+
+# STEP 28: lensing w. metadetect
+
+meta_lensing () {
+
+	echo "Running STEP 28: meta_processing"
+
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_lensing_template.sh > ${PROCESSING_STEP_DIR}/meta_lensing.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_lensing.sh
+
+	sbatch ${PROCESSING_STEP_DIR}/meta_lensing.sh
+}
+
+# STEP 29: gotta blast
 
 gotta_blast () {
 
@@ -1291,7 +1381,7 @@ triaxiality () {
 # Once we have a corrected catalog, it's time to identify galaxies in the field and estimate their redshift.
 # For this we use a Bayesian PhotoZ algorithm.
 
-photo_z
+#photo_z
 
 
 #STEP19 NOTES:
@@ -1332,6 +1422,21 @@ photo_z
 
 #red_sequence
 
+# == Briefly going back to LSSTPipe for running metadetect! == #
+
+
+#STEP24-28 NOTES:
+# these steps run our implementation of metadetect
+# meta_4a runs the shears on our coadds
+# and meta_4b runs detect/deblend/measure on them, which we can use to build a robust calibration
+# meta_export collects all of the outputs from the 5 different versions of our coadds
+# meta_processing/meta_lensing finally process those coadds and run the lensing portion (including shear-calibration!)
+
+#meta_4a
+#meta_4b
+#meta_export
+#meta_processing
+#meta_lensing
 
 #STEP24 NOTES:
 # blast intermediate collections and other datasets, then zip the submit-directory
