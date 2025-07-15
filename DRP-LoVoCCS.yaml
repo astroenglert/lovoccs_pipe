@@ -35,7 +35,7 @@ tasks:
       doBrighterFatter: true
       
   calibrate:
-    class: lsst.pipe.tasks.calibrate.CalibrateTask
+    class: custom_pipetasks.calibrate.CalibrateTask
     config:
       photoCal.match.referenceSelection.magLimit.fluxField: i_flux
       photoCal.match.referenceSelection.magLimit.maximum: 22.0
