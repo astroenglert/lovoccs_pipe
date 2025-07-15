@@ -36,7 +36,7 @@ mkdir -p corrupt_raws
 # begin checking each raw file
 for file in raws/*.fz; do
 	echo "Verifying ${file}"
-	python python_scripts/check_data.py "${file}" ${SLURM_ARRAY_TASK_ID} ${SLURM_ARRAY_TASK_MAX} > raws/out_${SLURM_ARRAY_TASK_ID}.txt
+	python python_scripts/noirlab_download/check_data.py "${file}" ${SLURM_ARRAY_TASK_ID} ${SLURM_ARRAY_TASK_MAX} > raws/out_${SLURM_ARRAY_TASK_ID}.txt
 	# not-empty output imples an intact file!
 	if [ -s raws/out_${SLURM_ARRAY_TASK_ID}.txt ]; then
 		rm -r raws/out_${SLURM_ARRAY_TASK_ID}.txt
