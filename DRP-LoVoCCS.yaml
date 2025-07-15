@@ -33,7 +33,13 @@ tasks:
       doCrosstalk: true
       connections.newBFKernel: bfk
       doBrighterFatter: true
-      
+  measure:
+    class: custom_pipetasks.multiBand.MeasureMergedCoaddSourcesTask
+    config:
+      # disable matches to the refcats so we can run these neatly in parallel
+      python : |
+        config.doMatchSources=False
+        config.doWriteMatchesDenormalized=False
   calibrate:
     class: custom_pipetasks.calibrate.CalibrateTask
     config:
