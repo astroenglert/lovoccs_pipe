@@ -548,6 +548,10 @@ jointcal () {
 	# because different clusters pull from various catalogs, separate configs are created for each band
 	# the for-loops here are a little lazy... but there isn't any tangible benefit to handling it more neatly
 	# CATALOG is the photometry catalog, BAND is the band to process using this catalog
+	
+	# delay successive submissions by ~10min to prevent conflicts later
+	# this isn't foolproof... but works surprisingly well!
+	DELAY=0
 	for INPUT in "$@"; do
 		CATALOG=${INPUT/%,*/}
 		BAND=${INPUT/#*,/}
@@ -633,8 +637,8 @@ jointcal () {
 		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 
 		echo "Submitting to slurm..."
-		sbatch ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
-		sleep 20m
+		DELAY=$((${DELAY} + 600))
+		sbatch --time=now+${DELAY} ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 		
 		# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish!
 		# jointcal is single-threaded, so we don't need to hand it all resources, but I'll leave this here in case we need it later
@@ -1296,7 +1300,7 @@ triaxiality () {
 # it will not be writing any outputs. In this case the fix is simply cancelling that job...
 # The "admin" script (process_ccd_BAND_CLN) will automatically resubmit a new set of managers/workers.
 
-process_ccd sdss,u ps1,g ps1,r ps1,i ps1,z ps1,y
+#process_ccd sdss,u ps1,g ps1,r ps1,i ps1,z ps1,y
 
 
 #STEP7+8 NOTES: 
@@ -1314,7 +1318,7 @@ process_ccd sdss,u ps1,g ps1,r ps1,i ps1,z ps1,y
 # This runs step2a of DRP. Taking the best CCD's following select_visit, we create final visit summaries
 # which are required for jointcal. This only takes a few minutes to run...
 
-#visit_summary u g r i z
+visit_summary u g r i z
 
 
 #STEP10 NOTES: 
