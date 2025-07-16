@@ -794,113 +794,38 @@ coadd_3b () {
 	
 	# neither coadd_3b nor 3c have the same memory failures...
 	# but since measure and forcedPhotom (3c) take so long to run, it's more efficient to evenly distribute resources
-	echo "Creating new BPS config..."
-	
-	ALLOC=$((CORES/(5*2)))
-	MEM_ALLOC=$((RAM/(5*2)))
+	#echo "Creating new BPS config..."
+	#
+	#ALLOC=$((CORES/(5*2)))
+	#MEM_ALLOC=$((RAM/(5*2)))
 	# two nodes by default for coadd_3b
-	echo "Allocating 2 nodes, ${ALLOC} cores, and ${MEM_ALLOC} GB of RAM per node for each band"
-	bps_config_formatter 2 ${ALLOC} ${MEM_ALLOC} "48:00:00" "_coadd3b"
+	#echo "Allocating 2 nodes, ${ALLOC} cores, and ${MEM_ALLOC} GB of RAM per node for each band"
+	#bps_config_formatter 2 ${ALLOC} ${MEM_ALLOC} "48:00:00" "_coadd3b"
+	# now that all the bands are processed together, I can let bps take care of the resource alloc
+	
 	
 	# because different clusters pull from various catalogs, separate configs are created for each band
 	# the for-loops here are a little lazy... but there isn't any tangible benefit to handling it more neatly
 	# CATALOG is the photometry catalog, BAND is the band to process using this catalog
-	for INPUT in "$@"; do
-		CATALOG=${INPUT/%,*/}
-		BAND=${INPUT/#*,/}
-		
-		# ps1 formatting
-		if [ "${CATALOG}" == "ps1" ]; then
-			PS1_BANDS=('g' 'r' 'i' 'z' 'y')
-			PS1_MAPS=('gmag' 'rmag' 'imag' 'zmag' 'ymag')
-			
-			for i in ${!PS1_BANDS[@]}; do
-				if [ "${PS1_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}" "${PS1_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: PS1 does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		# sky-mapper dr1 formatting
-		if [ "${CATALOG}" == "sm_dr1" ]; then
-			SM1_BANDS=('u' 'g' 'r' 'i' 'z')
-			SM1_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
-			SM1_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
-			
-			for i in ${!SM1_BANDS[@]}; do
-				if [ "${SM1_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}_${SM1_CAT_BANDS[$i]}" "${SM1_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: SM_DR1 does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		# sky-mapper dr2 formatting
-		if [ "${CATALOG}" == "sm_dr2" ]; then
-			SM2_BANDS=('u' 'g' 'r' 'i' 'z')
-			SM2_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
-			SM2_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
-			
-			for i in ${!SM2_BANDS[@]}; do
-				if [ "${SM2_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}_${SM2_CAT_BANDS[$i]}" "${SM2_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: SM_DR2 does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		# sdss formatting
-		if [ "${CATALOG}" == "sdss" ]; then
-			SDSS_BANDS=('u')
-			SDSS_MAPS=('upmag')
-			
-			for i in ${!SDSS_BANDS[@]}; do
-				if [ "${SDSS_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}" "${SDSS_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 0 ]; then echo "ERROR: SDSS does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		if [ "${CATALOG}" == "des_dr2" ]; then
-			DES_BANDS=('g' 'r' 'i' 'z' 'y')
-			DES_MAPS=('wavg_mag_psf_g' 'wavg_mag_psf_r' 'wavg_mag_psf_i' 'wavg_mag_psf_z' 'wavg_mag_psf_y')
-			
-			for i in ${!DES_BANDS[@]}; do
-				if [ "${DES_BANDS[$i]}" == "$BAND" ]; then 
-					coadd_3b_formatter "${CATALOG}" "${DES_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: DES does not contain ${BAND}"; return; fi
-			done
-		fi
 
-		# pass the cluster name and band into the template
-		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3b_template.sh > ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh
-		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh
-		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh
-
-		echo "Submitting to slurm..."
-		
-		# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish.
-		# but since coadd_3b has such a long runtime... it's a little bit better to submit these as separate tasks rather than dependencies
-		#if [ -z "$JOBID" ]; then
-		#	JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh)
-		#	echo "Submitted coadd_3b_${BAND} with ${JOBID}"
-		#else
-		#	JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh)
-		#	echo "Submitted coadd_3b_${BAND} with ${JOBID}"
-		#fi
-		
-		sbatch ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh
-		sleep 20m
-
-	done
+	# pass the cluster name and band into the template
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3b_template.sh > ${PROCESSING_STEP_DIR}/coadd_3b.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3b.sh
+	echo "Submitting to slurm..."
+	
+	# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish.
+	# but since coadd_3b has such a long runtime... it's a little bit better to submit these as separate tasks rather than dependencies
+	#if [ -z "$JOBID" ]; then
+	#	JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh)
+	#	echo "Submitted coadd_3b_${BAND} with ${JOBID}"
+	#else
+	#	JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh)
+	#	echo "Submitted coadd_3b_${BAND} with ${JOBID}"
+	#fi
+	
+	echo "Submitting to slurm..."
+	sbatch ${PROCESSING_STEP_DIR}/coadd_3b.sh
+	prompt_wait
 
 }
 
@@ -1332,7 +1257,7 @@ triaxiality () {
 
 # Options are des_dr2 (g,r,i,z,y), ps1 (g,r,i,z,y), sdss (u-band only), sm_dr1_(g,i,r,v,z), sm_dr2_BAND_(g,i,r,v,z) the arguments here and in coadd_3b should be identical to the input of process_ccd
 
-jointcal sdss,u ps1,g ps1,r ps1,i ps1,z
+#jointcal sdss,u ps1,g ps1,r ps1,i ps1,z
 
 
 #STEP11 NOTES: 
@@ -1353,7 +1278,7 @@ jointcal sdss,u ps1,g ps1,r ps1,i ps1,z
 # it may not be very useful to merge them
 
 #coadd_3a
-#coadd_3b sdss,u ps1,g ps1,r ps1,i ps1,z
+coadd_3b
 #coadd_3c
 #coadd_3d
 

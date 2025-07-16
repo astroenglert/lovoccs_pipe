@@ -4,9 +4,9 @@
 #SBATCH --mem=50GB
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
-#SBATCH -J coadd_3b_process_cluster_name
-#SBATCH -o slurm_outputs/coadd_3b_process_cluster_name-%j.out
-#SBATCH -e slurm_outputs/coadd_3b_process_cluster_name-%j.err
+#SBATCH -J coadd_3b_cluster_name
+#SBATCH -o slurm_outputs/coadd_3b_cluster_name-%j.out
+#SBATCH -e slurm_outputs/coadd_3b_cluster_name-%j.err
 
 # defining variables
 # TEXT REPLACED FOR TEMPLATES
@@ -39,5 +39,5 @@ bps submit -b repo/repo \
     -o DECam/processing/coadd_3b \
     -p ${CLUSTER_DIR}/pipeline_yamls/DRP_step3b.yaml \
     -d "instrument='DECam' AND skymap='${CLN}_skymap'" \
-    ${CLUSTER_DIR}/configs/bps_config_coadd3b.yaml
+    ${CLUSTER_DIR}/configs/bps_config.yaml
 

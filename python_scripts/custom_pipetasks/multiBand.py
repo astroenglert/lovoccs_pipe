@@ -356,7 +356,7 @@ class MeasureMergedCoaddSourcesConnections(PipelineTaskConnections,
 
         if config.doMatchSources is False:
             self.outputs -= set(("matchResult",))
-            self.inputs -= set(("refCat",))
+            self.prerequisiteInputs -= set(("refCat",))
 
         if config.doWriteMatchesDenormalized is False:
             self.outputs -= set(("denormMatches",))

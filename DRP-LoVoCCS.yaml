@@ -56,7 +56,7 @@ tasks:
     class: lsst.pipe.tasks.makeWarp.MakeWarpTask
     config:
       # These configs match obs_subaru, to facilitate 1:1 comparisons between DECam and HSC
-      matchingKernelSize: 21
+      matchingKernelSize: 29
       modelPsf.defaultFwhm: 7.7
       warpAndPsfMatch.warp.warpingKernelName: lanczos5
       coaddPsf.warpingKernelName: lanczos5
@@ -70,7 +70,7 @@ tasks:
         config.select.maxScaledSizeScatter=None
         config.select.maxPsfTraceRadiusDelta=None
   templateGen:
-    class: lsst.drp.tasks.assemble_coadd.CompareWarpAssembleCoaddTask
+    class: lsst.pipe.tasks.assembleCoadd.CompareWarpAssembleCoaddTask
     config:
       # These configs match obs_subaru, to facilitate 1:1 comparisons between DECam and HSC
       matchingKernelSize: 29
@@ -90,7 +90,7 @@ tasks:
         from lsst.pipe.tasks.selectImages import PsfWcsSelectImagesTask
         config.select.retarget(PsfWcsSelectImagesTask)
   assembleCoadd:
-    class: lsst.drp.tasks.assemble_coadd.CompareWarpAssembleCoaddTask
+    class: lsst.pipe.tasks.assembleCoadd.CompareWarpAssembleCoaddTask
     config:
       # These configs match obs_subaru, to facilitate 1:1 comparisons between
       # DECam and HSC
@@ -132,12 +132,14 @@ tasks:
     class: lsst.pipe.tasks.deblendCoaddSourcesPipeline.DeblendCoaddSourcesMultiTask
     config:
       # large ellipticals in cluster fields can exceed the default blending cutoffs
+      # if this starts to cause memory issues, I'll backpedal and enable maxAreaTimesPeaks
+      # but I suspect each task will have enough to deal with the larger footprints on Oscar
       python: |
-        config.multibandDeblend.maxFootprintArea=int(3e6)
-        config.multibandDeblend.maxAreaTimesPeaks=int(6e8)
+        config.multibandDeblend.maxFootprintArea=-1
+        config.multibandDeblend.maxAreaTimesPeaks=-1
         config.multibandDeblend.maxFootprintSize=-1
         config.multibandDeblend.minFootprintAxisRatio=-1
-        config.multibandDeblend.maxSpectrumCutoff=int(3e7)
+        config.multibandDeblend.maxSpectrumCutoff=-1
   jointcal:
     class: lsst.jointcal.JointcalTask
     config:
@@ -216,19 +218,18 @@ subsets:
     subset:
       - makeWarp
       - assembleCoadd
+    description: |
+      The first portion of DRP-step3.
+  step3b:
+    subset:
       - detection
       - mergeDetections
       - deblend
-    description: |
-      The first portion of DRP-step3.
-  
-  step3b:
-    subset:
       - measure
     description: |
-      Since LoVoCCs uses separate reference catalogs depending on the band, 
-      we have to run detection separately and clobber the outputs.
-  
+      Running detection/merge/deblend isn't too intensive usually,
+      so I've grouped them together with the more intensive measure step
+    
   step3c:
     subset:
       - writeObjectTable
