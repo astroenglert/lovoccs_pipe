@@ -630,10 +630,6 @@ class MeasureMergedCoaddSourcesTask(PipelineTask):
                 inputs['visitCatalogs'] = inputCatalogsToKeep
                 inputs['wcsUpdates'] = inputCatalogWcsUpdate
                 inputs['ccdInputs'] = ccdInputs
-        
-        # HARD-CODED CHANGE HERE
-        # Manually pop the refCat since it doesn't seem to want to go away
-        temp = inputs.pop('refCat')
 
         outputs = self.run(**inputs)
         # Strip HeavyFootprints to save space on disk
