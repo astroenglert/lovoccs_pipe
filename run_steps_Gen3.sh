@@ -637,8 +637,9 @@ jointcal () {
 		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 
 		echo "Submitting to slurm..."
+		
+		sbatch --begin=now+${DELAY} ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 		DELAY=$((${DELAY} + 600))
-		sbatch --time=now+${DELAY} ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 		
 		# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish!
 		# jointcal is single-threaded, so we don't need to hand it all resources, but I'll leave this here in case we need it later
@@ -1318,7 +1319,7 @@ triaxiality () {
 # This runs step2a of DRP. Taking the best CCD's following select_visit, we create final visit summaries
 # which are required for jointcal. This only takes a few minutes to run...
 
-visit_summary u g r i z
+#visit_summary u g r i z
 
 
 #STEP10 NOTES: 
@@ -1331,7 +1332,7 @@ visit_summary u g r i z
 
 # Options are des_dr2 (g,r,i,z,y), ps1 (g,r,i,z,y), sdss (u-band only), sm_dr1_(g,i,r,v,z), sm_dr2_BAND_(g,i,r,v,z) the arguments here and in coadd_3b should be identical to the input of process_ccd
 
-#jointcal sdss,u ps1,g ps1,r ps1,i ps1,z
+jointcal sdss,u ps1,g ps1,r ps1,i ps1,z
 
 
 #STEP11 NOTES: 
