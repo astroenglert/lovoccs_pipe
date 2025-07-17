@@ -25,7 +25,7 @@ if __name__ == '__main__':
         sl_bias_filename = sys.argv[3]
         output_filename = sys.argv[4]
         update_err = True
-    if len(sys.argv) == 6:
+    elif len(sys.argv) == 6:
         catalog_filename = sys.argv[1]
         ct_bias_filename = sys.argv[2]
         sl_bias_filename = sys.argv[3]
