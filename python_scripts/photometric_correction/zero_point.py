@@ -14,10 +14,6 @@ from ..configs.photometric_correction_config import use_locus
 
 if __name__ == '__main__':
     
-    if len(sys.argv) != 5:
-        print("python zero_point.py catalog color_term_residual stellar_locus_residual output_filename")
-        raise Exception("Improper Usage! Correct usage: python zero_point.py catalog color_term_residual stellar_locus_residual output_filename")
-    
     # loading arguments from cln
     if len(sys.argv) == 5:
         catalog_filename = sys.argv[1]
