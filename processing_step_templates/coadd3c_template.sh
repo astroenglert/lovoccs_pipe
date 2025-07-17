@@ -35,7 +35,7 @@ pipetask build -p DRP-LoVoCCS.yaml#step3c \
 
 # step3a assembleCoadd, detect, deblend
 bps submit -b repo/repo \
-    -i DECam/processing/coadd_3a,DECam/processing/coadd_3b_u,DECam/processing/coadd_3b_g,DECam/processing/coadd_3b_r,DECam/processing/coadd_3b_i,DECam/processing/coadd_3b_z,skymaps \
+    -i DECam/processing/coadd_3a,DECam/processing/coadd_3b,skymaps \
     -o DECam/processing/coadd_3c \
     -p ${CLUSTER_DIR}/pipeline_yamls/DRP_step3c.yaml \
     -d "instrument='DECam' AND skymap='${CLN}_skymap'" \
