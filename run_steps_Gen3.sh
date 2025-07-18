@@ -857,7 +857,7 @@ coadd_3d () {
 	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3d.sh
 	
 	echo "Submitting to slurm..."
-	sbatch ${PROCESSING_STEP_DIR}/coadd_3d.sh
+	#sbatch ${PROCESSING_STEP_DIR}/coadd_3d.sh
 	prompt_wait
 
 }
@@ -1080,17 +1080,27 @@ meta_export () {
 }
 
 # STEP 27: process metadetect data
+#TODO speed this up by splitting it per-shear
 
 meta_processing () {
 
 	echo "Running STEP 27: meta_processing"
-
-	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_processing_template.sh > ${PROCESSING_STEP_DIR}/meta_processing.sh
-	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_processing.sh
-
+	
 	mkdir metadetect_processing
+	
+	# split this into 5 separate shears to process
+	for SHEARTYPE in "noshear" "1p" "2p" "1m" "2m"; do 
+	
+	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_processing_template.sh > ${PROCESSING_STEP_DIR}/meta_processing_${SHEARTYPE}.sh
+	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_processing_${SHEARTYPE}.sh
+	sed -i "s|shear_type|${SHEARTYPE}|g" ${PROCESSING_STEP_DIR}/meta_processing_${SHEARTYPE}.sh
 
-	sbatch ${PROCESSING_STEP_DIR}/meta_processing.sh
+	sbatch ${PROCESSING_STEP_DIR}/meta_processing_${SHEARTYPE}.sh
+	
+	done
+	
+	prompt_wait
+	
 }
 
 # STEP 28: lensing w. metadetect
@@ -1278,7 +1288,7 @@ triaxiality () {
 # it may not be very useful to merge them
 
 #coadd_3a
-coadd_3b
+#coadd_3b
 #coadd_3c
 #coadd_3d
 
@@ -1366,7 +1376,7 @@ coadd_3b
 #meta_4b
 #meta_export
 #meta_processing
-#meta_lensing
+meta_lensing
 
 #STEP24 NOTES:
 # blast intermediate collections and other datasets, then zip the submit-directory
