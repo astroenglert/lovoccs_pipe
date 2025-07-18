@@ -7,7 +7,8 @@ config.doPropagateFlags=False
 config.doWriteMatchesDenormalized=False
 
 # stripped down for measurement list for metadetect, only shape+photometry and other essetials
-config.measurement.plugins.names=['base_Blendedness', 'base_CircularApertureFlux', 'base_ClassificationSizeExtendedness', 'base_GaussianFlux', 'base_InputCount', 'base_LocalBackground', 'base_LocalPhotoCalib', 'base_LocalWcs', 'base_PixelFlags', 'base_PsfFlux', 'base_SdssCentroid', 'base_SdssShape', 'base_SkyCoord', 'base_Variance', 'ext_shapeHSM_HigherOrderMomentsPSF', 'ext_shapeHSM_HigherOrderMomentsSource', 'ext_shapeHSM_HsmPsfMoments', 'ext_shapeHSM_HsmPsfMomentsDebiased', 'ext_shapeHSM_HsmShapeRegauss', 'ext_shapeHSM_HsmSourceMoments', 'ext_shapeHSM_HsmSourceMomentsRound', 'modelfit_CModel', 'ext_shapeHSM_HsmShapeKsb', 'ext_simpleShape_SimpleShape', 'modelfit_DoubleShapeletPsfApprox' ]
+# HSM needs to be run to avoid a validation error, but no point in running others (e.g. KSB)
+config.measurement.plugins.names=['base_Blendedness', 'base_CircularApertureFlux', 'base_GaussianFlux', 'base_InputCount', 'base_LocalBackground', 'base_LocalPhotoCalib', 'base_LocalWcs', 'base_PixelFlags', 'base_PsfFlux', 'base_SdssCentroid', 'base_SdssShape', 'base_SkyCoord', 'base_Variance', 'ext_shapeHSM_HsmPsfMoments', 'ext_shapeHSM_HsmShapeRegauss', 'ext_shapeHSM_HsmSourceMoments', 'ext_shapeHSM_HsmSourceMomentsRound', 'modelfit_CModel', 'ext_simpleShape_SimpleShape', 'modelfit_DoubleShapeletPsfApprox' ]
 
 # 12.0 is the default used as a reference instFlux, which is required
 config.measurement.plugins['base_CircularApertureFlux'].radii=[12.0]
