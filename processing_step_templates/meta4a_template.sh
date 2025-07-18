@@ -39,7 +39,7 @@ PATCHES="(40..43, 51..56, 63..68, 75..80, 87..92, 100..103)"
 
 # step3a assembleCoadd, detect, deblend
 bps submit -b repo/repo \
-    -i DECam/processing/coadd_3a,refcats,skymaps \
+    -i DECam/processing/coadd_3a,DECam/processing/coadd_3b,refcats,skymaps \
     -o DECam/processing/meta_4a \
     -p ${CLUSTER_DIR}/pipeline_yamls/DRP_step4a.yaml \
     -d "instrument='DECam' AND skymap='${CLN}_skymap' AND ( patch IN ${PATCHES} )" \
