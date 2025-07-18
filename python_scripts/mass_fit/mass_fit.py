@@ -14,12 +14,15 @@ from scipy.optimize import minimize
 from scipy import interpolate
 from scipy import stats
 
+from lsst.daf.butler import Butler
 
 import matplotlib.pyplot as pl
 
 from astropy.io import ascii, fits
 from astropy.table import Table, hstack, vstack
 from astropy.wcs import WCS
+from astropy.wcs.utils import skycoord_to_pixel, pixel_to_skycoord
+from astropy.coordinates import SkyCoord
 
 from astropy.cosmology import FlatLambdaCDM
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -388,45 +391,41 @@ def draw_plots_map(cluster_center_x,cluster_center_y,peak_sn,resolution,output_d
 if __name__ == '__main__':
     
     # collecting arguments from cln
-    if len(sys.argv) == 9:
+    if len(sys.argv) == 8:
 
         table_filename = sys.argv[1]
         Map_table_filename = sys.argv[2]
         cluster_name = sys.argv[3]
-        sample_spacing = int(sys.argv[4]) #TODO this and lower-patch can be removed when mass_map outputs either on-sky OR in 00-1111 WCS
-        output_directory = sys.argv[5]
-        cores = int(sys.argv[6])
-        instrument = sys.argv[7]
-        apply_cuts = int(sys.argv[8])
-        lower_patch = (3,3)
-        
-    elif len(sys.argv) == 10:
-    
-        table_filename = sys.argv[1]
-        Map_table_filename = sys.argv[2]
-        cluster_name = sys.argv[3]
-        sample_spacing = int(sys.argv[4]) 
-        output_directory = sys.argv[5]
-        cores = int(sys.argv[6])
-        instrument = sys.argv[7]
-        apply_cuts = int(sys.argv[8])
-        lower_patch = sys.argv[9].split(',')
-    
+        output_directory = sys.argv[4]
+        cores = int(sys.argv[5])
+        instrument = sys.argv[6]
+        apply_cuts = int(sys.argv[7])
+            
     else:
     
         print("python mass_map.py table coadd grid_resolution filter output_directory cores [OPTIONAL: LOWER_PATCH]")
         raise Exception("Improper Usage! Correct usage: python mass_map.py table coadd grid_resolution filter output_directory cores [OPTIONAL: LOWER_PATCH]")
+    
+    # first load the WCS for the skymap
+    butler = Butler('repo/repo')
+    
+    skymap = butler.get('skyMap',collections='skymaps',dataId={'instrument':'DECam','tract':0,'skymap':'{CLN}_skymap'.format(CLN=cluster_name)})
+    
+    for tract in skymap:
+        print(skymap.config)
+    
+    wcs = WCS(tract.wcs.getFitsMetadata())
     
     # load and cut the table
     table = ascii.read(table_filename)
     if apply_cuts:
         table = load_quality_cuts(table,quality_cuts=quality_cuts)
     basename = Path(table_filename).stem
-    #table.write(output_directory + basename + '_mass_fit_cut.csv',format='ascii.csv',overwrite=True)
+    table.write(output_directory + basename + '_mass_fit_cut.csv',format='ascii.csv',overwrite=True)
 
     peak_table = ascii.read(Map_table_filename)
     
-    # by default, run 1000 bootstraps
+    # by default, run 2000 bootstraps
     realizations = 2000
     
     # load resolution
@@ -439,7 +438,9 @@ if __name__ == '__main__':
     num_peaks = 1
     peak_SN = np.max(peak_table['SN_peak'])
     cluster_peak_index = np.argmin(np.abs(peak_SN - peak_table['SN_peak']))
-    cluster_centers = [(int(lower_patch[0])*4000 + sample_spacing*(peak_table['x_sn_max'][cluster_peak_index] + 1/2),int(lower_patch[1])*4000 + sample_spacing*(peak_table['y_sn_max'][cluster_peak_index] + 1/2))]
+    cluster_centers = SkyCoord(ra=peak_table['ra'][cluster_peak_index],dec=peak_table['dec'][cluster_peak_index],unit='degree')
+    cluster_centers = skycoord_to_pixel(cluster_centers,wcs=wcs)
+    cluster_centers = [(cluster_centers[0],cluster_centers[1])]
     
     aperture_sizes = [peak_table['aperture_size'][cluster_peak_index]]
     cluster_peak_sn = [peak_table['SN_peak'][cluster_peak_index]]

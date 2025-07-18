@@ -25,5 +25,5 @@ setup lsst_distrib
 mkdir mass_fit_output
 
 # this step just requires calling the corresponding python script
-python -m python_scripts.mass_fit.mass_fit "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "mass_map_output/Map_E_peak_catalog_schirmer.csv" "${CLN}" "100" "mass_fit_output/" "20" "decam" "1" #(3,3) call to lower patch here is optional, but needs to be tweaked if different patches are used when computing the mass_map; default assumes 33-88... eventually we can drop this when mass_map is either running on-sky or outputting in a different wcs
+python -m python_scripts.mass_fit.mass_fit "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "mass_map_output/Map_E_peak_catalog_schirmer.csv" "${CLN}" "mass_fit_output/" "20" "decam" "1"
 

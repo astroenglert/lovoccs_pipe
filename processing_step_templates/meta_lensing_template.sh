@@ -63,6 +63,5 @@ fi
 
 
 # FINALLY, run mass_fit
-python -m python_scripts.mass_fit.mass_fit "meta_lensing_output/calibrate/${CLN}_noshear_dered_dezp_zphot_gals_meta_cal.csv" "meta_lensing_output/mass_map/Map_E_peak_catalog_schirmer.csv" "${CLN}" "100" "meta_lensing_output/mass_fit/" "20" "decam" "0" #(3,3) call to lower patch here is optional, but needs to be tweaked if different patches are used when computing the mass_map; default assumes 33-88... eventually we can drop this when mass_map is either running on-sky or outputting in a different wcs
-
+python -m python_scripts.mass_fit.mass_fit "meta_lensing_output/calibrate/${CLN}_noshear_dered_dezp_zphot_gals_meta_cal.csv" "meta_lensing_output/mass_map/Map_E_peak_catalog_schirmer.csv" "${CLN}" "meta_lensing_output/mass_fit/" "20" "decam" "0"
 
