@@ -82,7 +82,7 @@ if __name__ == '__main__':
         shape_type = 'sdss'
         xx = data_out[shape_type + '_xx']
         xx_err = data_out[shape_type + '_xx_err']
-        yy = data_out[shape_type + 'yy']
+        yy = data_out[shape_type + '_yy']
         yy_err = data_out[shape_type + '_yy_err']
         xy = data_out[shape_type + '_xy']
         xy_err = data_out[shape_type + '_xy_err']
