@@ -42,7 +42,7 @@ python -m python_scripts.metadetect_shear.meta_calibrate "metadetect_processing/
 
 # NEXT, run mass_map!
 COADD="combine_patch_color_output/${CLN}_r33-88_deepCoadd.fits"
-python -m python_scripts.mass_map.mass_map "meta_lensing_output/calibrate/${CLN}_noshear_dered_dezp_zphot_gals_meta_cal.csv" "${COADD}" "schirmer" "100" "meta_lensing_output/mass_map/" "20" "decam" "0" #(3,3)
+python -m python_scripts.mass_map.mass_map "meta_lensing_output/calibrate/${CLN}_noshear_dered_dezp_zphot_gals_meta_cal.csv" "100" "1.8" "meta_lensing_output/mass_map/" "20" "decam" "1" "${CLN}" "schirmer"
 
 # Also re-draw the corresponding contours
 COADD_R="combine_patch_color_output/${CLN}_i33-88_deepCoadd.fits"

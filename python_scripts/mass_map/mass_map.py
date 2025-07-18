@@ -10,11 +10,18 @@ import numpy as np
 
 import matplotlib.pyplot as pl
 
+import astropy.units as u
 from astropy.io import ascii, fits
 from astropy.table import Table, hstack, vstack
 from astropy.wcs import WCS
+from astropy.wcs.utils import skycoord_to_pixel, pixel_to_skycoord
+from astropy.coordinates import SkyCoord
+
+from astroquery.ipac.ned import Ned
 
 from photutils.segmentation import detect_sources, SourceCatalog
+
+from lsst.daf.butler import Butler
 
 # HOMEBREW MODULES BELOW
 from .filters import implemented_filters
@@ -299,7 +306,7 @@ def write_to_fits(Map_E,Map_B,Map_V,wcs,output_filename):
     return
 
 
-def draw_mass_map(Map_E,Map_B,Map_V,y_grid_samples,x_grid_samples,smoothing):
+def draw_mass_map(Map_E,Map_B,Map_V,smoothing,Map_wcs):
     '''
     
     A helper function to render our nice mass_map plots
@@ -316,15 +323,26 @@ def draw_mass_map(Map_E,Map_B,Map_V,y_grid_samples,x_grid_samples,smoothing):
         (ax1,ax2): tuple of axes; a tuple containing the matplotlib axes
     '''
     
-    fig,(ax1,ax2) = pl.subplots(1,2,figsize=(10,6))
-    im = ax1.imshow(Map_E/np.sqrt(Map_V), vmin=-3, vmax=6, extent=[np.min(y_grid_samples), np.max(y_grid_samples), np.min(x_grid_samples), np.max(x_grid_samples) ],origin='lower')
-    im = ax2.imshow(Map_B/np.sqrt(Map_V), vmin=-3, vmax=6, extent=[np.min(y_grid_samples), np.max(y_grid_samples), np.min(x_grid_samples), np.max(x_grid_samples) ],origin='lower')
+    fig,(ax1,ax2) = pl.subplots(1,2,figsize=(10,6),subplot_kw={'projection':Map_wcs,'coord_meta':{'unit':(u.deg,u.deg)},'aspect':'equal'})
+    
+    lon = ax1.coords[0]
+    lat = ax1.coords[1]
+    lon.set_major_formatter('d.d')
+    lat.set_major_formatter('d.d')
+    
+    lon = ax2.coords[0]
+    lat = ax2.coords[1]
+    lon.set_major_formatter('d.d')
+    lat.set_major_formatter('d.d')
+    
+    im = ax1.imshow(Map_E/np.sqrt(Map_V), vmin=-3, vmax=6,origin='lower')
+    im = ax2.imshow(Map_B/np.sqrt(Map_V), vmin=-3, vmax=6,origin='lower')
     cbar = fig.colorbar(im, ax=(ax1,ax2), orientation="horizontal")
     cbar.ax.set_xlabel("S/N")
-    ax1.set_xlabel('x [pix]')
-    ax1.set_ylabel('y [pix]')
-    ax2.set_xlabel('x [pix]')
-    ax2.set_ylabel('y [pix]')
+    ax1.set_xlabel('RA (deg)')
+    ax1.set_ylabel('RA (deg)')
+    ax2.set_xlabel('DEC (deg)')
+    ax2.set_ylabel('DEC (deg)')
     
     ax1.set_title('E-Mode (Tangent)')
     ax2.set_title('B-Mode (Cross)')
@@ -334,89 +352,80 @@ def draw_mass_map(Map_E,Map_B,Map_V,y_grid_samples,x_grid_samples,smoothing):
     return fig, (ax1,ax2)
 
     
-# okay, that's all the preliminaries done, here is the outline
-# problem, how do I define a wcs? I can define the grid in px-coordinates very easily
-# Unfortunately, I'll keep the trick of loading a coadd but WONT hard-code it!
-# 1. Read catalog, coadd (just the header/wcs), grid_resolution, output_directory, cores
-# 2. cut and save cut-catalog (I'm skipping the deep-coadd cut, let SN/BPZ work for themselves)
-# 3. Sample a grid_resolution sized grid centered at TARGET,  (roughly spans) central 33-88 patches
-# 3. for now hard-code default number of Schirmer-radii, and divide each across the cores for mapping+detection
-# 4. collect outputs, draw/write figures to disk
+# Hmm, the most correct way of doing this is as follows:
+# 1. center mass_map on the X-ray peak/cluster-center
+# 2. Define a LxL (L in degrees) on-sky
+# 3. Compute distances w. a flat-sky; delta_theta = sqrt(delta_dec^2 + delta_ra^2*cos(dec)^2)
+# 4. Define an appropriate WCS for this for saving!
 
 
 if __name__ == '__main__':
     
     # collecting arguments from cln
-    if len(sys.argv) == 9:
+    if len(sys.argv) == 10:
 
         table_filename = sys.argv[1]
-        coadd_filename = sys.argv[2]
-        filter_name = sys.argv[3]
-        sample_spacing = int(sys.argv[4]) 
-        output_directory = sys.argv[5]
-        cores = int(sys.argv[6])
-        instrument = sys.argv[7]
-        apply_cuts = int(sys.argv[8])
-        lower_patch = (3,3)
+        sample_spacing = float(sys.argv[2]) # leave in pixels
+        Map_length = float(sys.argv[3]) # leave in degrees
+        output_directory = sys.argv[4]
+        cores = int(sys.argv[5])
+        instrument = sys.argv[6]
+        apply_cuts = int(sys.argv[7])
+        cln = sys.argv[8]
+        filter_name = sys.argv[9]
         
-    elif len(sys.argv) == 10:
-    
-        table_filename = sys.argv[1]
-        coadd_filename = sys.argv[2]
-        filter_name = sys.argv[3]
-        sample_spacing = int(sys.argv[4]) 
-        output_directory = sys.argv[5]
-        cores = int(sys.argv[6])
-        instrument = sys.argv[7]
-        apply_cuts = int(sys.argv[8])
-        lower_patch = sys.argv[9].split(',')
-    
     else:
     
         print("python mass_map.py table coadd grid_resolution filter output_directory cores [OPTIONAL: LOWER_PATCH]")
         raise Exception("Improper Usage! Correct usage: python mass_map.py table coadd grid_resolution filter output_directory cores [OPTIONAL: LOWER_PATCH]")
     
+    # first load the WCS to use while building Map
+    butler = Butler('repo/repo')
+    skymap = butler.get('skyMap',collections='skymaps',dataId={'instrument':'DECam','tract':0,'skymap':'{CLN}_skymap'.format(CLN=cln)})
+    
+    for tract in skymap:
+        print(skymap.config)
+    
+    wcs = WCS(tract.wcs.getFitsMetadata())
+    
     # read in the table, apply quality cuts, save the cut-table w/ an additional tag
     table = ascii.read(table_filename)
+    
     if apply_cuts:
         table = load_quality_cuts(table,quality_cuts=quality_cuts)
         basename = Path(table_filename).stem
         table.write(output_directory + basename + '_Map_cut.csv',format='ascii.csv',overwrite=True)
     
+    resolution = instrument_resolution[instrument]
+    
     # load the aperture/filter
     q_filter = implemented_filters[filter_name]
     
-    # load the wcs from the coadd
-    header = fits.getheader(coadd_filename,0)
-    coadd_wcs = WCS(header)
-    coadd_shape = coadd_wcs.array_shape
+    # load information about the cluster
+    ned_result = Ned.query_object(cln)
+    ra_cl = ned_result[0]['RA']
+    dec_cl = ned_result[0]['DEC']
+    zL = ned_result[0]['Redshift']
     
-    # Map_shape should be (coadd[0]/res,coadd[1]/res)
-    Map_shape = (int(coadd_shape[0]/sample_spacing),int(coadd_shape[1]/sample_spacing))
+    # define a grid centered on the cluster
+    Map_center = skycoord_to_pixel(SkyCoord(ra=ra_cl,dec=dec_cl,unit='degree'),wcs=wcs)
+    px_length = Map_length*3600/0.263
+    x_sample = np.arange(Map_center[0] - px_length//2, Map_center[0] + px_length//2,sample_spacing)
+    y_sample = np.arange(Map_center[1] - px_length//2, Map_center[1] + px_length//2,sample_spacing)
+    y_grid,x_grid = np.meshgrid(y_sample,x_sample)
     
-    # build a grid centered on the coadd
-    centering_y = coadd_shape[0] - (Map_shape[0]*sample_spacing)
-    centering_x = coadd_shape[1] - (Map_shape[1]*sample_spacing)
-    
-    #TODO what is the best way of telling mass_map the patch this coadd is located in (which offsets the px-coordinates by 4k px/patch). I've added an option to pass this via cln but, there may be a better solution?
-    #TODO we could add information on the patch to the header of the coadd, that way we don't need to call the lower-patch nor the px/patch explicitly here nor at lines further below
-    x_grid_samples = np.arange(int(lower_patch[1])*4000, (int(lower_patch[1])*4000) + coadd_shape[1],sample_spacing) + sample_spacing/2 + centering_x/2
-    y_grid_samples = np.arange(int(lower_patch[0])*4000, (int(lower_patch[0])*4000) + coadd_shape[0],sample_spacing) + sample_spacing/2 + centering_y/2
-    y_grid,x_grid = np.meshgrid(y_grid_samples,x_grid_samples)
-    
-    resolution_dict = instrument_resolution
-    resolution = resolution_dict[instrument] # ("/px)
-    
-    # create the wcs for Map; subtract the lower-patch-index since the coadd-wcs has px 4000*LOWER_INDEX => 0
-    # use pixel 0,0 as the crval
+    # define a WCS for the sample-grid
+    # originally built this block (w. Prakruth's help) for mass_maps for A360 w. ComCam
     Map_wcs = WCS(naxis=2)
-    crval_sky = coadd_wcs.pixel_to_world(x_grid_samples[0]-int(lower_patch[1])*4000,y_grid_samples[0]-int(lower_patch[0])*4000)
-    Map_wcs.wcs.crval = [crval_sky.ra.degree,crval_sky.dec.degree]
-    Map_wcs.wcs.crpix = [0,0]
-    Map_wcs.wcs.cdelt = [-sample_spacing*resolution/3600,sample_spacing*resolution/3600]
+    crval_sky = [ra_cl*u.deg,dec_cl*u.deg]
+    Map_wcs.wcs.crval = [ra_cl,dec_cl]
+    Map_wcs.wcs.crpix = [len(x_sample) // 2,len(y_sample) // 2] # center on the cluster
+    delta_per_px = sample_spacing*resolution/3600
+    Map_wcs.wcs.cdelt = [-delta_per_px,delta_per_px]
     Map_wcs.wcs.ctype = ["RA---TAN", "DEC--TAN"]
     Map_wcs.wcs.radesys = 'ICRS'
     Map_wcs.wcs.equinox = 2000
+    Map_wcs.wcs.cd = [[-delta_per_px,0],[0,delta_per_px]]
     
     # now that the grid is defined, collect information from the table
     x = table['x'].value
@@ -460,7 +469,7 @@ if __name__ == '__main__':
         
         
         # Draw pretty pictures first
-        fig, (ax1, ax2) = draw_mass_map(Map_E,Map_B,Map_V,y_grid_samples,x_grid_samples,smoothing)
+        fig, (ax1, ax2) = draw_mass_map(Map_E,Map_B,Map_V,smoothing,Map_wcs)
         
         # then update the table and draw the peaks
         # E-Mode
@@ -468,7 +477,10 @@ if __name__ == '__main__':
         
             e_table = outputs[i][3]
             e_table['aperture_size'] = np.ones(len(e_table)) * smoothing
-            ax1.scatter(int(lower_patch[1])*4000 + e_table['x_sn_max']*sample_spacing,int(lower_patch[1])*4000 + e_table['y_sn_max']*sample_spacing,s=10,marker='x')
+            peak_skycoord = pixel_to_skycoord(xp=e_table['x_sn_max'],yp=e_table['y_sn_max'],wcs=Map_wcs)
+            e_table['ra'] = peak_skycoord.ra.deg
+            e_table['dec'] = peak_skycoord.dec.deg
+            ax1.scatter(x=e_table['x_sn_max'], y=e_table['y_sn_max'],s=10,marker='x')
             e_table['SourceID'] = np.char.add(e_table['SourceID'].astype(str),'_' + str(smoothing)) # append the schirmer radius to make a unique source-ID
             Map_E_table = vstack([Map_E_table,e_table])
         
@@ -477,15 +489,12 @@ if __name__ == '__main__':
         
             b_table = outputs[i][4]
             b_table['aperture_size'] = np.ones(len(b_table)) * smoothing
-            ax2.scatter(int(lower_patch[1])*4000 + b_table['x_sn_max']*sample_spacing,int(lower_patch[1])*4000 + b_table['y_sn_max']*sample_spacing,s=10,marker='x')
+            peak_skycoord = pixel_to_skycoord(xp=b_table['x_sn_max'],yp=b_table['y_sn_max'],wcs=Map_wcs)
+            b_table['ra'] = peak_skycoord.ra.deg
+            b_table['dec'] = peak_skycoord.dec.deg
+            ax2.scatter(x=b_table['x_sn_max'],y=b_table['y_sn_max'],s=10,marker='x')
             b_table['SourceID'] = np.char.add(b_table['SourceID'].astype(str),'_' + str(smoothing)) # append the schirmer radius to make a unique source-ID
             Map_B_table = vstack([Map_B_table,b_table])
-        
-        # rescale to the correct xlim/ylim
-        ax1.set_xlim((np.min(x_grid_samples), np.max(x_grid_samples)))
-        ax1.set_ylim((np.min(y_grid_samples), np.max(y_grid_samples)))
-        ax2.set_xlim((np.min(x_grid_samples), np.max(x_grid_samples)))
-        ax2.set_ylim((np.min(y_grid_samples), np.max(y_grid_samples)))
         
         # and save the outputs
         fig.savefig(output_directory + f'Map_SN_Rs_{smoothing}.png',bbox_inches='tight',dpi=720)
