@@ -20,7 +20,7 @@ from astropy.table import Table, hstack, vstack
 from ..mass_map.mass_map import load_quality_cuts
 
 # loading config
-from ..configs.meta_calibrate_config import quality_cuts, shape_type, delta_gamma
+from ..configs.meta_calibrate_config import quality_cuts, shape_type, delta_gamma, color_cuts
 
 
 #TODO define a version of this function to allow for weights
@@ -276,6 +276,13 @@ if __name__ == '__main__':
         
         tab = ascii.read(name)
         tab = load_quality_cuts(tab,quality_cuts=quality_cuts)
+        
+        # also apply a color cut to each catalog to remove non-physical objects
+        select = np.ones(len(tab),dtype=bool)
+        for cut in color_cuts:
+            select = (select) & (np.abs(tab[cut[0]] - tab[cut[1]]) < cut[2])
+        tab = tab[select]
+        
         catalogs[key] = tab
     
     # compute the repsonsivity
@@ -314,6 +321,7 @@ if __name__ == '__main__':
     tab['shape_weight'] = np.ones(len(tab))/(0.365**2)
     
     quality_check(tab,output_directory=output_directory)
+
     
     # and finally save this table!
     basename = Path(files['noshear']).stem
