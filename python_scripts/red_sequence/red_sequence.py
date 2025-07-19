@@ -26,10 +26,13 @@ import astropy.units as u
 from astropy.io import ascii, fits
 from astropy.table import Table, hstack, vstack
 from astropy.wcs import WCS
+from astropy.wcs.utils import skycoord_to_pixel, pixel_to_skycoord
 from astropy.coordinates import SkyCoord
 from astropy.stats import sigma_clip
 
 from astroquery.ipac.ned import Ned
+
+from lsst.daf.butler import Butler
 
 from astropy.cosmology import FlatLambdaCDM
 cosmo = FlatLambdaCDM(H0=70,Om0=0.3)
@@ -140,7 +143,7 @@ def fit_RS_color_binning(gal_table,output_filepath,filter_map=filter_map,color_0
     Args:
         gal_table: Astropy Table; a table of G galaxies to search for red-sequence members in
         output_filepath: string; the filepath of an output quality check figure
-        filter_map: dict; filter map specifying column names given a band
+        filter_map: dict; filter kde specifying column names given a band
         color_0: string; a string specifying the column in gal_table to use for the color (color_0 - color_1)
         color_1: string; a string specifying the column in gal_table to use for the color 
         ref_mag: string; the reference magnitude to use in gal_table when searching for rs-members
@@ -301,42 +304,51 @@ def write_to_fits(kde,wcs,output_filename):
 if __name__ == '__main__':
     
     # collecting arguments from cln
-    if len(sys.argv) == 9:
+    if len(sys.argv) == 8:
     
         gal_table_filename = sys.argv[1]
-        coadd_filename = sys.argv[2]
-        sample_spacing = int(sys.argv[3]) 
+        sample_spacing = int(sys.argv[2]) # leave in px
+        kde_length = float(sys.argv[3]) # leave in degrees
         bandwidth = int(sys.argv[4]) # in kpc
         output_directory = sys.argv[5]
         instrument = sys.argv[6]
-        lower_patch = sys.argv[7].split(',')
-        cluster_name = sys.argv[8]
+        cluster_name = sys.argv[7]
         specz_cat_filename = None
         specz_header = None
     
-    elif len(sys.argv) == 11:
+    elif len(sys.argv) == 10:
         
         gal_table_filename = sys.argv[1]
-        coadd_filename = sys.argv[2]
-        sample_spacing = int(sys.argv[3]) 
+        sample_spacing = int(sys.argv[2]) 
+        kde_length = float(sys.argv[3]) # leave in degrees
         bandwidth = int(sys.argv[4]) # in kpc
         output_directory = sys.argv[5]
         instrument = sys.argv[6]
-        lower_patch = sys.argv[7].split(',')
-        cluster_name = sys.argv[8]
-        specz_cat_filename = sys.argv[9]
-        specz_header = sys.argv[10]
-        
+        cluster_name = sys.argv[7]
+        specz_cat_filename = sys.argv[8]
+        specz_header = sys.argv[9] 
     
     else:
     
         raise Exception("Improper Usage! Correct usage: python red_sequence.py gal_table coadd grid_resolution bandwidth output_directory instrument lower_patch")
+    
+    # load the wcs from the skyMap
+    butler = Butler('repo/repo')
+    skyMap = butler.get('skyMap',collections='skymaps',dataId={'instrument':'DECam','tract':0,'skymap':'{CLN}_skymap'.format(CLN=cluster_name)})
+    
+    for tract in skyMap:
+        print(skyMap.config)
+    
+    wcs = WCS(tract.wcs.getFitsMetadata())
     
     # collect the cluster info
     ned_result = Ned.query_object(cluster_name)
     ra_cl = ned_result[0]['RA']
     dec_cl = ned_result[0]['DEC']
     zL = ned_result[0]['Redshift']
+    
+    # load the instrument resolution
+    resolution = instrument_resolution[instrument]
     
     # if enabled, scale the upper magnitude based on the pedital (z~0.08) by default
     if scale_upper_mag:
@@ -362,23 +374,25 @@ if __name__ == '__main__':
     # actually apply the cuts
     cut_gal_table = gal_table[cut_sn & cut_nan & cut_center]
     
-    # load the wcs from the coadd
-    header = fits.getheader(coadd_filename,0)
-    coadd_wcs = WCS(header)
-    coadd_shape = coadd_wcs.array_shape
+    # define a grid centered on the cluster
+    kde_center = skycoord_to_pixel(SkyCoord(ra=ra_cl,dec=dec_cl,unit='degree'),wcs=wcs)
+    px_length = kde_length*3600/0.263
+    x_sample = np.arange(kde_center[0] - px_length//2, kde_center[0] + px_length//2,sample_spacing)
+    y_sample = np.arange(kde_center[1] - px_length//2, kde_center[1] + px_length//2,sample_spacing)
+    y_grid,x_grid = np.meshgrid(y_sample,x_sample)
     
-    # kde_shape should be (coadd[0]/res,coadd[1]/res)
-    kde_shape = (int(coadd_shape[0]/sample_spacing),int(coadd_shape[1]/sample_spacing))
-    
-    # build a grid centered on the coadd
-    centering_y = coadd_shape[0] - (kde_shape[0]*sample_spacing)
-    centering_x = coadd_shape[1] - (kde_shape[1]*sample_spacing)
-    
-    #TODO what is the best way of telling kde the patch this coadd is located in (which offsets the px-coordinates by 4k px/patch). I've added an option to pass this via cln but, there may be a better solution?
-    #TODO we could add information on the patch to the header of the coadd, that way we don't need to call the lower-patch nor the px/patch explicitly here nor at lines further below
-    x_grid_samples = np.arange(int(lower_patch[1])*4000, (int(lower_patch[1])*4000) + coadd_shape[1],sample_spacing) + sample_spacing/2 + centering_x/2
-    y_grid_samples = np.arange(int(lower_patch[0])*4000, (int(lower_patch[0])*4000) + coadd_shape[0],sample_spacing) + sample_spacing/2 + centering_y/2
-    y_grid,x_grid = np.meshgrid(y_grid_samples,x_grid_samples)
+    # define a WCS for the sample-grid
+    # originally built this block (w. Prakruth's help) for mass_kdes for A360 w. ComCam
+    kde_wcs = WCS(naxis=2)
+    crval_sky = [ra_cl*u.deg,dec_cl*u.deg]
+    kde_wcs.wcs.crval = [ra_cl,dec_cl]
+    kde_wcs.wcs.crpix = [len(x_sample) // 2,len(y_sample) // 2] # center on the cluster
+    delta_per_px = sample_spacing*resolution/3600
+    kde_wcs.wcs.cdelt = [-delta_per_px,delta_per_px]
+    kde_wcs.wcs.ctype = ["RA---TAN", "DEC--TAN"]
+    kde_wcs.wcs.radesys = 'ICRS'
+    kde_wcs.wcs.equinox = 2000
+    kde_wcs.wcs.cd = [[-delta_per_px,0],[0,delta_per_px]]
     
     # use the peak-finding code for this, first initial selection in gr then final in ri
     gr_members,gr_selections = fit_RS_color_binning(cut_gal_table,output_directory + 'photom_gr_rs_selection.png',filter_map=filter_map,color_0='g',color_1='r',color_bins=color_bins_gr,tolerance=0.09,min_per_bin=15,mag_bins=mag_bins,f_scale=0.09)
@@ -496,38 +510,27 @@ if __name__ == '__main__':
     rs_member_x = rs_members['x']
     rs_member_y = rs_members['y']
     
-    #TODO same problem from mass_map, these should probably be cleaned-up and wrapped in a function
-    resolution = instrument_resolution[instrument] # ("/px)
-    
     #TODO what is the best choice of weights for this?
     # bandwidth is in kpc at the cluster, convert this to a proper bandwidth in pixel-coordinates
     bandwidth = ( bandwidth / cosmo.angular_diameter_distance(zL).to_value('kpc') ) * ( 180/np.pi ) * 3600 / resolution
     
-    
     kde = build_gaussian_kde(rs_member_x,rs_member_y,x_grid,y_grid,kernel_kwargs={'sigma':bandwidth})
     
     # upscale kde to reflect the sampling, e.g. kde is saved in density/spx as before
-    #TOMORROW; fix the normalization of the KDE, its kinda screwed up right now
     kde = kde*(sample_spacing**2)
-    
-    # create the wcs for kde; subtract the lower-patch-index since the coadd-wcs has px 4000*LOWER_INDEX => 0
-    # use pixel 0,0 as the crval
-    kde_wcs = WCS(naxis=2)
-    crval_sky = coadd_wcs.pixel_to_world(x_grid_samples[0]-int(lower_patch[1])*4000,y_grid_samples[0]-int(lower_patch[0])*4000)
-    kde_wcs.wcs.crval = [crval_sky.ra.degree,crval_sky.dec.degree]
-    kde_wcs.wcs.crpix = [0,0]
-    kde_wcs.wcs.cdelt = [-sample_spacing*resolution/3600,sample_spacing*resolution/3600]
-    kde_wcs.wcs.ctype = ["RA---TAN", "DEC--TAN"]
-    kde_wcs.wcs.radesys = 'ICRS'
-    kde_wcs.wcs.equinox = 2000
 
     write_to_fits(kde,wcs=kde_wcs,output_filename=output_directory + 'rs_density_kde.fits')
     
     # one-last thing, render the kde for reference
-    fig,ax = pl.subplots()
-    im = ax.imshow(kde,origin='lower',extent=[np.min(x_grid_samples), np.max(x_grid_samples), np.min(y_grid_samples), np.max(y_grid_samples) ])
-    ax.set_xlabel('x [px]')
-    ax.set_ylabel('y [px]')
+    fig,ax = pl.subplots(subplot_kw={'projection':kde_wcs,'coord_meta':{'unit':(u.deg,u.deg)},'aspect':'equal'})
+    im = ax.imshow(kde,origin='lower')
+    lon = ax.coords[0]
+    lat = ax.coords[1]
+    lon.set_major_formatter('d.d')
+    lat.set_major_formatter('d.d')
+    
+    ax.set_xlabel('RA (deg)')
+    ax.set_ylabel('DEC (deg)')
     
     cbar = fig.colorbar(im,ax=ax,orientation="vertical")
     cbar.ax.set_ylabel("Density-per-spx")
