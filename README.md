@@ -84,7 +84,7 @@ create_output
 ...
 ```
 
-And call run_steps from the command-line via `bash run_steps_Gen3.sh`.
+And call run_steps from the command-line via `bash run_steps_Gen3.sh`. Each step is executed in exactly the same way, just don't forget to re-comment the previous step after verifying the step completed successfully!
 
 
 # Citations
