@@ -1,10 +1,69 @@
 # lovoccs_pipe
+
 A pipeline for processing DECam observations for the Local Volume Complete Cluster Survey (LoVoCCS).
 
-This pipeline is built to walk the user through specific "processing steps" to go from raw images of galaxy clusters stored on the [NOIRLab Science Archive](https://astroarchive.noirlab.edu/) to lensing science. Going from raw data to coadds is carried out via a user's installation of the [LSST Science Pipelines](https://pipelines.lsst.io/) (LSP) and going from coadds/catalogs to lensing products is carried out through our own 'homebrewed' scripts. This build is compatible with LSP `v26_0_0` and relies on a modified version of the DECam Data Release Pipeline: `DRP-LoVoCCS.yaml`.
+This pipeline is built to walk the user through specific "processing steps" to go from raw images of galaxy clusters stored on the [NOIRLab Science Archive](https://astroarchive.noirlab.edu/) to lensing science. Going from raw data to coadds is carried out via a user's installation of the [LSST Science Pipelines](https://pipelines.lsst.io/) (LSP) and going from coadds/catalogs to lensing products is carried out through our own 'homebrewed' scripts. This build relies on LSP `v26.0.0` and relies on a modified version of the DECam Data Release Pipeline: `DRP-LoVoCCS.yaml`.
 
-To get started with processing, from the directory you want to process in, clone this repository then create a new directory for processing a cluster (e.g. processing A85, clone the repo and define a new folder so that `.../A85/` and `.../lovoccs_pipe/` are in the same directory). Update the configs located in `python_scripts/configs/...` so that your filepaths are correct. Then, copy `run_steps_gen3.sh` into the new cluster directory (`.../A85/`), update the filepath-variables at the top of the script, and run each step by uncommenting their corresponding command, starting with line 1147, `create_output`.
+After making a clone of the repository somewhere, create a new folder where you want to process a cluster. Make a copy of the script `run_steps_Gen3.sh` and place it in this new folder, then update the variables at the top of the script as specified in the comments.
+
+Running the pipeline is handled entirely by `run_steps_Gen3.sh`, which has a list of the 29 processing steps (and some notes) at the end of the file. After filling in the directories, resource allocation, and cluster name at the top of the script, you're ready to begin! To run a given processing step, comment out the line containing the command and run `bash run_steps_Gen3.sh` from the command line. `run_steps_Gen3.sh` uses text-replacement to fill lines in a template (see `processing_step_templates/`); the template is then saved to a folder specified in run_steps and automatically submitted to Slurm by calling `sbatch {PROCESSING_STEP}.sh`. The copy that is saved to a folder is ready to be manually submitted by the user via `sbatch` and is saved in case there are some manual tweaks that need to be made.
+
+
+# Installation and Usage
+
+First, install LSP v26 somewhere (`~/lsst_stack_v26_0_0/`) and create a directory containing calibrations and refcats (`~/calib_catalog_repo`). Then download lovoccs_pipe in some directory (`~/processing`) via
+
+``` git clone https://github.com/astroenglert/lovoccs_pipe.git ```
+
+Create a new directory where you want to run the processing (e.g. A85)
+
+``` mkdir ~/processing/A85/ ```
+
+Copy `run_steps_Gen3.sh` into this new directory
+
+``` cp ~/processing/lovoccs_pipe/run_steps_Gen3.sh ~/processing/A85/run_steps_Gen3.sh ```
+
+Update the variables at the top of `run_steps_Gen3.sh` to reflect the cluster you want to process and the relevant directories
+
+```
+CLUSTER_NAME='A85'
+...
+NODES=10 
+CORES=180 # multiple of NODES only!
+RAM=1300 # multiple of NODES only!
+WALL_TIME=48:00:00 
+...
+AUTO_PIPELINE_DIR="~/processing/lovoccs_pipe" # path to your installation of lovoccs_pipe
+TEMPLATE_DIR="${AUTO_PIPELINE_DIR}/processing_step_templates" # shouldn't need to be adjusted
+LOAD_PIPELINE_PATH="~/lsst_stack_v26_0_0/loadLSST.bash" # path to your v26.0.0 LSP installation
+CLUSTER_DIR="~/processing/${CLUSTER_NAME}" # the directory in which you want to process
+PROCESSING_STEP_DIR="${CLUSTER_DIR}/processing_step" # shouldn't need to be adjusted
+CALIB_CATALOG_REPO="~/calib_catalog_repo" # location of calibrations and refcats
+```
+
+By default, the directories are all set for usage on Oscar/CCV here at Brown, but you can customize them as needed.
+
+After that, you're ready to process! Go to the bottom of the script, and uncomment the first step:
+
+```
+...
+# == RUNNING STEPS == #
+
+# == STEP0 NOTES == # 
+# After copying and pasting run_steps_Gen3 into a directory with the Cluster Name, create_output creates a series of folders and python scripts. This only takes a few seconds to run
+
+# == STEP0 COMMAND == #
+create_output
+...
+```
+
+And call run_steps from the command-line via `bash run_steps_Gen3.sh`.
 
 
 # Citations
 Works that make use of this pipeline should cite [Fu et al. 2021](https://doi.org/10.3847/1538-4357/ac68e8), [Englert et al. (2025)](https://ui.adsabs.harvard.edu/abs/2025AAS...24541207E/abstract), and [Englert, Dell'Antonio, Montes (2025)](https://ui.adsabs.harvard.edu/abs/2025arXiv250523551E/abstract). Citations for LSP should also be included (see [Citing and acknowledging the LSST Science Pipelines](https://pipelines.lsst.io/#citing-and-acknowledging-the-lsst-science-pipelines)).
+
+
+# Contributing
+
+Please open an issue if there are major changes that need to be made, for small tweaks/bugfixes feel free to open a pull request.
