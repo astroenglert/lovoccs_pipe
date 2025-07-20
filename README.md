@@ -9,7 +9,7 @@ After making a clone of the repository somewhere, create a new folder where you 
 Running the pipeline is handled entirely by `run_steps_Gen3.sh`, which has a list of the 29 processing steps (and some notes) at the end of the file. After filling in the directories, resource allocation, and cluster name at the top of the script, you're ready to begin! To run a given processing step, comment out the line containing the command and run `bash run_steps_Gen3.sh` from the command line. `run_steps_Gen3.sh` uses text-replacement to fill lines in a template (see `processing_step_templates/`); the template is then saved to a folder specified in run_steps and automatically submitted to Slurm by calling `sbatch {PROCESSING_STEP}.sh`. The copy that is saved to a folder is ready to be manually submitted by the user via `sbatch` and is saved in case there are some manual tweaks that need to be made.
 
 
-# Installation and Usage
+# Installation 
 
 First, install LSP v26 somewhere (`~/lsst_stack_v26_0_0/`) and create a directory containing calibrations and refcats (`~/calib_catalog_repo`). Then download lovoccs_pipe in some directory (`~/processing`) via
 
@@ -41,9 +41,36 @@ PROCESSING_STEP_DIR="${CLUSTER_DIR}/processing_step" # shouldn't need to be adju
 CALIB_CATALOG_REPO="~/calib_catalog_repo" # location of calibrations and refcats
 ```
 
-By default, the directories are all set for usage on Oscar/CCV here at Brown, but you can customize them as needed.
+By default, the above directories and the filepaths below are all set for usage on Oscar/CCV here at Brown, but you can customize them as needed.
 
-After that, you're ready to process! Go to the bottom of the script, and uncomment the first step:
+There are a handful of additional auxilliary files that we use throughout processing, these include:
+
+1. A database containing calibrations and reference catalogs; the CALIB_CATALOG_REPO variable stores the path
+   - By default, `ingest_data` expects to find a [reference catalog in the Gen3 format](https://pipelines.lsst.io/v/v26_0_0/modules/lsst.meas.algorithms/creating-a-reference-catalog.html) of type `refcat` located in `{CALIB_CATALOG_REPO}/gen3_formatted_new/{CLUSTER_NAME}/refcat`
+   - Later steps also rely on the same set of catalogs stored as .csv's in `{CALIB_CATALOG_REPO}/catalogs_new/{CLUSTER_NAME}`
+   - The calibrations, including `skyframe`, `bfk_kernel`, `flat`, `bias`, and `fringe` frames, should be [created w. the LSP Gen3](https://pipelines.lsst.io/v/v26_0_0/modules/lsst.cp.pipe/constructing-calibrations.html) and certified into a collection called `DECam/calib/certified`. This collection should be exported and saved in `{CALIB_CATALOG_REPO}/import_ready_calibs_6/`
+   - These, and a list of all available refcats, also have filepaths specified in `python_scripts/configs/processing_step_configs.sh`
+
+2. A directory containing colorterms and reference stars to be used during photometric calibration
+   - The filepaths can be configured via the config-file `python_scripts/configs/photometric_correction_config.py`
+   - Columns of the .csv are keyed by band and the rows specify the N-th order term in the polynomial (e.g. row-1 is the linear coefficient)
+   - By default we calibrate using the g-i color of the corresponding reference catalog
+   - The reference stars used to generate the terms are optional, but very useful to plot
+
+3. A handful of other misc. files stored in `python_scripts/configs/processing_step_configs.sh`
+   - SPECZ_DB is a database containing files used for reference by BPZ (just during plotting as a quality-check)
+      - The expected format is a .csv with at least three headers: ra/dec/z
+      - Should be titled by the cluster name, e.g. `{SPECZ_DB}/{CLUSTER_NAME}_ned_select.csv`; this can be switched by updating the photo_z processing step
+   - EXT_DB contains extinction maps; by default we use IRAS maps
+      - We use the default .fits file that can be (queried directly)[https://irsa.ipac.caltech.edu/applications/DUST/]
+      - The expected directory structure is again based on the cluster name: `{EXT_DB}/{CLUSTER_NAME}.fits`
+   - XRAY_DB specifies some archival X-Ray data that can be drawn over mass_maps for reference
+      - Again, these are just .fits files saved in: `{XRAY_DB}/{CLUSTER_NAME}/Chandra/broad_flux_smoothed.fits`
+
+
+# Usage
+
+You're ready to process! Go to the bottom of the script, and uncomment the first step:
 
 ```
 ...
