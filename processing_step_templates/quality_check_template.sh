@@ -13,6 +13,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="cluster_dir" # UPDATE LATER
+PY_SCRIPTS="py_scripts"
 #TODO Pass this via run_steps rather than hard-coded
 CALIB_CATALOG_REPO="/gpfs/data/idellant/Clusters/calib_catalog_repo" 
 
@@ -22,6 +23,9 @@ cd ${CLUSTER_DIR}
 # initalize the LSP (LSST Science Pipeline)
 source ${LOAD_LSST}
 setup lsst_distrib
+
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 
 # load configs
 source python_scripts/configs/processing_step_configs.sh
@@ -43,9 +47,9 @@ python -m python_scripts.photometric_correction.separate_stars_galaxies "${INPUT
 # really we apply the zp-correction here to be comparable w. refcats; but since we care about the signal post atm/optics, we skip adding the bias. I've created a modified version of zp-correction to handle this temporarily, really we should add a cln-option to the existing zp-correction script which disables the error-propagation
 
 echo "running zp"
-python -m python_scripts.photometric_correction.zero_point_skip_errors "quality_check_output/${CLN}_stars.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_stars.csv"
+python -m python_scripts.photometric_correction.zero_point "quality_check_output/${CLN}_stars.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_stars.csv" "0"
 
-python -m python_scripts.photometric_correction.zero_point_skip_errors "quality_check_output/${CLN}_gals.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_gals.csv"
+python -m python_scripts.photometric_correction.zero_point "quality_check_output/${CLN}_gals.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "quality_check_output/${CLN}_dezp_gals.csv" "0"
 
 
 # next, match the star-catalog to Gaia for checking the photometry

@@ -15,6 +15,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path" # REPLACE WITH load_pipeline_path FOR TEMPLATE
 CLUSTER_DIR="cluster_dir"
+PY_SCRIPTS="py_scripts"
 
 # navigate to cluster directory
 cd ${CLUSTER_DIR}
@@ -22,6 +23,9 @@ cd ${CLUSTER_DIR}
 # initalize the LSP (LSST Science Pipeline)
 source ${LOAD_LSST}
 setup lsst_distrib
+
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 
 # in-case a previous list/out.txt exists, delete it
 # this may cause problems later if this script is used multiple times... watch out for that
@@ -32,7 +36,7 @@ mkdir -p corrupt_raws
 # begin checking each raw file
 for file in raws/*.fz; do
 	echo "Verifying ${file}"
-	python python_scripts/check_data.py "${file}" ${SLURM_ARRAY_TASK_ID} ${SLURM_ARRAY_TASK_MAX} > raws/out_${SLURM_ARRAY_TASK_ID}.txt
+	python python_scripts/noirlab_download/check_data.py "${file}" ${SLURM_ARRAY_TASK_ID} ${SLURM_ARRAY_TASK_MAX} > raws/out_${SLURM_ARRAY_TASK_ID}.txt
 	# not-empty output imples an intact file!
 	if [ -s raws/out_${SLURM_ARRAY_TASK_ID}.txt ]; then
 		rm -r raws/out_${SLURM_ARRAY_TASK_ID}.txt

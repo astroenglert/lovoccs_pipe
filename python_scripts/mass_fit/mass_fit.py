@@ -14,12 +14,15 @@ from scipy.optimize import minimize
 from scipy import interpolate
 from scipy import stats
 
+from lsst.daf.butler import Butler
 
 import matplotlib.pyplot as pl
 
 from astropy.io import ascii, fits
 from astropy.table import Table, hstack, vstack
 from astropy.wcs import WCS
+from astropy.wcs.utils import skycoord_to_pixel, pixel_to_skycoord
+from astropy.coordinates import SkyCoord
 
 from astropy.cosmology import FlatLambdaCDM
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -32,7 +35,11 @@ from astroquery.ipac.ned import Ned
 from .shear_profiles import implemented_profiles, shear_nfw, sigma_crit
 
 # loading configs
-from ..configs.mass_fit_config import instrument_resolution, quality_cuts
+from ..configs.mass_fit_config import instrument_resolution, quality_cuts, bootstrap_peak, map_filter
+
+# load methods to bootstrap mass_map
+from ..mass_map.mass_map import compute_sn_px
+from ..mass_map.filters import implemented_filters
 
 #TODO overhaul this to a standard-IO or function for running quality-cuts read from a config
 def load_quality_cuts(table,quality_cuts=None):
@@ -326,6 +333,60 @@ def draw_plots(masses,names,reduced_chi2,complete_sample,output_directory,resolu
 
     return
 
+
+# helper function for drawing plots of the statistics from mass_map
+def draw_plots_map(cluster_center_x,cluster_center_y,peak_sn,resolution,output_directory,cosmo=cosmo):
+    '''
+    A function for drawing peak-positions across each realization.
+    
+    Args:
+        cluster_center_x: numpy array; an (N,) array containing the x-px of the peak per realization
+        cluster_center_y: numpy array; an (N,) array containing the y-px of the peak per realization
+        peak_sn: numpy array; an (N,) array containing the SN of the peak per realization
+        resolution: float; "/px of the instrument
+        output_directory: string; a string specifying the output directory to save figures in
+        
+    Returns:
+        None?
+    
+    '''
+    
+    peak_statistics = Table()
+    
+    # this will need to be tweaked for N-peaks
+    #TODO when we have multiple peaks fitted this will need tweaking
+    for i in range(1):
+        
+        peak_statistics['x'] = cluster_center_x
+        peak_statistics['y'] = cluster_center_y
+        peak_statistics['sn'] = peak_sn
+        
+        peak_statistics.write(output_directory + 'peak_realizations.csv',format='ascii.csv',overwrite=True)
+    
+        # now draw plots per-peak
+        # starting with a scatter-plot of everything
+        fig, ax = pl.subplots()
+        
+        median_x = np.median(cluster_center_x)
+        median_y = np.median(cluster_center_y)
+        std_x = np.std(cluster_center_x)
+        std_y = np.std(cluster_center_y)
+        
+        im = ax.scatter(x=(cluster_center_x - median_x)*resolution,y=(cluster_center_y - median_y)*resolution,c=peak_sn,alpha=0.5,s=5,vmin=3)
+        ax.set_xlim((-2.5*std_x*resolution,+2.5*std_x*resolution))
+        ax.set_ylim((-2.5*std_y*resolution,+2.5*std_y*resolution))
+        
+        ax.set_xlabel('$ x - x_{med} $ (\")')
+        ax.set_ylabel('$ y - y_{med} $ (\")')
+        ax.set_title("Peak per Realization")
+        
+        cbar = fig.colorbar(im,ax=[ax])
+        cbar.ax.set_ylabel("S/N",rotation=0)
+        cbar.ax.get_yaxis().labelpad = 15
+        fig.savefig(output_directory + 'mass_peak_realizations.png',bbox_inches='tight',dpi=720)
+        
+    return
+
     
 if __name__ == '__main__':
     
@@ -335,38 +396,37 @@ if __name__ == '__main__':
         table_filename = sys.argv[1]
         Map_table_filename = sys.argv[2]
         cluster_name = sys.argv[3]
-        sample_spacing = int(sys.argv[4]) #TODO this and lower-patch can be removed when mass_map outputs either on-sky OR in 00-1111 WCS
-        output_directory = sys.argv[5]
-        cores = int(sys.argv[6])
-        instrument = sys.argv[7]
-        lower_patch = (3,3)
-        
-    elif len(sys.argv) == 9:
-    
-        table_filename = sys.argv[1]
-        Map_table_filename = sys.argv[2]
-        cluster_name = sys.argv[3]
-        sample_spacing = int(sys.argv[4]) 
-        output_directory = sys.argv[5]
-        cores = int(sys.argv[6])
-        instrument = sys.argv[7]
-        lower_patch = sys.argv[8].split(',')
-    
+        output_directory = sys.argv[4]
+        cores = int(sys.argv[5])
+        instrument = sys.argv[6]
+        apply_cuts = int(sys.argv[7])
+            
     else:
     
         print("python mass_map.py table coadd grid_resolution filter output_directory cores [OPTIONAL: LOWER_PATCH]")
         raise Exception("Improper Usage! Correct usage: python mass_map.py table coadd grid_resolution filter output_directory cores [OPTIONAL: LOWER_PATCH]")
     
+    # first load the WCS for the skymap
+    butler = Butler('repo/repo')
+    
+    skymap = butler.get('skyMap',collections='skymaps',dataId={'instrument':'DECam','tract':0,'skymap':'{CLN}_skymap'.format(CLN=cluster_name)})
+    
+    for tract in skymap:
+        print(skymap.config)
+    
+    wcs = WCS(tract.wcs.getFitsMetadata())
+    
     # load and cut the table
     table = ascii.read(table_filename)
-    table = load_quality_cuts(table,quality_cuts=quality_cuts)
+    if apply_cuts:
+        table = load_quality_cuts(table,quality_cuts=quality_cuts)
     basename = Path(table_filename).stem
     table.write(output_directory + basename + '_mass_fit_cut.csv',format='ascii.csv',overwrite=True)
 
     peak_table = ascii.read(Map_table_filename)
     
-    # by default, run 1000 bootstraps
-    realizations = 1000
+    # by default, run 2000 bootstraps
+    realizations = 2000
     
     # load resolution
     resolution_dict = instrument_resolution
@@ -374,12 +434,17 @@ if __name__ == '__main__':
     rad_per_px = (resolution) * np.pi/(180*3600)
     
     #TODO we could automatically select the highest 'unique' N-peaks, something fun for someone to work on; for now I've hard-coded it to 1
-    # get px-coordinates of the maximum-SN peak(s)
+    # get px-coordinates and aperture_size of the maximum-SN peak(s)
     num_peaks = 1
     peak_SN = np.max(peak_table['SN_peak'])
     cluster_peak_index = np.argmin(np.abs(peak_SN - peak_table['SN_peak']))
-    cluster_centers = [(int(lower_patch[0])*4000 + sample_spacing*(peak_table['x_sn_max'][cluster_peak_index] + 1/2),int(lower_patch[1])*4000 + sample_spacing*(peak_table['y_sn_max'][cluster_peak_index] + 1/2))]
-
+    cluster_centers = SkyCoord(ra=peak_table['ra'][cluster_peak_index],dec=peak_table['dec'][cluster_peak_index],unit='degree')
+    cluster_centers = skycoord_to_pixel(cluster_centers,wcs=wcs)
+    cluster_centers = [(cluster_centers[0],cluster_centers[1])]
+    
+    aperture_sizes = [peak_table['aperture_size'][cluster_peak_index]]
+    cluster_peak_sn = [peak_table['SN_peak'][cluster_peak_index]]
+    
     # we need to know the cluster for the lens-redshift
     ned_result = Ned.query_object(cluster_name)
     ra_cl = ned_result[0]['RA']
@@ -393,7 +458,7 @@ if __name__ == '__main__':
     g2_observed = table['g2']
     zS = table['z_phot'] #z_b in our old catalogs
 
-    #TODO this should probably be moved to the naive shear_calibration
+    # moved to shear calibration, I'll leave this here just in case
     if 'shape_weight' not in table.colnames:
         weights = np.ones(len(table))/(0.365**2) # shape-weight is an inverse-variance, from previous studies e_rms ~ 0.365 
     else:
@@ -409,17 +474,41 @@ if __name__ == '__main__':
         local = np.random.RandomState(index)
         sample = local.randint(low=0,high=len(zS),size=int(len(zS)))
         
+        # recompute the location of the mass_peak w. each realization
+        if bootstrap_peak:
+            
+            new_centers = []
+            sn_peaks = []
+            
+            # find the positions of each peak (more accurately)
+            for i in range(num_peaks):
+                
+                # recompute the peak position relative to the current realization
+                minimize_me = lambda sample_px : -compute_sn_px(sample_px[0],sample_px[1],x_pos[sample],y_pos[sample],g1_observed[sample],g2_observed[sample],weights[sample],implemented_filters[map_filter],filter_kwargs={'aperture_size':aperture_sizes[i]})
+                result = minimize(minimize_me,x0=cluster_centers[i])
+                new_centers.append(result.x)
+                sn_peaks.append(-result.fun)
+            
+            # update the cluster_centers
+            centers = new_centers
+        
+        else:
+            
+            # otherwise default to the input list of centers and sn-peaks from the original mass_maps
+            centers = cluster_centers
+            sn_peaks = cluster_peak_sn
+        
         # defining functions inside functions isn't a great thing to-do... but otherwise propagating args through minimize/pool is a pain
         #TODO there is probably a cleaner way of wrapping all this in one method to pass to Pool...
         def chi2(log10_M200):
-            g1_res,g2_res = multipeak_residuals([10**power for power in log10_M200],zS[sample],x_pos[sample],y_pos[sample],g1_observed[sample],g2_observed[sample],zL=zL,num_peaks=num_peaks,cluster_centers=cluster_centers,rad_per_px=rad_per_px)
+            g1_res,g2_res = multipeak_residuals([10**power for power in log10_M200],zS[sample],x_pos[sample],y_pos[sample],g1_observed[sample],g2_observed[sample],zL=zL,num_peaks=num_peaks,cluster_centers=centers,rad_per_px=rad_per_px)
             chi2 = np.sum( ( (g1_res**2) + (g2_res**2) )*weights[sample])
             return chi2
         
         test = minimize(chi2,[14] * num_peaks,bounds=[(12,16)] * num_peaks)
         
-        return 10**test.x, test.fun/(len(zS) - num_peaks)
-
+        return 10**test.x, test.fun/(len(zS) - num_peaks), centers, sn_peaks
+    
     
     with Pool(cores) as p:
         outputs = p.map(wrapper,range(realizations))
@@ -428,10 +517,17 @@ if __name__ == '__main__':
     # right now I'm only unpacking a single-peak, but most of the code is in-place to run statistics on multiple peaks
     mass = []
     chi2 = []
+    cluster_center_x = []
+    cluster_center_y = []
+    sn_peaks = []
     for i in range(len(outputs)):
         chi2.append(outputs[i][1])
         mass.append(outputs[i][0][0])
+        cluster_center_x.append(outputs[i][2][0][0])
+        cluster_center_y.append(outputs[i][2][0][1])
+        sn_peaks.append(outputs[i][3][0])
     
     draw_plots(np.array(mass),[cluster_name],reduced_chi2=np.array(chi2),complete_sample=complete_sample,output_directory=output_directory,resolution=resolution)
-
+    draw_plots_map(cluster_center_x,cluster_center_y,sn_peaks,resolution=resolution,output_directory=output_directory,cosmo=cosmo)
+    
 

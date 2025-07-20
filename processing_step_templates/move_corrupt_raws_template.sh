@@ -10,6 +10,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="cluster_dir"
+PY_SCRIPTS="py_scripts"
 
 # navigate to cluster directory
 cd ${CLUSTER_DIR}

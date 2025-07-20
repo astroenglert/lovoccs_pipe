@@ -13,6 +13,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="cluster_dir" # UPDATE LATER
+PY_SCRIPTS="py_scripts"
 
 # navigate to .../cluster_name
 cd ${CLUSTER_DIR}
@@ -20,6 +21,9 @@ cd ${CLUSTER_DIR}
 # initalize the LSP (LSST Science Pipeline)
 source ${LOAD_LSST}
 setup lsst_distrib
+
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 
 # prevent implicit multithreading (otherwise tasks compete for resources)
 export OMP_NUM_THREADS=1
@@ -31,7 +35,7 @@ pipetask build -p DRP-LoVoCCS.yaml#step3c \
 
 # step3a assembleCoadd, detect, deblend
 bps submit -b repo/repo \
-    -i DECam/processing/coadd_3a,DECam/processing/coadd_3b_u,DECam/processing/coadd_3b_g,DECam/processing/coadd_3b_r,DECam/processing/coadd_3b_i,DECam/processing/coadd_3b_z,skymaps \
+    -i DECam/processing/coadd_3a,DECam/processing/coadd_3b,skymaps \
     -o DECam/processing/coadd_3c \
     -p ${CLUSTER_DIR}/pipeline_yamls/DRP_step3c.yaml \
     -d "instrument='DECam' AND skymap='${CLN}_skymap'" \

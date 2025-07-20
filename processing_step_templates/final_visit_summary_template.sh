@@ -13,6 +13,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="cluster_dir" # UPDATE LATER
+PY_SCRIPTS="py_scripts"
 BAND=process_band
 
 # navigate to .../cluster_name
@@ -21,6 +22,9 @@ cd ${CLUSTER_DIR}
 # initalize the LSP (LSST Science Pipeline)
 source ${LOAD_LSST}
 setup lsst_distrib
+
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 
 # prevent implicit multithreading (otherwise tasks compete for resources)
 export OMP_NUM_THREADS=1

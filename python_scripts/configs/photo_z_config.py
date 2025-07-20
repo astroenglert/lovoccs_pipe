@@ -19,10 +19,15 @@ external_cache = None
 
 # used for cutting the matched catalog of specz-photoz when drawing plots and computing statistics
 mod_chi2_cut = 4
-odds_cut = 0.95
+odds_cut = 0.7
 
 # 'ngvs' -> NGVS photo-z priors; 'cosmos' -> COSMOS photo-z priors
 # more can be implemented by editing python_scripts/photo_z/sed_template.py
 prior_choice = 'ngvs'
+
+# low-SN forced photometry in u/g can artificially broaden the priors
+# assign certain blue bands no flux for redshift below a certain SN?
+truncate_bluest = True
+sn_cuts = {'u':5,'g':5}
 
 

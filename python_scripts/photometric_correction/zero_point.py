@@ -14,15 +14,22 @@ from ..configs.photometric_correction_config import use_locus
 
 if __name__ == '__main__':
     
-    if len(sys.argv) != 5:
-        print("python zero_point.py catalog color_term_residual stellar_locus_residual output_filename")
-        raise Exception("Improper Usage! Correct usage: python zero_point.py catalog color_term_residual stellar_locus_residual output_filename")
-    
     # loading arguments from cln
-    catalog_filename = sys.argv[1]
-    ct_bias_filename = sys.argv[2]
-    sl_bias_filename = sys.argv[3]
-    output_filename = sys.argv[4]
+    if len(sys.argv) == 5:
+        catalog_filename = sys.argv[1]
+        ct_bias_filename = sys.argv[2]
+        sl_bias_filename = sys.argv[3]
+        output_filename = sys.argv[4]
+        update_err = True
+    elif len(sys.argv) == 6:
+        catalog_filename = sys.argv[1]
+        ct_bias_filename = sys.argv[2]
+        sl_bias_filename = sys.argv[3]
+        output_filename = sys.argv[4]
+        update_err = bool(int(sys.argv[5]))
+    else:
+        print("python zero_point.py catalog color_term_residual stellar_locus_residual output_filename [OPTIONAL: update_err]")
+        raise Exception("Improper Usage! Correct usage: python zero_point.py catalog color_term_residual stellar_locus_residual output_filename [OPTIONAL: update_err]")
     
     # loading tables from disk
     catalog = Table.read(catalog_filename,format='ascii.csv')
@@ -48,10 +55,12 @@ if __name__ == '__main__':
             catalog[band] = catalog[band]
         elif band[0] in use_locus:
             catalog[band] = catalog[band] - sl_bias[band[0]][0]
-            catalog[band + err_tag] = np.sqrt(catalog[band + err_tag]**2 + sl_bias[band[0]][1]**2)
+            if update_err:
+                catalog[band + err_tag] = np.sqrt(catalog[band + err_tag]**2 + sl_bias[band[0]][1]**2)
         else:
             catalog[band] = catalog[band] - ct_bias[band[0]][0]
-            catalog[band + err_tag] = np.sqrt(catalog[band + err_tag]**2 + ct_bias[band[0]][1]**2)
+            if update_err:
+                catalog[band + err_tag] = np.sqrt(catalog[band + err_tag]**2 + ct_bias[band[0]][1]**2)
         
     catalog.write(output_filename, format="ascii.csv", overwrite=True)
     

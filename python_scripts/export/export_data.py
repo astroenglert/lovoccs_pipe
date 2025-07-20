@@ -35,7 +35,7 @@ from . import export_config
 export_config = impresources.files(export_config)
 
 
-def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['r_inst_psf_flux','r_inst_cmodel_flux'],compute_shapes=['sdss','sdss_psf','hsm','hsm_psf','i_sdss_psf']):
+def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['r_inst_psf_flux','r_inst_cmodel_flux'],compute_shapes=['sdss','sdss_psf','hsm','hsm_psf','i_sdss_psf'],dataset_type='deepCoadd_obj',collections='DECam/processing/coadd_3c'):
     '''
     A function for exporting data from a specified patch, given a dictionary of flags and columns. The formatting of the flag dictionaries is {"BAND:TABLE_NAME:COLUMN_NAME":"TRUE/FALSE"} and the column dictionaries are structured similarly" {"BAND:TABLE_NAME:COLUMN_NAME":"OUTPUT_COLUMN_NAME"}. This was done to make exporting custom measurements a bit easier (you're welcome Soren!).
     
@@ -53,11 +53,11 @@ def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['
     '''
     
     patch_table = Table()
-    
+    print(f'Trying to export Patch {patch}')
     # if the deepCoaddObj table doesn't exist, or the flags are missing, skip the patch!
     try:
-        deepCoaddObj = butler.get('deepCoadd_obj',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch},collections='DECam/processing/coadd_3c')
-        
+        deepCoaddObj = butler.get(dataset_type,dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch},collections=collections)
+
         # collect the object flags
         select_objects = np.ones(len(deepCoaddObj)).astype(bool)
         for input_col,output_col in flags.items():
@@ -68,6 +68,7 @@ def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['
                 select_objects &= deepCoaddObj[input_col[1]][input_col[0]][input_col[2]]
     
     except:
+        print(f'Failed to export Patch {patch}, skipping...')
         # if the above fails, export an empty table
         return patch_table
     
@@ -92,7 +93,7 @@ def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['
             
             # try to load photocalib for the band
             try:
-                CoaddPhotoCalib = butler.get('deepCoadd_calexp.photoCalib',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch,'band':input_col[0]},collections='DECam/processing/coadd_3c')
+                CoaddPhotoCalib = butler.get('deepCoadd_calexp.photoCalib',dataId={'instrument':'DECam','skymap':'{CLN}_skymap'.format(CLN=cln),'tract':0,'patch':patch,'band':input_col[0]},collections=collections)
                 mag = CoaddPhotoCalib.instFluxToMagnitudeArray(values.values,x=patch_table['x'].data,y=patch_table['y'].data) 
                 
                 # load the fluxerr for this band

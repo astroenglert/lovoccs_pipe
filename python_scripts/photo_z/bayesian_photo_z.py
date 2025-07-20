@@ -28,7 +28,7 @@ from . import flux_cache
 flux_db = impresources.files(flux_cache)
 
 # configurables
-from ..configs.photo_z_config import filter_map, error_tag, external_cache, mod_chi2_cut, odds_cut, prior_choice
+from ..configs.photo_z_config import filter_map, error_tag, external_cache, mod_chi2_cut, odds_cut, prior_choice, truncate_bluest, sn_cuts
 
 
 # compute F00,F0T,FTT (Benitez+00 Eq. 9)
@@ -170,7 +170,7 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
             sed_upper.load_flux_from_disk(sed_cache_upper,trans)
         else:
             sed.write_flux_to_disk(sed_cache)
-            sed_upper.write_flux_to_disk(sed_cache)
+            sed_upper.write_flux_to_disk(sed_cache_upper)
         
         F00,FT0,FTT,interpolated_scaled_flux = compute_F(sed,table,filter_map,error_tag,sed_upper,weight,filter_template_zps=filter_template_zps)
         chi2T = F00[:,None] - ( (FT0**2)/(FTT) )
@@ -241,10 +241,14 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
     odds = np.zeros(len(table))
     
     #TODO for-loop here isn't great, there should be a way of doing this using broadcasting
+    # while this is here, it simplifies getting the ML-estimate
+    z_ml = np.zeros(len(table))
     for i in range(len(table)):
         best_fit_flux[i] = flux_per_template[i,primary_estimate_indices[i],:,best_template_index[i]]
         odds[i] = np.abs(cumulative_prob[i,upper[i]] - cumulative_prob[i,lower[i]])
-        
+        z_ml_index = np.unravel_index(np.argmax(chi2[i,:,:]), chi2[i,:,:].shape)[0]
+        z_ml[i] = redshifts[z_ml_index]
+  
     template_error = np.nanmax(best_fit_flux,axis=1)/15
     
     # now go through each band to compute chi2 mod
@@ -265,10 +269,10 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
     mod_chi2 = np.nansum(mod_chi2_per_band,axis=1)/mod_chi2_dof
             
     # and finally, I can wrap all the statistics into one output-table
-    #TODO add ML (min-chi2) estimate to outputs
     redshift_statistics['z_phot'] = primary_estimate
     redshift_statistics['z_median'] = z_median
     redshift_statistics['z_mode'] = z_mode
+    redshift_statistics['z_ml'] = z_ml
     redshift_statistics['template_at_z_phot'] = best_template_index
     redshift_statistics['odds'] = odds
     redshift_statistics['mod_chi2'] = mod_chi2
@@ -670,6 +674,17 @@ if __name__ == '__main__':
     # loading the table
     table = ascii.read(table_filename)
     
+    # making a copy w. truncated u/g-mags
+    truncated_table = table.copy()
+    
+    # truncate the bluest filters w. forced-photometry SN < 5
+    if truncate_bluest:
+        for band, cut in sn_cuts.items():
+            signal = (2.5/np.log(10)) * (1/truncated_table[filter_map[band] + error_tag])
+            truncated_table[filter_map[band]][signal < cut] = np.nan
+            truncated_table[filter_map[band] + error_tag][signal < cut] = np.nan 
+    
+    
     # split the table into chunks for running in parallel; approximately 60 per-task
     #chunk_size = np.ceil(len(table)/cores)
     #split_table = [table[int(i*chunk_size):int((i+1)*chunk_size)] for i in range(cores)]
@@ -678,8 +693,8 @@ if __name__ == '__main__':
     # breakup the table into chunks of 60-entries
     # for 20 massive groups, processes are killed by OS
     chunk_size = 60
-    num_chunks = int(np.ceil(len(table)/chunk_size))
-    split_table = [table[int(i*chunk_size):int((i+1)*chunk_size)] for i in range(num_chunks)]
+    num_chunks = int(np.ceil(len(truncated_table)/chunk_size))
+    split_table = [truncated_table[int(i*chunk_size):int((i+1)*chunk_size)] for i in range(num_chunks)]
     
     # select templates with the approrpriate priors
     template_list = prior_dict[prior_choice]
@@ -716,11 +731,5 @@ if __name__ == '__main__':
     # might need to pass coordinates to really gain from this, ~1-10% of galaxies across the full-fov are cluster-members, but all galaxies w/in R500 will be member and have a different dist of spectral types
     # Once we have the full LV sample processed + DESI, someone should try to recalibrate priors p(T|z) -> p(T|z,R) and p(z|T,m0) -> p(z|T,m0,R) where R is some distance from the cluster-center
     # We also need to decide if this requires any additional priors that should be placed on R... project for someone else!
-    
-        
-        
-        
-
-
 
 

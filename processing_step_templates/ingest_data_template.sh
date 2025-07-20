@@ -11,6 +11,7 @@
 CLN="cluster_name" 
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="cluster_dir" # REPLACE WITH CLUSTER DIRECTORY EVENTUALLY
+PY_SCRIPTS="py_scripts"
 #TODO Pass this via run_steps rather than hard-coded
 CALIB_CATALOG_REPO="/gpfs/data/idellant/Clusters/calib_catalog_repo" 
 
@@ -21,10 +22,13 @@ cd ${CLUSTER_DIR}
 source ${LOAD_LSST}
 setup lsst_distrib
 
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
+
 # import reference calibs, using symlink to avoid fussing over calibration dates
 
 echo "Importing calibration frames!"
-butler import --transfer direct repo/repo "${CALIB_CATALOG_REPO}"/import_ready_calibs_5
+butler import --transfer direct repo/repo "${CALIB_CATALOG_REPO}"/import_ready_calibs_6
 
 #2024-09 AE: Consolidated calibrations into a single collection, no need to import these separately anymore
 

@@ -99,13 +99,12 @@ if __name__ == '__main__':
     ax = pl.subplot(projection=image_wcs,coord_meta={'unit':(u.deg,u.deg)},aspect='equal')
     ax.imshow(1-display(image_data),cmap='gray')
     
-    # overlay SN-contours in blue (from SN~2-6)
-    cs = ax.contour(Map_SN,transform=ax.get_transform(contour_wcs),levels=np.arange(2,7),cmap='Blues',vmin=0,vmax=7)
+    # overlay SN-contours in blue (from SN ~ 2-8)
+    cs = ax.contour(Map_SN,transform=ax.get_transform(contour_wcs),levels=np.arange(2,9),cmap='Blues',alpha=0.8,vmin=-4,vmax=8)
     ax.clabel(cs, inline=True, fontsize=11, fmt='%.0f')
     
     # overlay RS-contours in red
-    #TODO scaling on here is pulled straight from gen2, is there a smarter way of doing this?
-    ax.contour(rs_data,transform=ax.get_transform(rs_wcs),cmap='Reds',levels=np.linspace(np.min(rs_data),np.max(rs_data),5)[2:],vmin=np.max(rs_data)*(-0.5),vmax=np.max(rs_data))
+    ax.contour(rs_data,transform=ax.get_transform(rs_wcs),cmap='Reds',levels=np.linspace(0,0.12,6)[1:],vmin=-0.1,vmax=0.12,alpha=0.6)
     
     # optionally overlay x-ray contours
     if draw_xray:

@@ -146,7 +146,6 @@ def plot_mag_hist(star_catalog,gal_catalog,output_directory,fit_range=[23,24],ma
     f_linear = lambda x, A, B: A*x + B
     
     # cut to the center ~1deg
-    #TODO center of the skymap isn't always aligned with the center of the cluster/our-pointing (although it usually is...), is there a way we can fix this even for targets where we have a non-standard pointing?
     star_center_cut = (np.sqrt((star_catalog['x'] - skymap_center[0])**2 + (star_catalog['y']-skymap_center[1])**2) < max_sep)
     gal_center_cut = (np.sqrt((gal_catalog['x'] - skymap_center[0])**2 + (gal_catalog['y']-skymap_center[1])**2) < max_sep)
     
@@ -248,7 +247,6 @@ def plot_snr_mag_hist(star_catalog,gal_catalog,output_directory,SN_bins=[(9,11),
             bands_in_catalog.append(i)
     
     # cut to the center ~1deg
-    #TODO center of the skymap isn't always aligned with the center of the cluster/our-pointing (although it usually is...), is there a way we can fix this even for targets where we have a non-standard pointing?
     star_center_cut = (np.sqrt((star_catalog['x'] - skymap_center[0])**2 + (star_catalog['y']-skymap_center[1])**2) < max_sep)
     gal_center_cut = (np.sqrt((gal_catalog['x'] - skymap_center[0])**2 + (gal_catalog['y']-skymap_center[1])**2) < max_sep)
     
@@ -349,7 +347,8 @@ def plot_snr_mag_hist(star_catalog,gal_catalog,output_directory,SN_bins=[(9,11),
     
     # now update the figure labels
     handles, labels = ax.get_legend_handles_labels()
-    leg = fig.legend(handles, labels, loc=(0.77, 0.20)) #TODO this might not work-well when the number of bands changes
+    leg = fig.legend(handles, labels, loc=(0.71, 0.23)) #TODO this might not work-well when the number of bands changes
+    
     fig.supxlabel(" Magnitude ")
     fig.supylabel(" Frequency ")
     fig.savefig(output_directory + "snr_mag_hist.png",dpi=720,bbox_inches='tight')
@@ -392,7 +391,6 @@ def plot_mag_magerr(star_catalog,gal_catalog,output_directory,mag_range=(17,27),
             bands_in_catalog.append(i)
     
     # cut to the center ~1deg
-    #TODO center of the skymap isn't always aligned with the center of the cluster/our-pointing (although it usually is...), is there a way we can fix this even for targets where we have a non-standard pointing?
     star_center_cut = (np.sqrt((star_catalog['x'] - skymap_center[0])**2 + (star_catalog['y']-skymap_center[1])**2) < max_sep)
     gal_center_cut = (np.sqrt((gal_catalog['x'] - skymap_center[0])**2 + (gal_catalog['y']-skymap_center[1])**2) < max_sep)
     
@@ -424,12 +422,16 @@ def plot_mag_magerr(star_catalog,gal_catalog,output_directory,mag_range=(17,27),
         gal_magerr = gal_magerr[finite_cut_gal]
         
         # draw magerr v. mag and SN-lines
-        ax.scatter(star_mag, star_magerr, marker='.', alpha=0.02, label="PSF Mag (Stars)")
-        ax.scatter(gal_mag, gal_magerr, marker='.', alpha=0.02, label="CModel Mag (Galaxies)")
+        ax.scatter(gal_mag, gal_magerr, marker='.', alpha=0.5, color='C1',s=2) #,label="CModel Mag (Galaxies)")
+        ax.scatter(star_mag, star_magerr, marker='.', alpha=0.1, color='C0',s=2) #,label="PSF Mag (Stars)")
         
-        ax.hlines((2.5/np.log(10))/5, mag_range[0], mag_range[1], linestyles='solid', colors='k', alpha=0.5, label="S/N = 5")
-        ax.hlines((2.5/np.log(10))/10, mag_range[0], mag_range[1], linestyles='solid', colors='k', alpha=0.5, label="S/N = 10")
-        ax.hlines((2.5/np.log(10))/20, mag_range[0], mag_range[1], linestyles='solid', colors='k', alpha=0.5, label="S/N = 20")
+        # lazy-trick to get the scatterplot more obvious, draw two HUGE points outside the axlims
+        ax.scatter(100,100,marker='.',label="PSF Mag (Stars)",color='C0',s=10)
+        ax.scatter(100,100,marker='.',label="CModel Mag (Galaxies)",color='C1',s=10)
+        
+        ax.hlines((2.5/np.log(10))/5, mag_range[0], mag_range[1], linestyles='-', colors='k', alpha=0.5, label="S/N = 5")
+        ax.hlines((2.5/np.log(10))/10, mag_range[0], mag_range[1], linestyles='--', colors='k', alpha=0.5, label="S/N = 10")
+        ax.hlines((2.5/np.log(10))/20, mag_range[0], mag_range[1], linestyles=':', colors='k', alpha=0.5, label="S/N = 20")
         
         # now make the plots pretty :)
         ax.set_title(band)
@@ -439,9 +441,11 @@ def plot_mag_magerr(star_catalog,gal_catalog,output_directory,mag_range=(17,27),
     
     # now update the figure labels
     handles, labels = ax.get_legend_handles_labels()
-    leg = fig.legend(handles, labels, loc=(0.77, 0.20)) #TODO this might not work-well when the number of bands changes
+    leg = fig.legend(handles, labels, loc=(0.735, 0.225)) #TODO this might not work-well when the number of bands changes
+    
     for lh in leg.legend_handles:
-        lh.set_alpha=0.5
+        lh.set_alpha=1
+    
     fig.supxlabel(" Magnitude ")
     fig.supylabel(" Uncertainty ")
     
@@ -556,7 +560,6 @@ def star_gal_correlation(star_catalog,gal_catalog,output_directory,cmodel_mag_cu
     '''
     
     # cut to the center ~1deg
-    #TODO center of the skymap isn't always aligned with the center of the cluster/our-pointing (although it usually is...), is there a way we can fix this even for targets where we have a non-standard pointing?
     star_center_cut = (np.sqrt((star_catalog['x'] - skymap_center[0])**2 + (star_catalog['y']-skymap_center[1])**2) < center_cut)
     gal_center_cut = (np.sqrt((gal_catalog['x'] - skymap_center[0])**2 + (gal_catalog['y']-skymap_center[1])**2) < center_cut)
     
@@ -866,12 +869,14 @@ def draw_catalog(star_catalog,gal_catalog,output_directory,cluster_name,sn_cut=1
         # draw a marker located at the cluster
         ax.scatter(ra_cl,dec_cl,s=5,color='black',marker='*')
     
-    #TODO there is a way of drawing a colorbar without changing the aspect-ratio of the axes that we should implement here
+    # this isn't a publicaiton-quality plot, so I'll live with the squished aspect-ratios
+    fig.supxlabel(' RA [deg] ')
+    fig.supylabel(' DEC [deg] ')
+    pl.tight_layout()
+    
     cb = fig.colorbar(im,ax=axs.ravel().tolist())
     cb.solids.set(alpha=1)
     
-    fig.supxlabel(' RA [deg] ')
-    fig.supylabel(' DEC [deg] ')
     fig.savefig(output_directory + 'catalog_render.png',dpi=720,bbox_inches='tight')
     
     return

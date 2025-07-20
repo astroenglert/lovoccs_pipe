@@ -13,6 +13,7 @@
 CLN="cluster_name"
 LOAD_LSST="load_pipeline_path"
 CLUSTER_DIR="cluster_dir" # UPDATE LATER
+PY_SCRIPTS="py_scripts"
 
 # navigate to .../cluster_name
 cd ${CLUSTER_DIR}
@@ -21,6 +22,9 @@ cd ${CLUSTER_DIR}
 source ${LOAD_LSST}
 setup lsst_distrib
 
+# add the python_scripts from lovoccs_pipe to the PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
+
 # create an output directory for photometric_correction
 mkdir red_sequence_output
 
@@ -28,7 +32,7 @@ mkdir red_sequence_output
 # two steps here, run red_sequence.py then draw the contours
 COADD="combine_patch_color_output/${CLN}_r33-88_deepCoadd.fits"
 echo "mapping the rs..."
-python -m python_scripts.red_sequence.red_sequence "shear_calibration_output/${CLN}_dered_dezp_zphot_scal_gals.csv" "${COADD}" "100" "500" "red_sequence_output/" "decam" #"3,3" assumed, needs to be specififed if using a different set of patches
+python -m python_scripts.red_sequence.red_sequence "photo_z_output/${CLN}_dered_dezp_zphot_gals.csv" "100" "1.8" "200" "red_sequence_output/" "decam" "${CLN}" "photo_z_output/${CLN}_dered_dezp_gals_matched_specz.csv" "z_spec"
 
 # and finally render the density
 echo "rendering contours..."
