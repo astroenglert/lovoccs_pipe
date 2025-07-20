@@ -1,40 +1,38 @@
-# Updating run_steps_5 to gen 3 LSP
+# Processing pipeline for LoVoCCS!
 
 # ==== #
 
-# This script is built to work users through each task for processing clusters
-# e.g. from raw -> calexp -> coadd -> catalogs -> lensing maps; each arrow represents a 'processing_step'
-# Each step in the pipeline has a template file located at automatic_pipeline_v24/processing_step_templates [TEMP]
-# run_steps copies each template file and uses text-replacement to pass the name of the cluster and other information into the template
-# run_steps then submits the processing_step to slurm for exection
-# The filled-in template are saved in data/$CLUSTER_NAME/processing_step
+# This script is built to work users through each task for processing clusters for the Local Volume Complete Cluster Survey (LoVoCCS)
+# See the readme for more information!
 
-# == A quick note on the structure of outputs == #
-# the previous version of run_steps dumped output files into the cluster directory, I've tried to ease that by creating a dedicated slurm_outputs folder. One small caviat of doing this is that, when a processing_step needs to be re-run, it must be sbatch'ed from the CLUSTER_NAME directory
-# I've also added a feature which allocates resources, as necessary, with a little bit more intelligence. Check out https://ccv.brown.edu/rates/ to see how many cores and how much RAM you have available, and specify the default number of cores and RAM to be used for processing a cluster here!
-
+# == Name of the cluster to process == #
+# this may need to be changed for a few clusters...
 CLUSTER_NAME='A85'
-NODES=10 # might need to be tweaked for exploratory
-CORES=180 # multiple of 10's only!
-RAM=1300 # multiple of 10 only!
-WALL_TIME=48:00:00 # default time is 2-days, may need to be adjusted for exploratory users
+
+
+# == Resources to allocate for cluster processing == #
+# Check out https://ccv.brown.edu/rates/ to see how many cores and how much RAM you have available 
+# If you're not on Oscar, hopefully you already know what this looks like
+# Make sure to leave some cores/memory available so you can load up a terminal or do other science
+NODES=10 
+CORES=180 # multiple of NODES only!
+RAM=1300 # multiple of NODES only!
+WALL_TIME=48:00:00 
+
 
 # == VARIABLES == #
+# This is setup for folks operating on our Oscar/CCV allocation
+# Users outside of Brown will need to tweak this
+AUTO_PIPELINE_DIR="/gpfs/data/idellant/Clusters/gen3_processing/lovoccs_pipe" # path to your installation of lovoccs_pipe
+TEMPLATE_DIR="${AUTO_PIPELINE_DIR}/processing_step_templates" # shouldn't need to be adjusted
+LOAD_PIPELINE_PATH="/gpfs/data/idellant/lsst_stack_v26_0_0/loadLSST.bash" # path to your v26.0.0 LSP installation
+CLUSTER_DIR="/gpfs/data/idellant/Clusters/gen3_processing/${CLUSTER_NAME}" # the directory in which you want to process
+PROCESSING_STEP_DIR="${CLUSTER_DIR}/processing_step" # shouldn't need to be adjusted
+CALIB_CATALOG_REPO="/gpfs/data/idellant/Clusters/calib_catalog_repo" # location of calibrations and refcats
 
-#update when complete
-AUTO_PIPELINE_DIR="/gpfs/data/idellant/Clusters/gen3_processing/testing_pipeline/A85_metadetect/lovoccs_pipe" #update when complete
-TEMPLATE_DIR="${AUTO_PIPELINE_DIR}/processing_step_templates"
-LOAD_PIPELINE_PATH="/gpfs/data/idellant/lsst_stack_v26_0_0/loadLSST.bash" # update to install in Clusters when complete
-CLUSTER_DIR="/gpfs/data/idellant/Clusters/gen3_processing/testing_pipeline/A85_metadetect" #update when complete
-PROCESSING_STEP_DIR="${CLUSTER_DIR}/processing_step"
-CALIB_CATALOG_REPO="/gpfs/data/idellant/Clusters/calib_catalog_repo"
-
-# == INITIALIZE LSP == #
-
-# source ${LOAD_PIPELINE_PATH}
-# setup lsst_distrib
 
 # == FUNCTIONS ==  #
+
 
 # helper function for customizing bps configs
 bps_config_formatter () {
@@ -56,6 +54,7 @@ bps_config_formatter () {
 
 }
 
+
 # helper function for printing text
 prompt () {
 
@@ -65,12 +64,14 @@ prompt () {
 
 }
 
+
 # helper function to tell user a job has been submitted
 prompt_wait () {
 
 	prompt "Please wait for the sbatch job to finish! Use 'myq' and 'myjobinfo' to monitor progress."
 
 }
+
 
 # STEP 0: creates output directories for slurm-scripts and directory for processing_steps
 
@@ -93,10 +94,9 @@ bps_config_formatter "${NODES}" "$((CORES/NODES))" "$((RAM/NODES))" "${WALL_TIME
 
 }
 
+
 # STEP 1: download raw data from NOAO
 
-#TODO I've added a new script to manage the download using multiple streams in parallel
-# BUT the connections are still throttled after a certain threshold is passed, we need to get on NoirLab to fix this!
 download_raw () {
 
 	echo "Running STEP 1: download_raw"
@@ -116,8 +116,8 @@ download_raw () {
 
 }
 
-# STEP 2: Often there are a few visits per cluster which have a bad fits header burried somewhere
-# unfortunately LSSTPipe struggles a bit with these... so we have to check for them a-priori
+
+# STEP 2: Check for any exposures with a bad/corrupt fits header
 
 check_raws () {
 
@@ -135,9 +135,8 @@ check_raws () {
 
 }
 
-# STEP 3: Now that we know which files are corrupt, we can move them to a separate folder
-# in theory they may be repairable by fixing any bad bits or by at least recovering some of the CCD's
-# but that's a project for someone in CS... not for me
+
+# STEP 3: Move those exposures to a separate folder
 
 move_corrupt_raws () {
 
@@ -155,10 +154,8 @@ move_corrupt_raws () {
 
 }
 
+
 # STEP 4: initialize the repository & create the Butler
-# This, STEP 0, and move_corrupt_raws run directly where run_steps.sh is called
-# usually this isn't a great thing to do since often it'll be run from a login node... 
-# but neither step involve much processing, so it's safe to do so
 
 initialize_repo () {
 
@@ -181,6 +178,7 @@ initialize_repo () {
 
 }
 
+
 # STEP 5: ingest raws, calibrations, and catalogs to the repository
 
 ingest_data () {
@@ -199,10 +197,10 @@ ingest_data () {
 
 }
 
+
 # STEP 6: perform instrumental signal removal (flats/bias/xtalk) and perform a rough astrom/photom calibration
 
 # config-formatting helper function
-
 process_ccd_refcat_formatter () {
 	
 	## text-fill fields ##
@@ -227,6 +225,7 @@ process_ccd_refcat_formatter () {
 	
 }
 
+# config-formatting helper function
 process_ccd_psf_formatter () {
 	
 	# the physical band being processed
@@ -258,6 +257,7 @@ process_ccd_psf_formatter () {
 	
 }
 
+# the actual processing-step
 process_ccd () {
 
 	echo "Running STEP 6: process_ccd"
@@ -350,10 +350,6 @@ process_ccd () {
 		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/process_ccd_${BAND}.sh
 		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/process_ccd_${BAND}.sh
 
-		# echo "Submitting to slurm..."
-		# sbatch ${PROCESSING_STEP_DIR}/process_ccd_${BAND}.sh
-		# sleep 15m
-
 		# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish.
 		# This let's us better utilize resources, at the cost of some overhead ran in serial at the beginning/end of each job
 		if [ -z "$JOBID" ]; then
@@ -367,11 +363,8 @@ process_ccd () {
 
 }
 
-# STEP 7: check each visit to measure the seeing (PSF-FWHM) and average ellipticity across the sensor
 
-# TODO: Test the seeing-check in the LSP against our algorithm (Moffat-fits)
-# Currently in the LSP, there is a step built into the coaddition stage which will pick-out good seeing visits
-# How well does this step work and how does it compare to our method of selecting detectors/visits with good seeing?
+# STEP 7: check each visit to measure the seeing (PSF-FWHM) and average ellipticity across the sensor
 
 check_visit () {
 	
@@ -425,8 +418,8 @@ check_visit () {
 	prompt_wait
 }
 
+
 # STEP 8: apply star-count/fwhm/ellip cuts and create a skymap enclosing our exposures
-# this is the second half of "check_visit", which is separate since it cannot be parallelized
 
 select_visit () {
 
@@ -471,10 +464,6 @@ visit_summary () {
 		sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/visit_summary_template.sh > ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
 		sed -i "s/process_band/${BAND}/g" ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
 		sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
-
-		# echo "Submitting to slurm..."
-		# sbatch ${PROCESSING_STEP_DIR}/visit_summary_${BAND}.sh
-		# sleep 1m
 		
 		# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish.
 		# This let's us better utilize resources, at the cost of some overhead ran in serial at the beginning/end of each job
@@ -491,10 +480,10 @@ visit_summary () {
 
 }
 
+
 # STEP #10 joint-calibration, compares visits of the same band to refcat and carries out a joint photom/astrom-cal
 
 # config-formatting helper function
-
 jointcal_formatter () {
 	
 	## text-fill fields ##
@@ -526,6 +515,7 @@ jointcal_formatter () {
 	sed -i "s/process_band/${PROCESS_BAND}/g" "${CLUSTER_DIR}/configs/jointcal_config_${PROCESS_BAND}.py"
 	sed -i "s/jointcal_order/${JOINTCAL_ORDER}/g" "${CLUSTER_DIR}/configs/jointcal_config_${PROCESS_BAND}.py"
 }
+
 
 jointcal () {
 
@@ -571,9 +561,6 @@ jointcal () {
 		fi
 		
 		# sky-mapper dr1 formatting
-		
-		
-		
 		if [ "${CATALOG}" == "sm_dr1" ]; then
 			SM1_BANDS=('u' 'g' 'r' 'i' 'z')
 			SM1_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
@@ -640,30 +627,15 @@ jointcal () {
 		
 		sbatch --begin=now+${DELAY} ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh
 		DELAY=$((${DELAY} + 600))
-		
-		# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish!
-		# jointcal is single-threaded, so we don't need to hand it all resources, but I'll leave this here in case we need it later
-		#
-		# if [ -z "$JOBID" ]; then
-		#	JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh)
-		#	echo "Submitted jointcal_${BAND} with ${JOBID}"
-		#else
-		#	JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/jointcal_${BAND}.sh)
-		#	echo "Submitted jointcal_${BAND} with ${JOBID}"
-		#fi
 
 	done
 
 }
 
+
 # STEP 11: final visit summary, this does a little bit of data management and implements data from jointcal to produce finalized per-visit catalogs
 
-# TODO (later): test different selection algorithms for aperture-correction...
-# what matters for now is that enough ccd's have the correction so that, when they are stacked, the correction will average-out
-
-
 # config-formatting helper function
-
 final_visit_summary_formatter () {
 	
 	## text-fill fields ##
@@ -687,6 +659,7 @@ final_visit_summary_formatter () {
 	sed -i "s/ap_corr_sn/${AP_CORR_SN}/g" "${CLUSTER_DIR}/configs/final_visit_summary_config_${PROCESS_BAND}.py"
 	
 }
+
 
 final_visit_summary () {
 	
@@ -715,16 +688,13 @@ final_visit_summary () {
 			echo "Submitted final_visit_summary_${BAND} with ${JOBID}"
 		fi
 		
-		# sbatch ${PROCESSING_STEP_DIR}/final_visit_summary_${BAND}.sh
-		# sleep 5m
-		
 	done
 
 	prompt_wait
 }
 
-# STEP 12: perform the first half of drp#step3a, (warp,assemble,detect,deblend)
 
+# STEP 12: perform the first half of drp#step3a, (warp,assemble)
 coadd_3a () {
 
 	echo "Running STEP 12: coadd_3a"
@@ -761,10 +731,10 @@ coadd_3a () {
 
 }
 
+
 # STEP 13: coadd_3b, this step measures sources on the coadd
 
 # config-formatting helper function
-
 coadd_3b_formatter () {
 	
 	## text-fill fields ##
@@ -788,40 +758,15 @@ coadd_3b_formatter () {
 	sed -i "s/process_band/${PROCESS_BAND}/g" "${CLUSTER_DIR}/configs/coadd_3b_config_${PROCESS_BAND}.py"
 }
 
+
 coadd_3b () {
 
 	echo "Running STEP 13: coadd_3b"
-	
-	# neither coadd_3b nor 3c have the same memory failures...
-	# but since measure and forcedPhotom (3c) take so long to run, it's more efficient to evenly distribute resources
-	#echo "Creating new BPS config..."
-	#
-	#ALLOC=$((CORES/(5*2)))
-	#MEM_ALLOC=$((RAM/(5*2)))
-	# two nodes by default for coadd_3b
-	#echo "Allocating 2 nodes, ${ALLOC} cores, and ${MEM_ALLOC} GB of RAM per node for each band"
-	#bps_config_formatter 2 ${ALLOC} ${MEM_ALLOC} "48:00:00" "_coadd3b"
-	# now that all the bands are processed together, I can let bps take care of the resource alloc
-	
-	
-	# because different clusters pull from various catalogs, separate configs are created for each band
-	# the for-loops here are a little lazy... but there isn't any tangible benefit to handling it more neatly
-	# CATALOG is the photometry catalog, BAND is the band to process using this catalog
 
 	# pass the cluster name and band into the template
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/coadd3b_template.sh > ${PROCESSING_STEP_DIR}/coadd_3b.sh
 	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3b.sh
 	echo "Submitting to slurm..."
-	
-	# Soren's idea, submit successive jobs so that they wait in the queue for the previous to finish.
-	# but since coadd_3b has such a long runtime... it's a little bit better to submit these as separate tasks rather than dependencies
-	#if [ -z "$JOBID" ]; then
-	#	JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh)
-	#	echo "Submitted coadd_3b_${BAND} with ${JOBID}"
-	#else
-	#	JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/coadd_3b_${BAND}.sh)
-	#	echo "Submitted coadd_3b_${BAND} with ${JOBID}"
-	#fi
 	
 	echo "Submitting to slurm..."
 	sbatch ${PROCESSING_STEP_DIR}/coadd_3b.sh
@@ -829,8 +774,8 @@ coadd_3b () {
 
 }
 
-# STEP 14: finish-up drp#step3 (merge,forcedPhoto,consolidateTable)
 
+# STEP 14: finish-up drp#step3 (merge,forcedPhoto,consolidateTable)
 coadd_3c () {
 
 	echo "Running STEP 14: coadd_3c"
@@ -844,8 +789,8 @@ coadd_3c () {
 
 }
 
-# STEP 15: produce a separate skycorr stack and detect sources on it
 
+# STEP 15: produce a separate skycorr stack and detect sources on it
 coadd_3d () {
 
 	echo "Running STEP 15: coadd_3d"
@@ -857,13 +802,13 @@ coadd_3d () {
 	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/coadd_3d.sh
 	
 	echo "Submitting to slurm..."
-	#sbatch ${PROCESSING_STEP_DIR}/coadd_3d.sh
+	sbatch ${PROCESSING_STEP_DIR}/coadd_3d.sh
 	prompt_wait
 
 }
 
-# STEP 16: export data from the LSP and draw fov
 
+# STEP 16: export data from the LSP and draw fov
 export_data () {
 
 	echo "Running STEP 16: export_data"
@@ -880,10 +825,6 @@ export_data () {
 
 
 # STEP 17: run photometric correction
-
-#from here-out these are copies of SF's scripts
-#TODO refractor these scripts to fit better in the "processing_step" format and check for bugs
-
 photometric_correction () {
 
     REFCAT_INSTRUMENT=$1
@@ -900,12 +841,11 @@ photometric_correction () {
     prompt_wait
     
     sleep 5s
-
-    
+ 
 }
 
-# STEP 18: measure photometric redshifts
 
+# STEP 18: measure photometric redshifts
 photo_z () {
     
     prompt "Running STEP 18: photo_z"
@@ -923,8 +863,8 @@ photo_z () {
     
 }
 
-# STEP 19: shear calibration
 
+# STEP 19: shear calibration
 shear_calibration () {
     
     prompt "Running STEP 19: shear_calibration"
@@ -943,7 +883,6 @@ shear_calibration () {
 
 
 # STEP 20: construct the mass map
-
 mass_map () {
     
     prompt "Running STEP 20: mass_map"
@@ -960,8 +899,8 @@ mass_map () {
  
 }
 
-# STEP 21: fit the mass
 
+# STEP 21: fit the mass
 mass_fit () {
     
     prompt "Running STEP 21: mass_fit"
@@ -978,9 +917,8 @@ mass_fit () {
  
 }
 
-# STEP 22: check quality
 
-#TODO We can use the data saved from check/select_visit to make a much more accurate map of the depth and pointings across the patches
+# STEP 22: check quality
 quality_check () {
     
     prompt "Running STEP 22: quality_check"
@@ -997,8 +935,8 @@ quality_check () {
  
 }
 
-# STEP 23: red sequence distribution
 
+# STEP 23: red sequence distribution
 red_sequence () {
     
     prompt "Running STEP 23: red_sequence"
@@ -1015,8 +953,8 @@ red_sequence () {
  
 }
 
-# STEP 24: meta_4a
 
+# STEP 24: meta_4a
 meta_4a () {
 
 	echo "Running STEP 24: meta_4a"
@@ -1030,8 +968,8 @@ meta_4a () {
 
 }
 
-# STEP 25: meta_4b
 
+# STEP 25: meta_4b
 meta_4b () {
 
 	echo "Running STEP 26: meta_4b"
@@ -1064,8 +1002,8 @@ meta_4b () {
 
 }
 
-# STEP 26: export metadetect data
 
+# STEP 26: export metadetect data
 meta_export () {
 
 	echo "Running STEP 26: meta_export"
@@ -1079,9 +1017,8 @@ meta_export () {
 	sbatch ${PROCESSING_STEP_DIR}/meta_export.sh
 }
 
-# STEP 27: process metadetect data
-#TODO speed this up by splitting it per-shear
 
+# STEP 27: process metadetect data
 meta_processing () {
 
 	echo "Running STEP 27: meta_processing"
@@ -1103,8 +1040,8 @@ meta_processing () {
 	
 }
 
-# STEP 28: lensing w. metadetect
 
+# STEP 28: lensing w. metadetect
 meta_lensing () {
 
 	echo "Running STEP 28: meta_processing"
@@ -1115,8 +1052,9 @@ meta_lensing () {
 	sbatch ${PROCESSING_STEP_DIR}/meta_lensing.sh
 }
 
-# STEP 29: gotta blast
 
+
+# STEP 29: gotta blast
 gotta_blast () {
 
     xmin=$1
@@ -1144,141 +1082,124 @@ gotta_blast () {
  
 }
 
-# STEP 24: triaxiality
-
-#TODO fix SExtractor configs so this works
-triaxiality () {
-
-    xmin=$1
-    ymin=$2
-    xmax=$3
-    ymax=$4
-    
-    prompt "Running STEP 24: triaxiality"
-
-    sed "s/cluster_name/${CLUSTER_NAME}/g; s/xmin/${xmin}/g; s/ymin/${ymin}/g; s/xmax/${xmax}/g; s/ymax/${ymax}/g" ${TEMPLATE_DIR}/triaxiality_template.sh > ${PROCESSING_STEP_DIR}/triaxiality.sh
-
-    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/triaxiality.sh
-
-    echo "Submitting sbatch script..."
-    #sbatch ${PROCESSING_STEP_DIR}/triaxiality.sh
-    prompt_wait
-    
-    sleep 5s
- 
-}
-
 
 # == RUNNING STEPS == #
 
-#STEP0 NOTES: 
+# == STEP0 NOTES == # 
 # After copying and pasting run_steps_Gen3 into a directory with the Cluster Name, create_output creates a series of folders and python scripts. This only takes a few seconds to run
 
+# == STEP0 COMMAND == #
 #create_output
 
 
-#STEP1 NOTES: 
+# == STEP1 NOTES == # 
 # This step queries and downloads frames from the NoirLab Science Archive
 # it usually takes a few hours too run, but if there is a lot of traffic or
-# other bandwidth issues (see the TODO on line 68) it can take as long as 12 hrs
+# other bandwidth issues it can take as long as 12 hrs
 
+# == STEP1 COMMAND == #
 #download_raw
 
 
-#STEP2 NOTES:
+# == STEP2 NOTES == #
 # Unfortunately, LSSTPipe has doesn't have any code built to catch errors due to
 # missing bits in the fits header or other issues which may corrupt a fits file.
 # As a result we have a step which manually opens checks each file (by opening each file python
 # and checking to see if the script crashes dramatically). This should only take a few minutes to run
 
+# == STEP2 COMMAND == #
 #check_raws
 
 
-#STEP3 NOTES: 
+# == STEP3 NOTES == # 
 # Really... STEP2 is one script which I wrapped into a job-array to help things run a bit faster
 # but because of how it was written, the corrupt fits have to be moved to a separate directory in another script.
-# Eventually I'll wrap these into one step..... but I don't want to manually rename all the step numbers below
-# at the moment.
 
+# == STEP3 COMMAND == #
 #move_corrupt_raws
 
 
-#STEP4 NOTES:
+# == STEP4 NOTES == #
 # To begin LSSTPipe, we need to create a repository which will manage all of the files produced during processing
 # this is a quick process, so like the above steps this is run from the command line rather than with a batch script
 
+# == STEP4 COMMAND == #
 #initialize_repo
 
 
-#STEP5 NOTES:
+# == STEP5 NOTES == #
 # Next, we have to ingest our data into the repository. This step takes care of ingesting all of the catalogs,
 # calibrations, and raw data into the repo. Depending on the amount of raw data, this can take an hour at most
 # but usually takes less.
 
+# == STEP5 COMMAND == #
 #ingest_data
 
 
-#STEP6 NOTES: 
+# == STEP6 NOTES == #
 # This technically runs step1 of the Data Release Pipe (DRP), the big steps this includes are:
 # ISR (Instrumental Signal Removal: Crosstalk, Nonlinearity, Bias, Fringe, Flat, Brighter-Fatter)
-# Image Characterization (Initial Measurements, Cosmic-Ray Repair, Background Subtraction, PSF Measured)
+# Image Characterization (Initial Measurements, Cosmic-Ray Repair, Background Subtraction, Initial PSF Measurement)
 # Image Calibration (Initial Astrometry & Photometry)
 # Remaining tasks consolidate sources into per-detector tables
-
-# For photometric refcats, the options are des_dr2 (g,r,i,z,y), ps1 (g,r,i,z,y), sdss (u-band only), sm_dr1_(g,i,r,v,z), sm_dr2_BAND_(g,i,r,v,z), see ~/Clusters/calib_catalog_repo/catalogs_new/CLUSTER for source-catalog coverage.
+#
+# For photometric refcats, the options are:
+# des_dr2 (g,r,i,z,y), ps1 (g,r,i,z,y), sdss (u-band only), sm_dr1 (g,i,r,u,z), sm_dr2 (g,i,r,u,z), see calib_catalog_repo for coverage
 # This is the first BIG processing step, which takes a VERY long time to run, typically on the order of ~12hrs
-# (per-band, 20 cores allocated) so try to run it overnight if you can.
+# the argument formatting is CAT,BAND; e.g. to use ps1 for g,r; sm_dr1 for i; sm_dr2 for z; and sdss for u; the command is
+# process_ccd sdss,u ps1,g ps1,r sm_dr1,i sm_dr2,z (the order of these is arbitrary; the command just runs a loop over the number of arguments)
+#
+# I would avoid using des_dr2 since this is a little "circular"
+# e.g. much of our data is included in DES so we'd be calibrating our own data with... our own data
 
-# Occassionally, these separate jobs will happen to write to the repo at the same time, which will cause a failure
-# When this occurs, just rerun the corresponding band using sbatch...
-
-# Also very rarely when a job is submitted although the bps.USRN job will be created,
-# it will not be writing any outputs. In this case the fix is simply cancelling that job...
-# The "admin" script (process_ccd_BAND_CLN) will automatically resubmit a new set of managers/workers.
-
+# == STEP6 COMMAND == #
 #process_ccd sdss,u ps1,g ps1,r ps1,i ps1,z ps1,y
 
 
-#STEP7+8 NOTES: 
+# == STEP7+8 NOTES == # 
 # Before moving forward, we check the seeing in each visit/ccd and trim visits which are not "lensing-quality"
 # We fit a Moffat profile to reference stars for measuring the FWHM and use the second moments to measure the distortion
 # in the psf. Technically there is a function for doing this embedded in LSSTPipe, but we have yet to test it. After selecting
 # the good detectors, a skymap object is created which encloses them
 # These usually take a few minutes to run each...
 
+# == STEP7+8 COMMAND == #
 #check_visit u g i r z
 #select_visit
 
 
-#STEP9 NOTES:
+# == STEP9 NOTES == #
 # This runs step2a of DRP. Taking the best CCD's following select_visit, we create final visit summaries
 # which are required for jointcal. This only takes a few minutes to run...
 
+# == STEP9 COMMAND == #
 #visit_summary u g r i z
 
 
-#STEP10 NOTES: 
+# == STEP10 NOTES == # 
 # This runs step2b of DRP, joint-calibration. For precision astrophysics, errors in photometry/astrometry must be minimized.
 # It happens that, on average, you can achive a more precise calibration by fitting the astrometry/photometry of each visit
 # individually, rather than matching to a reference catalog after stacking. This can be done by fully modelling the
 # atmosphere/optics (fgcm) or using an emiprical correction which models variations in brightnesses and positions
 # between exposures (jointcal). Jointcal models variations in positions/brightnesses with a polynomial anchored in
-# refcats and seeks to minimize a joint chi-squared. Ususally this takes about an hour/band (20-cores)...
+# refcats and seeks to minimize a joint chi-squared. Ususally this takes about an hour-ish
+#
+# Arguments should be IDENTICAL to the arguments used during check_visit, unless you are only trying to calibrate a specific band
 
-# Options are des_dr2 (g,r,i,z,y), ps1 (g,r,i,z,y), sdss (u-band only), sm_dr1_(g,i,r,v,z), sm_dr2_BAND_(g,i,r,v,z) the arguments here and in coadd_3b should be identical to the input of process_ccd
-
+# == STEP10 COMMAND == #
 #jointcal sdss,u ps1,g ps1,r ps1,i ps1,z
 
 
-#STEP11 NOTES: 
+# == STEP11 NOTES == # 
 # This runs step2d of DRP. For reasons I can't quite remember, step2c is optional and isn't currently functional on DECam.
 # It includes a final round of calibration which applies the corrections derived from jointcal and creates finalized
 # visit summaries. This takes ~1hr/band with 20-cores
 
+# == STEP11 COMMAND == #
 #final_visit_summary u g r i z
 
 
-#STEP12-15 NOTES: 
+# == STEP12-15 NOTES == # 
 # These steps run through step3a,step3b,step3c, and step3d of DRP.
 # step3a runs coaddition, detects sources, and runs the deblender (~3 hours w/ 140-cores)
 # step3b runs measurements on the coadds (~4 hrs/band w/ 20-cores)
@@ -1287,102 +1208,118 @@ triaxiality () {
 # Technically 3a,3b,3c can be run together if we disable the refcat matching... but since 3b is prone to errors
 # it may not be very useful to merge them
 
+# == STEP12-15 COMMAND == #
 #coadd_3a
 #coadd_3b
 #coadd_3c
 #coadd_3d
 
-#STEP16 NOTES:
+
+# == STEP16 NOTES == #
 # This step exports all of the data out of LSSTPipe, including:
 # Object catalogs containing shapes and magnitudes
 # Fits images containing the full fov
 # irg-images displaying the data
 # roughly ~1hr to run
 
+# == STEP16 COMMAND == #
 #export_data
 
 
 # == Processing with LSSTPipe is done and scripts only take a few minutes to run from here on == #
 
 
-#STEP17 NOTES:
+# == STEP17 NOTES == #
 # From this point forward, the analysis is carried out on a catalog-level, the first step to this is
 # correcting the photometry for color-terms and extinction (called de-redding). u-band is particularly funky here since
 # there are very few existing refcats to calibrate the data with... so instead we use mock-observations
 # created by integrating the spectra of reference-stars with the known transmission of the DECam filters
 # and measure the u-band color terms directly from that calculation ("stellar-locus correction").
+#
+# Use "ps1" "dr1" or "sm" "dr2" depending on the primary refcat used during process_ccd.
 
-# Use "ps1" "dr1" or "sm" "dr2" depending on the refcat used during process_ccd.
-
+# == STEP17 COMMAND == #
 #photometric_correction "ps1" "dr1"
 
 
-#STEP18 NOTES:
+# == STEP18 NOTES == #
 # Once we have a corrected catalog, it's time to identify galaxies in the field and estimate their redshift.
 # For this we use a Bayesian PhotoZ algorithm.
 
+# == STEP18 COMMAND == #
 #photo_z
 
 
-#STEP19 NOTES:
-# For the time being, we run a naive shear-calibration (e.g. g ~ e/(2R) without any weights).
-# This is almost certainly not the best we can do, but based on Soren's last Source-Injection
-# batch it's certainly better than usign the HSC method
+# == STEP19 NOTES == #
+# By default, run shear calibration using HSC-Y1 calibration
+# in principle this is instrument dependent... but in practice HSC calib can be "good enough"
+# but we've implemented a modifed version of metadetect (later processing steps) to provide a precise calibration
 
+# == STEP19 COMMAND == #
 #shear_calibration
 
 
-#STEP20 NOTES:
+# == STEP20 NOTES == #
 # Now that we have photo-z's, we can transform the HSM shape measurements into reduced shears and assemble a 
-# mass_map. Generally, what we produce at this stage is not directly contours representing the mass, but instead
-# a "mass-aperture map", which convolves the shear field with a filter built to pick out a particular signal.
-# Our filter is built to be particularly sensitive to NFW-like structures, which will have a high SN-ratio
+# mass_map. We use mass aperture statistics, which can be interpreted as:
+# - An optimized matched-filter built to pick up NFW-like profiles
+# - A measurement of the average convergence in an aperture, but weighted by a filter to maximize the signal
 
+# == STEP20 COMMAND == #
 #mass_map
 
 
-#STEP21 NOTES:
+# == STEP21 NOTES == #
 # This step actually extracts the mass by fitting the shears of an NFW-profile to the observed shear-field and
 # bootstrapping to produce error-bars.
 
+# == STEP21 COMMAND == #
 #mass_fit
 
 
-#STEP22 NOTES:
+# == STEP22 NOTES == #
 # This stage looks for correlations between different objects and produces plots summarizing the quality of 
 # observations/data which was used.
 
+# == STEP22 COMMAND == #
 #quality_check
 
 
-#STEP23 NOTES:
+# == STEP23 NOTES == #
 # Generally, in a cluster the "red-sequence galaxies" are the oldest objects in the cluster and, as a result,
 # effectively trace out the distribution of mass in the cluster. The red-sequence is selected from an HR-diagram
 # of the cluster and smoothed contours representing their number density are produced
 
+# == STEP23 COMMAND == #
 #red_sequence
+
 
 # == Briefly going back to LSSTPipe for running metadetect! == #
 
 
-#STEP24-28 NOTES:
+# == STEP24-28 NOTES == #
 # these steps run our implementation of metadetect
 # meta_4a runs the shears on our coadds
 # and meta_4b runs detect/deblend/measure on them, which we can use to build a robust calibration
 # meta_export collects all of the outputs from the 5 different versions of our coadds
 # meta_processing/meta_lensing finally process those coadds and run the lensing portion (including shear-calibration!)
 
+# STEP24-28 COMMAND == #
 #meta_4a
 #meta_4b
 #meta_export
 #meta_processing
 #meta_lensing
 
-#STEP24 NOTES:
+
+# == STEP29 NOTES == #
 # blast intermediate collections and other datasets, then zip the submit-directory
 
+# == STEP29 COMMAND == #
 #gotta_blast
 
+
+# And that's it!
 
 # == WIP == #
 
@@ -1445,6 +1382,29 @@ ap_pipe () {
 
 }
 
+
+# STEP TODO: triaxiality
+#TODO fix SExtractor configs so this works
+triaxiality () {
+
+    xmin=$1
+    ymin=$2
+    xmax=$3
+    ymax=$4
+    
+    prompt "Running STEP 24: triaxiality"
+
+    sed "s/cluster_name/${CLUSTER_NAME}/g; s/xmin/${xmin}/g; s/ymin/${ymin}/g; s/xmax/${xmax}/g; s/ymax/${ymax}/g" ${TEMPLATE_DIR}/triaxiality_template.sh > ${PROCESSING_STEP_DIR}/triaxiality.sh
+
+    sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g" ${PROCESSING_STEP_DIR}/triaxiality.sh
+
+    echo "Submitting sbatch script..."
+    #sbatch ${PROCESSING_STEP_DIR}/triaxiality.sh
+    prompt_wait
+    
+    sleep 5s
+ 
+}
 
 
 
