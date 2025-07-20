@@ -1376,7 +1376,7 @@ triaxiality () {
 #meta_4b
 #meta_export
 #meta_processing
-meta_lensing
+#meta_lensing
 
 #STEP24 NOTES:
 # blast intermediate collections and other datasets, then zip the submit-directory
