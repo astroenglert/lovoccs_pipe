@@ -32,7 +32,21 @@ def colorbar(mappable):
     return cbar
 
 def draw_psf(visit,band='r',fwhm_cut=3.8,ellip_cut=0.1,res=120):
+    '''
+    Draw a model of the PSF across a visit
     
+    Args:
+      visit: int; visit number to draw
+      band: string; band for this visit
+      fwhm_cut: float; maximum FWHM to pass QC's
+      ellip_cut: float; maximum ellip to pass QC's
+      res: float; resolutiono f the final figure
+    
+    Returns:
+      None
+    
+    '''
+
     visit_summary_filepath = "check_visit/summary_tables/{band}_visit_{exp}_summary.csv".format(band=band,exp=visit)
     
     visit_wcs_filepath = "check_visit/summary_tables/{band}_visit_{exp}_wcs.csv".format(band=band,exp=visit)

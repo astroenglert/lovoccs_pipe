@@ -64,6 +64,29 @@ def query_raws(caldat_min, caldat_max, ra, dec,
                 expmax=1000,
                 session=session,
                ):
+    '''
+    Function to query for raw exposures from NOIRLab
+    
+    Args:
+      caldat_min: string; the minimum calendar date to query
+      caldat_maxd: string; the maximum calendar date to query
+      ra: float; the Ra (in degrees) to center the query on
+      dec: float; the Dec (in degrees) to center the query on
+      outfields: array; list of fileds the query should return, 
+                        defaults to ["ra_center","dec_center","exposure","dateobs_center","caldat","ifilter","archive_filename","url","proposal"]
+      search: array; list specifying criteria for specific columns,
+                     defaults to [ ["instrument","decam"],["obs_type","object"],["proc_type","raw"],["prod_type","image"], ]
+      limit: int; maximum number of search results to return
+      ifilter: string; the filter name to query
+      radius: float; radius in deg to query about
+      expmin: float; minimum exposure time
+      expmax: float; maximum exposure time
+      session: Session; Session for the connection
+    
+    Returns:
+      dfMaster: DataFrame; dataframe containing visit information queried
+    
+    '''
     
     # roots for querying the server
     search.append(["caldat",caldat_min,caldat_max])
@@ -123,7 +146,19 @@ def query_raws(caldat_min, caldat_max, ra, dec,
     return dfMaster
 
 def make_download_config(table=None,urls=None,filename=None,download_config='raws/download_task'):
+    '''
+    Write a file to execute a list of download commands
     
+    Args:
+      table: DataFrame; table containing urls and filenames to download
+      urls: array; a list of URLs
+      filename: array; a list of filenames corresponding to each URL
+      download_config: string; tag to pre-pend to each script
+    
+    Returns:
+      None 
+    
+    '''
     # collect url and archive filenames
     if table is not None:
         print("Pulling urls and filenames from the table.")

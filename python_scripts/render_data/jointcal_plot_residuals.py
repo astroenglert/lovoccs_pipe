@@ -12,6 +12,17 @@ from astropy import units as u
 from astropy.table import Table
 
 def photom_astrom_jc_match(photom_table,astrom_table):
+    '''
+    Helper function to load the results of jointcal debug tables into a more managable format
+    
+    Args:
+      photom_table: DataFrame; dataframe containing jointcal photometry output
+      astrom_table: DataFrame; dataframe containing jointcal astrometry output
+    
+    Returns:
+      output: Astropy Table; a table containing the essential columns for debugging jointcal
+    
+    '''
     photom_ids = photom_table['id'].astype(int)
     astrom_ids = astrom_table['id'].astype(int)
     shared_astrom = np.in1d(astrom_ids,photom_ids)
@@ -34,6 +45,17 @@ def photom_astrom_jc_match(photom_table,astrom_table):
 
 # load a reference catalog
 def get_reference_catalog(refcat_name,cluster_name,band=None):
+    '''
+    Helper function to load a reference catalog
+    
+    Args:
+      refcat_name: string; name of refcat to load
+      cluster_name: string; name of the cluster
+    
+    Returns:
+      return_me: Table; astropy table storing reference stars
+    
+    '''
     
     # load the reference catalog
     cluster_refcats = glob.glob("/gpfs/data/idellant/Clusters/calib_catalog_repo/catalogs_new/{CLN}/{REFCAT}*.csv".format(CLN=cluster_name,REFCAT=refcat_name))
@@ -97,7 +119,26 @@ def get_reference_catalog(refcat_name,cluster_name,band=None):
     return return_me
 
 def compare_refcat_jointcal(cluster_name,refcat_name,band,order,jointcal_dir=None,visit=None,magu=25,magl=0,cmin=-0.2,cmax=0.2):
-
+    '''
+    Plot the jointcal residuals
+    
+    Args:
+      cluster_name: string; name of the cluster
+      refcat_name: string; name of the refcat
+      band: string; band to load
+      order: int; order of the jointcal fit
+      jointcal_dir: string; string to save residual plots in, defaults to .../jointcal_residuals/
+      visit: int; visit-id to draw
+      magu: float; upper magnitude limit to check
+      magl: float; lower magnitude limit to check
+      cmin: float; minimum residual on colorbar
+      cmax: float; maximum residual on colorbar
+    
+    Returns:
+      None
+    
+    '''
+    
     # will need to standardize these filepaths
     final="final"
     

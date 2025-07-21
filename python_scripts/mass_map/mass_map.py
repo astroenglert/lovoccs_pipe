@@ -308,7 +308,6 @@ def write_to_fits(Map_E,Map_B,Map_V,wcs,output_filename):
 
 def draw_mass_map(Map_E,Map_B,Map_V,smoothing,Map_wcs):
     '''
-    
     A helper function to render our nice mass_map plots
     
     Args:

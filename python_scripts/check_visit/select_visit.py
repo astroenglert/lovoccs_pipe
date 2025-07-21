@@ -23,7 +23,19 @@ from lsst.daf.butler import Butler
 # create scatter-plot of fwhm against ellipticity
 # not efficient to have two plotting functions here... but this only costs a few seconds per-band
 def plot_scatter(visit_dict,fwhm_cut,ellip_cut,res=120):
-
+    '''
+    Create a scatter-plot of FWHM against ellipticity
+    
+    Args:
+      visit_dict: dict; dictionary containing visit statistics
+      fwhm_cut: float; maximum allowed FWHM
+      ellip_cut: float; maximum allowed ellip
+      res: int; resolution of output figure
+    
+    Returns:
+      None
+    
+    '''
     # statistics of interest
     fwhm_hist = []
     ellip_hist = []
@@ -48,6 +60,20 @@ def plot_scatter(visit_dict,fwhm_cut,ellip_cut,res=120):
     
 # create histogram across all detectors/visits
 def plot_histograms(visit_dict,fwhm_cut,ellip_cut,good_visits=None,res=120):
+    '''
+    A helper function to plot histograms of detector and visit statistics
+    
+    Args:
+      visit_dict: dict; dictionary containing visit statistics
+      fwhm_cut: float; maximum allowed FWHM
+      ellip_cut: float; maximum allowed ellip
+      good_visits: array; list of visit-id's to render, plots all if None
+      res: int; resolution of saved figures
+    
+    Returns:
+      None 
+    
+    '''
     
     visits = list(visit_dict)
     
@@ -169,7 +195,22 @@ def plot_histograms(visit_dict,fwhm_cut,ellip_cut,good_visits=None,res=120):
 # this function actually applies the cuts we're interested in
 # it returns visits in a dictionary followed by an array of the good detectors
 def apply_cuts(visit_dict,visit_star_cut,det_star_cut,fwhm_cut,ellip_cut,det_cut=10,dist_cut=1.5):
+    '''
+    Helper function to apply quality cuts to a visit_dict and spit-out a list of the good visit/detectors
     
+    Args:
+      visit_dict: dict; dictionary containing visit statistics
+      visit_star_cut: int; minimum number of stars requried per-visit
+      det_star_cut: int; minimum number of stars required per-detector
+      fwhm_cut: float; maximum allowed FWHM
+      ellip_cut: float; maximum allowed ellip
+      det_cut: int; minimum number of good detectors for a visit to pass
+      dist_cut: float; maximum distance (in degrees) a detector can be from the cluster center
+    
+    Returns:
+      good_dict: dict; a dictionary specifying the good exposures/detectors
+    
+    '''
     good_dict = {}
     for visit in list(visit_dict):
         print("Applying cuts to visit {exp}!".format(exp=visit))

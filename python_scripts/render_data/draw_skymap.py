@@ -13,7 +13,17 @@ from lsst.daf.butler import Butler
 # with the lines of ra/dec separating each patch drawn on
 
 def get_patch_info(tract):
-        
+    '''
+    Helper function to load information about a tract
+    
+    Args:
+      tract: int; integer specifying the tract-id
+    
+    Returns:
+      id_array: array; array of patch id-numbers
+      bbox_dict: dict; dictionary of bbox info keyed by patch-index
+    
+    '''
     # ususally the skymap should be 12x12, but I'm leaving this general in case something changes
     xMax = tract.getNumPatches()[0]
     yMax = tract.getNumPatches()[1]
@@ -35,6 +45,19 @@ def get_patch_info(tract):
     return id_array,bbox_dict
 
 def draw_patches(ax,id_array,bbox_dict,textparams=None):
+    '''
+    Helper function to render the patches on-sky (roughly...)
+    
+    Args:
+      ax: matplotlib Axes; axes to draw patches over
+      id_array: array; array of patch-ID's
+      bbox_dict: dict; dictionary of bbox info keyed by patch index
+      textparams: dict; dictionary of parameter to pass to ax.annotate, defaults to None
+    
+    Returns:
+      None
+
+    '''
     
     # first just a quick lazy way to get the number of patches
     xMax = len(id_array[:,0])

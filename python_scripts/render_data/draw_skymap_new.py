@@ -18,7 +18,18 @@ from lsst.daf.butler import Butler
 
 # function to query hips for a cutout of CLN
 def get_cluster_cutout(cln="A85",catalog="CDS/P/DESI-Legacy-Surveys/DR10/r",dims=2000,fov=4,hipsQuery={}):
+    '''
+    Helper function to query HiPS for a cutout of the cluster
     
+    Args:
+      cln: string; cluster name
+      catalog: string; catalog to load data from, defaults to CDS/P/DESI-Legacy-Surveys/DR10/r
+      dims: int; width of the .fits image
+      fov: int; field of view of the .fits image in degrees
+      hipsQuery: dict; arguments to pass to the hipsQuery, defaults to {}
+    
+    
+    '''
     # query for object coordinates
     out = Ned.query_object(cln)
     ra = out[0]['RA']
@@ -57,7 +68,18 @@ def get_cluster_cutout(cln="A85",catalog="CDS/P/DESI-Legacy-Surveys/DR10/r",dims
     return w,result
 
 def get_patch_info(tract):
-        
+    '''
+    Helper function to load information about a tract
+    
+    Args:
+      tract: int; integer specifying the tract-id
+    
+    Returns:
+      id_array: array; array of patch id-numbers
+      bbox_dict: dict; dictionary of bbox info keyed by patch-index
+    
+    '''
+    
     # ususally the skymap should be 12x12, but I'm leaving this general in case something changes
     xMax = tract.getNumPatches()[0]
     yMax = tract.getNumPatches()[1]
@@ -79,6 +101,19 @@ def get_patch_info(tract):
     return id_array,bbox_dict
 
 def draw_patches(ax,id_array,bbox_dict,textparams=None):
+    '''
+    Helper function to render the patches on-sky (roughly...)
+    
+    Args:
+      ax: matplotlib Axes; axes to draw patches over
+      id_array: array; array of patch-ID's
+      bbox_dict: dict; dictionary of bbox info keyed by patch index
+      textparams: dict; dictionary of parameter to pass to ax.annotate, defaults to None
+    
+    Returns:
+      None
+
+    '''
     
     # first just a quick lazy way to get the number of patches
     xMax = len(id_array[:,0])
@@ -197,6 +232,19 @@ decam_ccd_names = [ 'S29', 'S30', 'S31',
                       ];
 
 def draw_decam(ax,ra,dec,**kwargs):
+    '''
+    Helper function to draw the outline of DECam CCD's centered at a point
+    
+    Args:
+      ax: matplotlib Axes; axes to draw CCD's over
+      ra: float; Ra (in degrees) to center on
+      dec: float; Dec (in degrees) to center on
+      kwargs: dict; dictionary passed to ax.plot
+    
+    Returns:
+      None
+    
+    '''
     decam_arr = np.array(decam_rds)
     for i in range(62):
         x_corner = decam_arr[i,:,0]
