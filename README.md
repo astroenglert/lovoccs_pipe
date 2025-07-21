@@ -62,7 +62,7 @@ There are a handful of additional auxilliary files that we use throughout proces
       - The expected format is a .csv with at least three headers: ra/dec/z
       - Should be titled by the cluster name, e.g. `{SPECZ_DB}/{CLUSTER_NAME}_ned_select.csv`; this can be switched by updating the photo_z processing step
    - EXT_DB contains extinction maps; by default we use IRAS maps
-      - We use the default .fits file that can be (queried directly)[https://irsa.ipac.caltech.edu/applications/DUST/]
+      - We use the default .fits file that can be [queried directly](https://irsa.ipac.caltech.edu/applications/DUST/)
       - The expected directory structure is again based on the cluster name: `{EXT_DB}/{CLUSTER_NAME}.fits`
    - XRAY_DB specifies some archival X-Ray data that can be drawn over mass_maps for reference
       - Again, these are just .fits files saved in: `{XRAY_DB}/{CLUSTER_NAME}/Chandra/broad_flux_smoothed.fits`
