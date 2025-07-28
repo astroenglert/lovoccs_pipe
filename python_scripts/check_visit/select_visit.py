@@ -228,7 +228,7 @@ def apply_cuts(visit_dict,visit_star_cut,det_star_cut,fwhm_cut,ellip_cut,det_cut
             
             # first a wcs cut, keep detectors w/in 1.5deg of the cluster center
             dist = cl_center.separation(SkyCoord(detector_statistics[1],detector_statistics[2],unit='deg')).deg
-            if dist > 1.5:
+            if dist > dist_cut:
                 print("Visit {exp} det {num} failed the detector-level distance-cut!".format(exp=visit,num=detector_statistics[0]))
                 continue
             
