@@ -284,35 +284,19 @@ process_ccd () {
 			done
 		fi
 		
-		# sky-mapper dr1 formatting
-		if [ "${CATALOG}" == "sm_dr1" ]; then
-			SM1_BANDS=('u' 'g' 'r' 'i' 'z')
-			SM1_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
-			SM1_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
+		# sky-mapper dr4 formatting
+		if [ "${CATALOG}" == "sm_dr4" ]; then
+			SM4_BANDS=('u' 'g' 'r' 'i' 'z')
+			SM4_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
+			SM4_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
 			
-			for i in ${!SM1_BANDS[@]}; do
-				if [ "${SM1_BANDS[$i]}" == "$BAND" ]; then 
-					process_ccd_refcat_formatter "${CATALOG}_${SM1_CAT_BANDS[$i]}" "${SM1_MAPS[$i]}" "${BAND}"
+			for i in ${!SM4_BANDS[@]}; do
+				if [ "${SM4_BANDS[$i]}" == "$BAND" ]; then 
+					process_ccd_refcat_formatter "${CATALOG}_${SM4_CAT_BANDS[$i]}" "${SM4_MAPS[$i]}" "${BAND}"
 					process_ccd_psf_formatter "${BAND}"
 					break
 				fi
-				if [ $i == 4 ]; then echo "ERROR: SM_DR1 does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		# sky-mapper dr2 formatting
-		if [ "${CATALOG}" == "sm_dr2" ]; then
-			SM2_BANDS=('u' 'g' 'r' 'i' 'z')
-			SM2_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
-			SM2_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
-			
-			for i in ${!SM2_BANDS[@]}; do
-				if [ "${SM2_BANDS[$i]}" == "$BAND" ]; then 
-					process_ccd_refcat_formatter "${CATALOG}_${SM2_CAT_BANDS[$i]}" "${SM2_MAPS[$i]}" "${BAND}"
-					process_ccd_psf_formatter "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: SM_DR2 does not contain ${BAND}"; return; fi
+				if [ $i == 4 ]; then echo "ERROR: SM_DR4 does not contain ${BAND}"; return; fi
 			done
 		fi
 		
@@ -328,20 +312,6 @@ process_ccd () {
 					break
 				fi
 				if [ $i == 0 ]; then echo "ERROR: SDSS does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		if [ "${CATALOG}" == "des_dr2" ]; then
-			DES_BANDS=('g' 'r' 'i' 'z' 'y')
-			DES_MAPS=('wavg_mag_psf_g' 'wavg_mag_psf_r' 'wavg_mag_psf_i' 'wavg_mag_psf_z' 'wavg_mag_psf_y')
-			
-			for i in ${!DES_BANDS[@]}; do
-				if [ "${DES_BANDS[$i]}" == "$BAND" ]; then 
-					process_ccd_refcat_formatter "${CATALOG}" "${DES_MAPS[$i]}" "${BAND}"
-					process_ccd_psf_formatter "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: DES does not contain ${BAND}"; return; fi
 			done
 		fi
 
@@ -560,33 +530,18 @@ jointcal () {
 			done
 		fi
 		
-		# sky-mapper dr1 formatting
-		if [ "${CATALOG}" == "sm_dr1" ]; then
-			SM1_BANDS=('u' 'g' 'r' 'i' 'z')
-			SM1_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
-			SM1_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
+		# sky-mapper dr4 formatting
+		if [ "${CATALOG}" == "sm_dr4" ]; then
+			SM4_BANDS=('u' 'g' 'r' 'i' 'z')
+			SM4_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
+			SM4_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
 			
-			for i in ${!SM1_BANDS[@]}; do
-				if [ "${SM1_BANDS[$i]}" == "$BAND" ]; then 
-					jointcal_formatter "${CATALOG}_${SM1_CAT_BANDS[$i]}" "${SM1_MAPS[$i]}" "${BAND}"
+			for i in ${!SM4_BANDS[@]}; do
+				if [ "${SM4_BANDS[$i]}" == "$BAND" ]; then 
+					jointcal_formatter "${CATALOG}_${SM4_CAT_BANDS[$i]}" "${SM4_MAPS[$i]}" "${BAND}"
 					break
 				fi
-				if [ $i == 4 ]; then echo "ERROR: SM_DR1 does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		# sky-mapper dr2 formatting
-		if [ "${CATALOG}" == "sm_dr2" ]; then
-			SM2_BANDS=('u' 'g' 'r' 'i' 'z')
-			SM2_MAPS=('v_psf' 'g_psf' 'r_psf' 'i_psf' 'z_psf')
-			SM2_CAT_BANDS=('v' 'g' 'r' 'i' 'z')
-			
-			for i in ${!SM2_BANDS[@]}; do
-				if [ "${SM2_BANDS[$i]}" == "$BAND" ]; then 
-					jointcal_formatter "${CATALOG}_${SM2_CAT_BANDS[$i]}" "${SM2_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: SM_DR2 does not contain ${BAND}"; return; fi
+				if [ $i == 4 ]; then echo "ERROR: SM_DR4 does not contain ${BAND}"; return; fi
 			done
 		fi
 		
@@ -601,19 +556,6 @@ jointcal () {
 					break
 				fi
 				if [ $i == 0 ]; then echo "ERROR: SDSS does not contain ${BAND}"; return; fi
-			done
-		fi
-		
-		if [ "${CATALOG}" == "des_dr2" ]; then
-			DES_BANDS=('g' 'r' 'i' 'z' 'y')
-			DES_MAPS=('wavg_mag_psf_g' 'wavg_mag_psf_r' 'wavg_mag_psf_i' 'wavg_mag_psf_z' 'wavg_mag_psf_y')
-			
-			for i in ${!DES_BANDS[@]}; do
-				if [ "${DES_BANDS[$i]}" == "$BAND" ]; then 
-					jointcal_formatter "${CATALOG}" "${DES_MAPS[$i]}" "${BAND}"
-					break
-				fi
-				if [ $i == 4 ]; then echo "ERROR: DES does not contain ${BAND}"; return; fi
 			done
 		fi
 
@@ -1144,13 +1086,10 @@ gotta_blast () {
 # Remaining tasks consolidate sources into per-detector tables
 #
 # For photometric refcats, the options are:
-# des_dr2 (g,r,i,z,y), ps1 (g,r,i,z,y), sdss (u-band only), sm_dr1 (g,i,r,u,z), sm_dr2 (g,i,r,u,z), see calib_catalog_repo for coverage
+# ps1 (g,r,i,z,y), sdss (u-band only), sm_dr4 (g,i,r,u,z), see calib_catalog_repo for coverage
 # This is the first BIG processing step, which takes a VERY long time to run, typically on the order of ~12hrs
-# the argument formatting is CAT,BAND; e.g. to use ps1 for g,r; sm_dr1 for i; sm_dr2 for z; and sdss for u; the command is
-# process_ccd sdss,u ps1,g ps1,r sm_dr1,i sm_dr2,z (the order of these is arbitrary; the command just runs a loop over the number of arguments)
-#
-# I would avoid using des_dr2 since this is a little "circular"
-# e.g. much of our data is included in DES so we'd be calibrating our own data with... our own data
+# the argument formatting is CAT,BAND; e.g. to use ps1 for g,r; sm_dr4 for i; sm_dr4 for z; and sdss for u; the command is
+# process_ccd sdss,u ps1,g ps1,r sm_dr4,i sm_dr4,z (the order of these is arbitrary; the command just runs a loop over the number of arguments)
 
 # == STEP6 COMMAND == #
 #process_ccd sdss,u ps1,g ps1,r ps1,i ps1,z ps1,y
