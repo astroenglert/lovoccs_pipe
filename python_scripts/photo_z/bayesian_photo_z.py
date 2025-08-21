@@ -53,14 +53,14 @@ def compute_F(sed_template,magnitude_table,filter_map,error_tag,sed_template_upp
     '''
     
     # check if the sed is cached, compute it if not
-    if sed_template._flux_cache == None:
+    if sed_template._flux_cache is None:
         #print('Now computing fluxes for %s'%(sed_template.sed_name))
         template_flux_table = sed_template.compute_flux()
     else:
         #print("Pulling fluxes from the \'cache\'")
         template_flux_table = sed_template._flux_cache
     
-    if (sed_template_upper._flux_cache == None) & (sed_template_upper is not None):
+    if (sed_template_upper._flux_cache is None) & (sed_template_upper is not None):
         #print('Now computing fluxes for %s'%(sed_template_upper.sed_name))
         template_flux_table_upper = sed_template_upper.compute_flux()
     elif sed_template_upper is not None:
