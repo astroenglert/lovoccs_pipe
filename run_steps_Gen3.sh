@@ -1175,7 +1175,7 @@ gotta_blast () {
 # created by integrating the spectra of reference-stars with the known transmission of the DECam filters
 # and measure the u-band color terms directly from that calculation ("stellar-locus correction").
 #
-# Use "ps1" "dr1" or "sm" "dr2" depending on the primary refcat used during process_ccd.
+# Use "ps1" "dr2" or "sm" "dr4" depending on the primary refcat used during process_ccd.
 
 # == STEP17 COMMAND == #
 #photometric_correction "ps1" "dr1"
