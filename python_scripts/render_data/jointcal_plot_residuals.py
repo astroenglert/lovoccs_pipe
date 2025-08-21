@@ -95,14 +95,16 @@ def get_reference_catalog(refcat_name,cluster_name,band=None):
         
     if "sm" in refcat_name:
         if band == "u":
-            band = "v"
+            band_search = "v"
             mag_col = "v_psf"
-        mag_col = band + "_psf"
+        else:
+            band_search = band
+            mag_col = band + "_psf"
         ra_header = "raj2000"
         dec_header = "dej2000"
         
         # sm has different filename when we download them, so its a little special
-        cluster_refcats = glob.glob("/gpfs/data/idellant/Clusters/calib_catalog_repo/catalogs_new/{CLN}/{REFCAT}*_{CLN}_{BAND}.csv".format(CLN=cluster_name,REFCAT=refcat_name,BAND=band)) 
+        cluster_refcats = glob.glob("/gpfs/data/idellant/Clusters/calib_catalog_repo/catalogs_new/{CLN}/{REFCAT}*_{CLN}_{BAND}.csv".format(CLN=cluster_name,REFCAT=refcat_name,BAND=band_search)) 
         
         # this should return a single catalog, if not something is wrong!
         if len(cluster_refcats) != 1:
