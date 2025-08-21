@@ -252,7 +252,7 @@ def draw_residuals(matched_catalog,catalog_instr,refcat_instr,band,colorterms,ca
     catalog_std_stars = load_std_stars(catalog_instr)
     
     # check that the reference stars exist, if-so draw them as well
-    if (refcat_std_stars != None) and (catalog_std_stars != None):
+    if (refcat_std_stars is not None) and (catalog_std_stars is not None):
         refcat_std_ct0 = refcat_std_stars[color[0]]
         refcat_std_ct1 = refcat_std_stars[color[1]]
         refcat_std_band = refcat_std_stars[band]
