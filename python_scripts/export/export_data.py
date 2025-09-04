@@ -132,8 +132,8 @@ def export_patch_data(butler,patch,flags,columns,cln='A85',compute_magnitudes=['
     # add a unique identifier
     #TODO should we do LVS or LV[XRAY RANK NUM]; e.g. for A85 LVS 0039... v. LV3 0039...
     coords = SkyCoord(ra=patch_table['ra'],dec=patch_table['dec'],unit='deg')
-    ra_str = coords.ra.to_string(u.hour,precision=2,sep='',pad=True)
-    dec_str = coords.dec.to_string(u.hour,precision=2,sep='',pad=True,alwayssign=True)
+    ra_str = coords.ra.to_string(u.hourangle,precision=2,sep='',pad=True)
+    dec_str = coords.dec.to_string(u.degree,precision=2,sep='',pad=True,alwayssign=True)
     
     object_id = np.char.add('LVS J',ra_str)
     object_id = np.char.add(object_id,dec_str)
