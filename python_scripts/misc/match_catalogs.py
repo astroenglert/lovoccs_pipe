@@ -192,6 +192,7 @@ def matched_catalog_histogram(refcat,refcat_inst,catalog,catalog_inst,sep=0.5*u.
     
     Returns:
         True if figure saved successfully
+    
     '''
     
     # collect the headers

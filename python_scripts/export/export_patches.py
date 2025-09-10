@@ -40,6 +40,25 @@ def collect_masks(butler,tract,cln,band,x_list,y_list,dataset_type='deepCoadd',p
     6 -> MP_DETECTED_NEGATIVE
     
     For more masks, print the header of hdul_index.
+    
+    Args:
+      butler: Butler; the butler to use for loading data
+      tract: int; integer specifying the tract
+      cln: string; cluster name
+      band: string; band to load masks from
+      x_list: array; list of x-indices per patch
+      y_list: array; list of y-indices per patch
+      dataset_type: string; datasetType to load masks from, defaults to 'deepCoadd'
+      patch_width: int; the dimensions of the patch in DECam pixels, defaults to '4000'
+      gap_width: int; the width of the outer-bbox around each patch, defaults to '100'
+      mask_planes: array; strings specifying the bad mask plane, defaults to ['BAD','DETECTED','DETECTED_NEGATIVE','SAT']
+      wcs_patch: array; specify the patch to use for loading the wcs, defaults to [5,5]
+      collection: string; collection in repo to load from, defaults to 'DECam/processing/coadd_3a'
+      tag: string; string to append to end of filename, defaults to None
+    
+    Returns:
+      None
+    
     '''
     
     patchIndices = {}
@@ -159,7 +178,25 @@ def collect_masks(butler,tract,cln,band,x_list,y_list,dataset_type='deepCoadd',p
 # define a function here to load and save fits-files of a given patch range
 # will export the deepCoadd and deepCoadd_calexp (deepcoadd+final round bkg-subtraction)
 def export_patches(butler,tract,cln,band,x_list,y_list,patch_width=4000,gap_width=100,dataset_type='deepCoadd',wcs_patch=[5,5],collection='DECam/processing/coadd_3a',tag=None):
-   
+    '''
+    Helper function to export patches of dataset_type from the repo
+    
+    Args:
+      band: string; the band for the dataset
+      x_list: array; an array specifying the x-indices of the patch
+      y_list: array; an array specifying the y-indices of the patch
+      patch_width: int; dimensions of the patch in DECam pixels, defaults to '4000'
+      gap_width: int; the width of the outer-bbox around each patch, defaults to '100'
+      dataset_type: string; dataset_type to export, defaults to 'deepCoadd'
+      wcs_patch: array; array specifying the patch to use as reference for the WCS, defaults to [5,5]
+      collection: string; collection in repo to load from, defaults to 'DECam/processing/coadd_3a
+      tag: string; tag to append to the end of the filename, defaults to None
+    
+    Returns:
+      None
+    
+    '''
+    
     patchIndices = {}
     image_whole = np.zeros((len(x_list)*patch_width, len(y_list)*patch_width))
     # first let's get a dictionary of the patches in a square of x_list x y_list
@@ -261,6 +298,19 @@ def export_patches(butler,tract,cln,band,x_list,y_list,patch_width=4000,gap_widt
 
 # Let's also use two stretches, one for color-correct (lupton) and another for not color-correct (but nice looking)
 def draw_rgb(R,G,B,patches,tag='deepCoadd',lupton=False):
+    '''
+    Helper function to draw an RGB image of the data
+    
+    Args:
+      R/G/B: string; string specifying the band to load into each channel
+      patches: string; the range of patches (e.g. '33-88')
+      tag: string; tag to append to the end of the output file
+      lupton: bool; enable Lupton coloring?
+    
+    Returns
+      None
+    
+    '''
     
     print("Loading FITS images...")
     data_1 = (pyfits.getdata(R, 0))

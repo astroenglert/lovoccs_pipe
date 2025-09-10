@@ -4,7 +4,18 @@ import sys
 
 # iterate through dataset_type in collection and find all headers containing a single apostraphe
 def repair_headers(butler,dataset_type='calexp',collection='DECam/processing/calexp_r'):
+    '''
+    Iterate through a dataset_type and find/replace all headers containing an apostraphe (which crashes LSP at later steps)
     
+    Args:
+      butler: Butler; butler for the repository
+      dataset_type: string; datasetType to load, defaults to 'calexp'
+      collection: string; collection to load datasets from, defaylts to 'DECam/processing/calexp_r'
+      
+    Returns:
+      None
+    
+    '''
     # write the output to disk?
     write = False
     

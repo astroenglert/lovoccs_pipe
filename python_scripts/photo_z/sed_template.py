@@ -250,12 +250,12 @@ class TemplateBase(ABC):
         elif galaxy_type == 2:
             for i in range(4):
                 amp = self._hubble_redshift_prior_amplitude(late_alpha[i], late_z0[i], late_kmt[i], m0[conditions[i]], ref_mag[i])
-                output_arr[conditions[i]] = late_prior[i](m0[conditions[i]])
+                output_arr[conditions[i]] = amp[:,None]*late_prior[i](m0[conditions[i]])
                 
         else:
             for i in range(4):
                 amp = self._hubble_redshift_prior_amplitude(irr_alpha[i], irr_z0[i], irr_kmt[i], m0[conditions[i]], ref_mag[i])
-                output_arr[conditions[i]] = irr_prior[i](m0[conditions[i]])
+                output_arr[conditions[i]] = amp[:,None]*irr_prior[i](m0[conditions[i]])
                 
         return output_arr
     

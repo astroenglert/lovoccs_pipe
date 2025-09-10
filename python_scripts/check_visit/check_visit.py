@@ -22,6 +22,20 @@ from lsst.daf.butler import Butler
 
 # create a summary of a given visit
 def summary_from_stars(visit,detectors,psf_flag='calib_psf_used',band='r'):
+    '''
+    Create an array storing the summary for a given visit.
+    
+    Args:
+      visit: int; visit number to summarize
+      detectors: array; array of the detectors to load
+      psf_flag: string; flag in preSourceTable specifying star to measure
+      band: string; band for this visit
+    
+    Returns:
+      visit_summary: DataFrame; dataframe containing the visit statistics
+    
+    '''
+    
     s = time.time()
     print("Now summarizing exposure number {visit}".format(visit=visit))
     # columns for final dataframe returned at the end
@@ -106,7 +120,19 @@ def summary_from_stars(visit,detectors,psf_flag='calib_psf_used',band='r'):
     return visit_summary
     
 def psf_from_stars(calexp,psf_candidates,trim_width=10,plot=False):
+    '''
+    Fit a PSF model (Moffat) to stars for measure the FWHM
     
+    Args:
+      calexp: ExposureF; exposure to fit stars for
+      psf_candidates: DataFrame; psf_candidate stars to fit; includes 'x' and 'y' in columns for position on calexp
+      trim_width: int; width to trim to before fitting the PSF
+      plot: bool; draw quality check plots?
+    
+    Returns:
+      fwhm_2d: array; list of measured FWHM for each psf_candidate 
+    
+    '''
     # array to record fwhm's
     fwhm_2d=[]
     

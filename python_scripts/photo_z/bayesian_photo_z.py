@@ -34,6 +34,7 @@ from ..configs.photo_z_config import filter_map, error_tag, external_cache, mod_
 # compute F00,F0T,FTT (Benitez+00 Eq. 9)
 def compute_F(sed_template,magnitude_table,filter_map,error_tag,sed_template_upper=None,weight=None,filter_template_zps=None):
     '''
+    Compute F00, F0T, FTT (Benitez+00, Eq. 9)
     
     Args:
         sed_template: TemplateBase; an sed_template which stores magnitudes as a function of redshifts for a given transmission-system
@@ -52,14 +53,14 @@ def compute_F(sed_template,magnitude_table,filter_map,error_tag,sed_template_upp
     '''
     
     # check if the sed is cached, compute it if not
-    if sed_template._flux_cache == None:
+    if sed_template._flux_cache is None:
         #print('Now computing fluxes for %s'%(sed_template.sed_name))
         template_flux_table = sed_template.compute_flux()
     else:
         #print("Pulling fluxes from the \'cache\'")
         template_flux_table = sed_template._flux_cache
     
-    if (sed_template_upper._flux_cache == None) & (sed_template_upper is not None):
+    if (sed_template_upper._flux_cache is None) & (sed_template_upper is not None):
         #print('Now computing fluxes for %s'%(sed_template_upper.sed_name))
         template_flux_table_upper = sed_template_upper.compute_flux()
     elif sed_template_upper is not None:
@@ -106,6 +107,7 @@ def compute_F(sed_template,magnitude_table,filter_map,error_tag,sed_template_upp
 
 def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_prior=None,cluster_prior_weights=None,z_spec_header=None,filter_template_zps=None,interp_steps=2,reference_mag='i',cosmo=None,redshifts=np.arange(0.01,1.5,0.001),estimator='mode',delta=0.1):
     '''
+    Given a table of magnitudes, compute bayesian photometric redshifts and record statistics (e.g. z_mode, z_median, chi2_mod, etc)
     
     Args:
         table: Astropy Table; a table containing mangitudes and magerr for all objects you want to compute photo-z's for with headers specified by filter_map
@@ -127,6 +129,7 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
     Returns:
         redshift_statistics: Astropy Table; a table containing the median/mode redshift estimates, ODDS, the modified chi2, and the interpolated-index of the best-fit template
         distributions: numpy array; an an N x len(redshifts) numpy array storing p(z|C,m0)
+        
     '''
     
     # first compute the total number of templates (including interp_steps)
@@ -316,6 +319,7 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
 # a helper function for binning arrays according to bins defined in some ind. variable
 def bin_array_in_xbins(array,x,xbin_edges):
     '''
+    Helper function to bin with respect to some arbitrary variable
     
     Args:
         array: N x 1 Numpy array; an N-dim array containing the quantity to bin
@@ -360,6 +364,7 @@ I'll write the code for these, but they'll only work really well with a large sp
 
 def large_sample_quality_check_plots(redshift_statistics,table,filter_map,z_spec_header=None,output_filepath='',blendedness_header='blendedness',refmag='i'):
     '''
+    Helper function to draw quality check plots for a large sample of redshifts (e.g. outlier-rate/std v. magnitude/photo-z)
     
     Args:
         redshift_statistics: Astropy Table; a table containing the median/mode redshift estimates, ODDS, the modified chi2, and the interpolated-index of the best-fit template
@@ -510,6 +515,7 @@ def large_sample_quality_check_plots(redshift_statistics,table,filter_map,z_spec
 
 def generic_quality_check_plots(redshift_statistics,table,filter_map,z_spec_header=None,output_filepath='',blendedness_header='blendedness',refmag='i',mod_chi2_cut=4,odds_cut=0.95):
     '''
+    Generic quality check plots to run given a specz database
     
     Args:
         redshift_statistics: Astropy Table; a table containing the median/mode redshift estimates, ODDS, the modified chi2, and the interpolated-index of the best-fit template

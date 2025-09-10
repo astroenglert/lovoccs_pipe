@@ -32,7 +32,20 @@ def display(mat, vmin, vmax, tag):
 
 # Let's also use two stretches, one for color-correct (lupton) and another for not color-correct (but nice looking)
 def draw_rgb(R,G,B,out,tag='deepCoadd',lupton=False):
-        
+    '''
+    Helper function to draw an RGB image of the data
+    
+    Args:
+      R/G/B: string; string specifying the band to load into each channel
+      patches: string; the range of patches (e.g. '33-88')
+      tag: string; tag to append to the end of the output file
+      lupton: bool; enable Lupton coloring?
+    
+    Returns
+      None
+    
+    '''
+    
     print("Loading FITS image...")
     if os.path.exists(R) and os.path.exists(G) and os.path.exists(B):
         print("Files all exist!")

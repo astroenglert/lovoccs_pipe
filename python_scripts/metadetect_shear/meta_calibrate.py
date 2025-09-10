@@ -147,6 +147,7 @@ def calibrate_shapes(tab_noshear,resp,diagonal=True,shape_type='sdss',bin_resp=3
 # draw quality check plots to verify that everything is okay
 def quality_check(tab,output_directory,shape_type='sdss',min_res=0.1,max_blend=0.1):
     """
+    Draw quality check plots to verify that the shape measurements are correct
     
     Args:
       tab: Astropy Table; table to take shapes from
