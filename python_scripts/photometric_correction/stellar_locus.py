@@ -138,7 +138,7 @@ if __name__ == '__main__':
     ax.set_ylim((-0.3,0.3))
     ax.legend(['Observed Stars','Model Stars'])
     
-    fig.savefig(f'{file_start}_{band_x0}-{band_x1}_{band_y0}-{band_y1}',bbox_inches='tight')
+    fig.savefig(f'{file_start}_{band_x0}-{band_x1}_{band_y0}-{band_y1}.png',bbox_inches='tight')
 
     #SECOND: i-z v r-i
     cbar_mag = 'g_psf_mag'
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     ax.set_ylim((-0.2,0.3))
     ax.legend(['Observed Stars','Model Stars'])
     
-    fig.savefig(f'{file_start}_{band_x0}-{band_x1}_{band_y0}-{band_y1}',bbox_inches='tight')
+    fig.savefig(f'{file_start}_{band_x0}-{band_x1}_{band_y0}-{band_y1}.png',bbox_inches='tight')
     
     #THIRD: u-band correction and g-r v. u-g
     
@@ -230,7 +230,7 @@ if __name__ == '__main__':
     ax.legend(['Linear Fit','Observed Stars','Model Stars'])
     
     filename_start = os.path.splitext(residual_filename)[0]
-    fig.savefig(f'{file_start}_{band_x0}-{band_x1}_{band_y0}-{band_y1}',bbox_inches='tight')
+    fig.savefig(f'{file_start}_{band_x0}-{band_x1}_{band_y0}-{band_y1}.png',bbox_inches='tight')
 
     #LASTLY, for computing the linear bias we select from a narrow-region of the observed color-space
     select_bias = ( star_catalog[headers[color_y_0]] - star_catalog[headers[color_y_1]] ) > 0.81
