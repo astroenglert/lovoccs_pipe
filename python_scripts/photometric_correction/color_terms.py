@@ -147,7 +147,7 @@ def apply_color_terms(matched_catalog,catalog_instr,refcat_instr,colorterms,cata
     mags = []
     for entry in keys:
         # _mag follows keys containing mag, and refcat_headers is None if the band/mag is not in refcat
-        if entry[-4:] == '_mag' and refcat_headers[entry] != None:
+        if entry[-4:] == '_mag' and refcat_headers[entry] is not None:
             mags.append(entry)
     
     #TODO somehow we need to write this condition in a smarter way

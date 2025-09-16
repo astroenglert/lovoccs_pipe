@@ -160,7 +160,7 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
         name_upper = sed_upper.sed_name
         
         # check if an external_cache has been specified
-        if external_cache == None:
+        if external_cache is None:
             sed_cache = flux_db.joinpath(f'{name}_flux_cache.csv')
             sed_cache_upper = flux_db.joinpath(f'{name_upper}_flux_cache.csv')
         else:
@@ -186,7 +186,7 @@ def compute_statistics(table,template_list,trans,filter_map,error_tag,cluster_pr
         redshift_prior[:,:,i] = (1-weight)*sed.get_redshift_prior(table[filter_map[reference_mag]]) + weight*sed_upper.get_redshift_prior(table[filter_map[reference_mag]])
                 
         # add an additional distribution to the redshift-prior to account for a cluster in the field
-        if (cluster_prior != None) & (cluster_prior_weights != None):
+        if (cluster_prior is not None) & (cluster_prior_weights is not None):
             
             # first interpolate between templates
             interpolated_cluster_prior = (1-weight)*cluster_prior[:,lower_dex] + (weight)*cluster_prior[:,upper_dex]

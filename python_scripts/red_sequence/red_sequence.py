@@ -424,12 +424,18 @@ if __name__ == '__main__':
         cut_gal_table_specz_members = cut_gal_table_specz[cluster_members]
         
         # run the RS- on selected cluster members
-        gr_members_spec,gr_selections_spec = fit_RS_color_binning(cut_gal_table_specz_members,output_directory + 'spec_members_gr_rs_selection.png',filter_map=filter_map,color_0='g',color_1='r',color_bins=color_bins_gr,tolerance=0.09,min_per_bin=10,mag_bins=mag_bins,f_scale=0.09)
-        ri_members_spec,ri_selections_spec = fit_RS_color_binning(gr_members_spec,output_directory + 'spec_members_ri_rs_selection.png',filter_map=filter_map,color_0='r',color_1='i',color_bins=color_bins_ri,tolerance=0.09,min_per_bin=10,mag_bins=mag_bins,f_scale=0.09)
+        try:
+            gr_members_spec,gr_selections_spec = fit_RS_color_binning(cut_gal_table_specz_members,output_directory + 'spec_members_gr_rs_selection.png',filter_map=filter_map,color_0='g',color_1='r',color_bins=color_bins_gr,tolerance=0.09,min_per_bin=10,mag_bins=mag_bins,f_scale=0.09)
+            ri_members_spec,ri_selections_spec = fit_RS_color_binning(gr_members_spec,output_directory + 'spec_members_ri_rs_selection.png',filter_map=filter_map,color_0='r',color_1='i',color_bins=color_bins_ri,tolerance=0.09,min_per_bin=10,mag_bins=mag_bins,f_scale=0.09)
+            
+            # to check for completeness/purity, run RS-selection on all entries in specz-catalog
+            gr_members_spec_all,gr_selections_spec = fit_RS_color_binning(cut_gal_table_specz,output_directory + 'spec_all_gr_rs_selection_specz.png',filter_map=filter_map,color_0='g',color_1='r',color_bins=color_bins_gr,tolerance=0.09,min_per_bin=10,mag_bins=mag_bins,f_scale=0.09)
+            ri_members_spec_all,ri_selections_spec = fit_RS_color_binning(gr_members_spec_all,output_directory + 'spec_all_ri_rs_selection_all_specz.png',filter_map=filter_map,color_0='r',color_1='i',color_bins=color_bins_ri,tolerance=0.09,min_per_bin=10,mag_bins=mag_bins,f_scale=0.09)
         
-        # to check for completeness/purity, run RS-selection on all entries in specz-catalog
-        gr_members_spec_all,gr_selections_spec = fit_RS_color_binning(cut_gal_table_specz,output_directory + 'spec_all_gr_rs_selection_specz.png',filter_map=filter_map,color_0='g',color_1='r',color_bins=color_bins_gr,tolerance=0.09,min_per_bin=10,mag_bins=mag_bins,f_scale=0.09)
-        ri_members_spec_all,ri_selections_spec = fit_RS_color_binning(gr_members_spec_all,output_directory + 'spec_all_ri_rs_selection_all_specz.png',filter_map=filter_map,color_0='r',color_1='i',color_bins=color_bins_ri,tolerance=0.09,min_per_bin=10,mag_bins=mag_bins,f_scale=0.09)
+        except:
+            print("Not enough confirmed cluster members to check for completeness/purity!")
+            print("Skipping these statistics and rendering the RS-map")
+            break
         
         #TODO when we have per-object identifiers, these objects can be matched by their ID rather than by an explicit coordinate matching
         # now that I have everythign collected together, its time to check the purity of these catalogs, first lets run a quick matching

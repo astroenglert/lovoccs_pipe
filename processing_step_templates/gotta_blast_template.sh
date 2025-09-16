@@ -33,6 +33,8 @@ echo Blasting icSrc
 butler prune-datasets repo/repo --find-all --unstore --datasets icSrc --no-confirm DECam/processing/*
 echo Blasting icExp
 butler prune-datasets repo/repo --find-all --unstore --datasets icExp --no-confirm DECam/processing/*
+echo Blasting calexps
+butler prune-datasets repo/repo --find-all --unstore --datasets calexp --no-confirm DECam/processing/*
 echo Blasting icExpBackground
 butler prune-datasets repo/repo --find-all --unstore --datasets icExpBackground --no-confirm DECam/processing/*
 echo Blasting icSrcSchema
@@ -60,6 +62,7 @@ rm -r repo/repo/DECam/processing/*/*/icSrc
 rm -r repo/repo/DECam/processing/*/*/icExp
 rm -r repo/repo/DECam/processing/*/*/icExpBackground
 rm -r repo/repo/DECam/processing/*/*/icSrcSchema
+rm -r repo/repo/DECam/processing/*/*/calexp
 rm -r repo/repo/DECam/processing/*/*/*_log
 rm -r repo/repo/DECam/processing/*/*/deepCoadd_directWarp
 rm -r repo/repo/DECam/processing/*/*/deepCoadd_psfMatchedWarp
