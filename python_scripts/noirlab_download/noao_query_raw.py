@@ -96,7 +96,7 @@ def query_raws(caldat_min, caldat_max, ra, dec,
     
     # search within a radius-deg box of the specified pointing
     search.append(['ra_center',ra - radius/np.cos(dec*np.pi/180),ra + radius/np.cos(dec*np.pi/180)])
-    search.append(['dec_cemter',dec - radius,dec + radius])
+    search.append(['dec_center',dec - radius,dec + radius])
     
     # appending constraints on exptime we use for LV (60s-180s)
     search.append(['exposure',expmin,expmax])
