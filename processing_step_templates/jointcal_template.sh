@@ -46,6 +46,6 @@ bps submit -b repo/repo \
 if [ ${BAND} == "u" ] || [ ${BAND} == "g" ] || [ ${BAND} == "z" ]; then
     python python_scripts/render_data/jointcal_plot_residuals.py "${CLN}" "${PHOTOM}" 2 "${BAND}"
 else
-    python python_scripts/render_data/jointcal_plot_residuals.py "${CLN}" "${PHOTOM}" 1 "${BAND}"
+    python python_scripts/render_data/jointcal_plot_residuals.py "${CLN}" "${PHOTOM}" 2 "${BAND}"
 fi
 
