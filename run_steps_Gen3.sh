@@ -474,7 +474,7 @@ jointcal_formatter () {
 	if [ "${PROCESS_BAND}" == "u" ] || [ "${PROCESS_BAND}" == "g" ] || [ "${PROCESS_BAND}" == "z" ]; then
 		JOINTCAL_ORDER=2 # ugz have best results at order 2 (at least for A85...)
 	else 
-		JOINTCAL_ORDER=1 # ri have best results at order 1... need to test this!
+		JOINTCAL_ORDER=2 # order 2 is sufficient!
 	fi
 	
 	# running the actual text-replacement
