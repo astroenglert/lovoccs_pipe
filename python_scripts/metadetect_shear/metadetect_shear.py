@@ -404,7 +404,7 @@ def collect_bright_stars(ref_cat, filter_name='phot_g_mean_mag', min_radius=5):
     """
     
     # Radius from DES Y6 results, we may need to be more agressive? Our data is deeper so the stars will be a touch fatter
-    radius = lambda g: (0.004432 * g**2) - (0.2257 * g) + 2.996 # in arcseconds
+    radius = lambda g: 10**( (0.004432 * g**2) - (0.2257 * g) + 2.996 ) # in arcseconds
     
     # convert nJy to data; collect the flux field using the table schema and convert it to AB-mag
     flux_field = getRefFluxField(ref_cat.schema,filter_name)
