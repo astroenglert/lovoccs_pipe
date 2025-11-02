@@ -474,27 +474,26 @@ if __name__ == '__main__':
         local = np.random.RandomState(index)
         sample = local.randint(low=0,high=len(zS),size=int(len(zS)))
         
-        # recompute the location of the mass_peak w. each realization
+        # recompute the location of the mass_peak w. each realization            
+        new_centers = []
+        new_sn_peaks = []
+        
+        # find the positions of each peak (more accurately)
+        for i in range(num_peaks):
+            # recompute the peak position relative to the current realization
+            minimize_me = lambda sample_px : -compute_sn_px(sample_px[0],sample_px[1],x_pos[sample],y_pos[sample],g1_observed[sample],g2_observed[sample],weights[sample],implemented_filters[map_filter],filter_kwargs={'aperture_size':aperture_sizes[i]})
+            result = minimize(minimize_me,x0=cluster_centers[i])
+            new_centers.append(result.x)
+            new_sn_peaks.append(-result.fun)
+
         if bootstrap_peak:
-            
-            new_centers = []
-            sn_peaks = []
-            
-            # find the positions of each peak (more accurately)
-            for i in range(num_peaks):
-                
-                # recompute the peak position relative to the current realization
-                minimize_me = lambda sample_px : -compute_sn_px(sample_px[0],sample_px[1],x_pos[sample],y_pos[sample],g1_observed[sample],g2_observed[sample],weights[sample],implemented_filters[map_filter],filter_kwargs={'aperture_size':aperture_sizes[i]})
-                result = minimize(minimize_me,x0=cluster_centers[i])
-                new_centers.append(result.x)
-                sn_peaks.append(-result.fun)
-            
             # update the cluster_centers
             centers = new_centers
-        
-        else:
+            sn_peaks = new_sn_peaks
             
+        else:
             # otherwise default to the input list of centers and sn-peaks from the original mass_maps
+            # bootstrapped SN and centering are still computed, just not used in the fitting
             centers = cluster_centers
             sn_peaks = cluster_peak_sn
         
@@ -507,7 +506,7 @@ if __name__ == '__main__':
         
         test = minimize(chi2,[14] * num_peaks,bounds=[(12,16)] * num_peaks)
         
-        return 10**test.x, test.fun/(len(zS) - num_peaks), centers, sn_peaks
+        return 10**test.x, test.fun/(len(zS) - num_peaks), new_centers, new_sn_peaks
     
     
     with Pool(cores) as p:
