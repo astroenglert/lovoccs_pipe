@@ -14,6 +14,8 @@ import matplotlib.pyplot as pl
 
 from scipy.stats import norm
 
+import pandas as pd
+
 # homebrew modules here
 from .color_terms import get_instrument_headers, apply_color_terms, load_color_terms
 
@@ -61,6 +63,9 @@ if __name__ == '__main__':
     # ranges for magnitudes
     mag_ranges = {'g':[15,21],'r':[15,21],'i':[15,21],'z':[15,21],'u':[13,21],'Y':[13,20]}
     
+    # Generate table to write differences to
+    record = pd.DataFrame()
+
     # now iterate through the headers which exist in residuals and save the results!
     for band in residuals.colnames:
         
@@ -91,6 +96,8 @@ if __name__ == '__main__':
         ra_cut = select_catalog[catalog_headers['ra_name'] + cat_tag][final_cut]
         dec_cut = select_catalog[catalog_headers['dec_name'] + cat_tag][final_cut]
         diff_cut = diffs[final_cut]
+
+        record[f"{band}_diff"] = pd.Series(diff_cut)
         
         # now draw the pretty-pictures :D
         # I could wrap this in a function... but since this is the only big-step in the script I'll cheat for now
@@ -119,6 +126,8 @@ if __name__ == '__main__':
         axs[1].set_ylabel("count")
         
         pl.savefig("%s_%s_%s_cmp.png"%(os.path.splitext(matched_catalog_filename)[0], band, refcat_instr) )
+
+    record.to_csv(f'{refcat_instr}_mag_diffs.csv', index=False)
         
         
     
