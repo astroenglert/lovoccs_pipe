@@ -25,25 +25,27 @@ from .color_terms import get_instrument_headers, apply_color_terms, load_color_t
 #NOTE: the old version of this script, compare_mag_v3b, centered the residuals at zero by subtracting a median, this doesn't change the stdv but I think it's misleading (since you're no longer rendering the residuals in that case!) so I've removed it from this script (this is line 183 of compare_mag_v3b.py)
 if __name__ == '__main__':
     
-    if len(sys.argv)==4:
+    if len(sys.argv)==5:
     
         # collecting arguments from cln
         matched_catalog_filename = sys.argv[1]
         catalog_instr = sys.argv[2] # usually decam
         refcat_instr = sys.argv[3] # ps1, sm, sdss, des
+        mag_diff_out = sys.argv[4] # mag difference csv output directory
         single_band = None # if this isn't specified, run on all bands shared with the refcat
         
-    elif len(sys.argv)==5:
+    elif len(sys.argv)==6:
     
         # collecting arguments from cln
         matched_catalog_filename = sys.argv[1]
         catalog_instr = sys.argv[2] # usually decam
         refcat_instr = sys.argv[3] # ps1, sm, sdss, des
-        single_band = sys.argv[4] # optional argument for running on a single-band (usually u-band), e.g. 'u_psf_mag'
+        mag_diff_out = sys.argv[4] # mag difference csv output directory
+        single_band = sys.argv[5] # optional argument for running on a single-band (usually u-band), e.g. 'u_psf_mag'
         
     else:
-        print("python compare_catalogs.py matched_catalog catalog_instr refcat_instr [OPTIONAL: band]")
-        raise Exception("Improper Usage! Correct usage: python compare_catalogs.py matched_catalog catalog_instr refcat_instr [OPTIONAL: band]")
+        print("python compare_catalogs.py matched_catalog catalog_instr refcat_instr mag_diff_out [OPTIONAL: band]")
+        raise Exception("Improper Usage! Correct usage: python compare_catalogs.py matched_catalog catalog_instr refcat_instr mag_diff_out [OPTIONAL: band]")
     
     # collect instrument headers
     refcat_headers = get_instrument_headers(refcat_instr)
@@ -135,7 +137,7 @@ if __name__ == '__main__':
     for band in bands_list[1:]:
         combined_table = join(combined_table, band_diff_dict[band], keys=['ID','ra','dec'], join_type='outer')
 
-    combined_table.write(f'photometric_correction_output/{refcat_instr}_mag_diffs.csv', format="ascii.csv", overwrite=True)
+    combined_table.write(f'{mag_diff_out}/{refcat_instr}_mag_diffs.csv', format="ascii.csv", overwrite=True)
         
         
     
