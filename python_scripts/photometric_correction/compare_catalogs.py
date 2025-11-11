@@ -4,7 +4,7 @@
 import sys
 import os
 
-from astropy.table import Table
+from astropy.table import Table, join
 
 import numpy as np
 
@@ -13,8 +13,6 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as pl
 
 from scipy.stats import norm
-
-import pandas as pd
 
 # homebrew modules here
 from .color_terms import get_instrument_headers, apply_color_terms, load_color_terms
@@ -63,8 +61,8 @@ if __name__ == '__main__':
     # ranges for magnitudes
     mag_ranges = {'g':[15,21],'r':[15,21],'i':[15,21],'z':[15,21],'u':[13,21],'Y':[13,20]}
     
-    # Generate table to write differences to
-    record = pd.DataFrame()
+    # Generate dict to write differences to
+    band_diff_dict = {}
 
     # now iterate through the headers which exist in residuals and save the results!
     for band in residuals.colnames:
@@ -96,8 +94,11 @@ if __name__ == '__main__':
         ra_cut = select_catalog[catalog_headers['ra_name'] + cat_tag][final_cut]
         dec_cut = select_catalog[catalog_headers['dec_name'] + cat_tag][final_cut]
         diff_cut = diffs[final_cut]
+        id_cut = select_catalog['ID' + cat_tag][final_cut]
 
-        record[f"{band}_diff"] = pd.Series(diff_cut)
+        # add table to the dictionary
+        band_table = Table({'ID': id_cut, 'ra': ra_cut, 'dec': dec_cut, f'{band}_diff': diff_cut})
+        band_diff_dict[band] = band_table
         
         # now draw the pretty-pictures :D
         # I could wrap this in a function... but since this is the only big-step in the script I'll cheat for now
@@ -127,7 +128,14 @@ if __name__ == '__main__':
         
         pl.savefig("%s_%s_%s_cmp.png"%(os.path.splitext(matched_catalog_filename)[0], band, refcat_instr) )
 
-    record.to_csv(f'{refcat_instr}_mag_diffs.csv', index=False)
+    # combine individual band tables into one combined table
+    bands_list = list(band_diff_dict.keys())
+    combined_table = band_diff_dict[bands_list[0]]
+
+    for band in bands_list[1:]:
+        combined_table = join(combined_table, band_diff_dict[band], keys=['ID','ra','dec'], join_type='outer')
+
+    combined_table.write(f'photometric_correction_output/{refcat_instr}_mag_diffs.csv', format="ascii.csv", overwrite=True)
         
         
     
