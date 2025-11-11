@@ -76,8 +76,6 @@ python -m python_scripts.photometric_correction.zero_point "photometric_correcti
 
 python -m python_scripts.photometric_correction.zero_point "photometric_correction_output/${CLN}_dered.csv" "photometric_correction_output/${CLN}_matched_residuals.csv" "photometric_correction_output/${CLN}_matched_residuals_stellar_locus.csv" "photometric_correction_output/${CLN}_dered_dezp.csv"
 
-MAG_DIFF_DIR="photometric_correction_output" #Directory to store magnitude difference tables
-
 for DEX in ${!POSSIBLE_CATALOGS[@]}; do
     
     # load the catalog and corresponding instrument
@@ -97,6 +95,6 @@ for DEX in ${!POSSIBLE_CATALOGS[@]}; do
     python -m python_scripts.misc.match_catalogs "photometric_correction_output/${CAT}_dered.csv" "${INS}" "_ref" "photometric_correction_output/${CLN}_dered_dezp_stars.csv" "decam" "_cat" "photometric_correction_output/${CLN}_dered_stars_matched_${CAT}.csv" "0.2"
     
     # now run the comparison
-    python -m python_scripts.photometric_correction.compare_catalogs "photometric_correction_output/${CLN}_dered_stars_matched_${CAT}.csv" "decam" "${INS}" "${MAG_DIFF_DIR}"
+    python -m python_scripts.photometric_correction.compare_catalogs "photometric_correction_output/${CLN}_dered_stars_matched_${CAT}.csv" "decam" "${INS}" "photometric_correction_output/${CLN}_mag_diffs_${CAT}.csv"
 
 done
