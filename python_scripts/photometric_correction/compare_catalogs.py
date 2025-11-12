@@ -4,7 +4,7 @@
 import sys
 import os
 
-from astropy.table import Table
+from astropy.table import Table, join
 
 import numpy as np
 
@@ -25,25 +25,27 @@ from .color_terms import get_instrument_headers, apply_color_terms, load_color_t
 #NOTE: the old version of this script, compare_mag_v3b, centered the residuals at zero by subtracting a median, this doesn't change the stdv but I think it's misleading (since you're no longer rendering the residuals in that case!) so I've removed it from this script (this is line 183 of compare_mag_v3b.py)
 if __name__ == '__main__':
     
-    if len(sys.argv)==4:
+    if len(sys.argv)==5:
     
         # collecting arguments from cln
         matched_catalog_filename = sys.argv[1]
         catalog_instr = sys.argv[2] # usually decam
         refcat_instr = sys.argv[3] # ps1, sm, sdss, des
+        mag_diff_path = sys.argv[4] # mag difference csv path
         single_band = None # if this isn't specified, run on all bands shared with the refcat
         
-    elif len(sys.argv)==5:
+    elif len(sys.argv)==6:
     
         # collecting arguments from cln
         matched_catalog_filename = sys.argv[1]
         catalog_instr = sys.argv[2] # usually decam
         refcat_instr = sys.argv[3] # ps1, sm, sdss, des
-        single_band = sys.argv[4] # optional argument for running on a single-band (usually u-band), e.g. 'u_psf_mag'
+        mag_diff_path = sys.argv[4] # mag difference csv path
+        single_band = sys.argv[5] # optional argument for running on a single-band (usually u-band), e.g. 'u_psf_mag'
         
     else:
-        print("python compare_catalogs.py matched_catalog catalog_instr refcat_instr [OPTIONAL: band]")
-        raise Exception("Improper Usage! Correct usage: python compare_catalogs.py matched_catalog catalog_instr refcat_instr [OPTIONAL: band]")
+        print("python compare_catalogs.py matched_catalog catalog_instr refcat_instr mag_diff_path [OPTIONAL: band]")
+        raise Exception("Improper Usage! Correct usage: python compare_catalogs.py matched_catalog catalog_instr refcat_instr mag_diff_path [OPTIONAL: band]")
     
     # collect instrument headers
     refcat_headers = get_instrument_headers(refcat_instr)
@@ -61,6 +63,9 @@ if __name__ == '__main__':
     # ranges for magnitudes
     mag_ranges = {'g':[15,21],'r':[15,21],'i':[15,21],'z':[15,21],'u':[13,21],'Y':[13,20]}
     
+    # Generate dict to write differences to
+    band_diff_dict = {}
+
     # now iterate through the headers which exist in residuals and save the results!
     for band in residuals.colnames:
         
@@ -91,6 +96,11 @@ if __name__ == '__main__':
         ra_cut = select_catalog[catalog_headers['ra_name'] + cat_tag][final_cut]
         dec_cut = select_catalog[catalog_headers['dec_name'] + cat_tag][final_cut]
         diff_cut = diffs[final_cut]
+        id_cut = select_catalog['ID' + cat_tag][final_cut]
+
+        # add table to the dictionary
+        band_table = Table({'ID': id_cut, 'ra': ra_cut, 'dec': dec_cut, f'{band}_diff': diff_cut})
+        band_diff_dict[band] = band_table
         
         # now draw the pretty-pictures :D
         # I could wrap this in a function... but since this is the only big-step in the script I'll cheat for now
@@ -119,6 +129,15 @@ if __name__ == '__main__':
         axs[1].set_ylabel("count")
         
         pl.savefig("%s_%s_%s_cmp.png"%(os.path.splitext(matched_catalog_filename)[0], band, refcat_instr) )
+
+    # combine individual band tables into one combined table
+    bands_list = list(band_diff_dict.keys())
+    combined_table = band_diff_dict[bands_list[0]]
+
+    for band in bands_list[1:]:
+        combined_table = join(combined_table, band_diff_dict[band], keys=['ID','ra','dec'], join_type='outer')
+
+    combined_table.write(mag_diff_path, format="ascii.csv", overwrite=True)
         
         
     
