@@ -390,13 +390,13 @@ if __name__ == '__main__':
     patch_all = [np.arange(0,xIndex),np.arange(0,yIndex)]
     ranges_all = str(min(patch_all[0])) + str(min(patch_all[0])) + '-' + str(max(patch_all[1])) + str(max(patch_all[1]))
     
-    for patches in [ patch_22, patch_44, patch_66 ]:
+    for patches in [ patch_22, patch_44, patch_66, patch_all ]:
         for band in ['g', 'r', 'i', 'z','u']:
             
             # export patches for each band and deepCoadd
             export_patches(band,patches[0],patches[1],dataset_type='deepCoadd',collection='DECam/processing/coadd_3a')
 
-    for patches in [ patch_22, patch_44, patch_66 ]:
+    for patches in [ patch_22, patch_44, patch_66, patch_all ]:
         for band in ['g', 'r', 'i', 'z']:
         
             # export patches for each band and deepCoadd
