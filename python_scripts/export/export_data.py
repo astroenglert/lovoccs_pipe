@@ -25,6 +25,8 @@ from astropy.table import Table, vstack
 
 from astropy.coordinates import SkyCoord
 
+from astropy.nddata import block_reduce
+
 import pandas as pd
 import matplotlib.pyplot as pl
 
@@ -273,13 +275,14 @@ def export_patches(band,x_list,y_list,patch_width=4000,gap_width=100,dataset_typ
 
 
 # Let's also use two stretches, one for color-correct (lupton) and another for not color-correct (but nice looking)
-def draw_rgb(R,G,B,patches,tag='deepCoadd',lupton=False):
+def draw_rgb(R,G,B,patches,block=0,tag='deepCoadd',lupton=False):
     '''
     Helper function to draw an RGB image of the data
     
     Args:
       R/G/B: string; string specifying the band to load into each channel
       patches: string; the range of patches (e.g. '33-88')
+      block: int; blocking factor to generate smaller image, defaults to '0'
       tag: string; tag to append to the end of the output file
       lupton: bool; enable Lupton coloring?
     
@@ -290,7 +293,6 @@ def draw_rgb(R,G,B,patches,tag='deepCoadd',lupton=False):
     fits_image_filename_1 = "combine_patch_color_output/{CLN}_{R}{PATCHES}_{TAG}.fits".format(CLN=cln,PATCHES=patches,R=R,TAG=tag)
     fits_image_filename_2 = "combine_patch_color_output/{CLN}_{G}{PATCHES}_{TAG}.fits".format(CLN=cln,PATCHES=patches,G=G,TAG=tag)
     fits_image_filename_3 = "combine_patch_color_output/{CLN}_{B}{PATCHES}_{TAG}.fits".format(CLN=cln,PATCHES=patches,B=B,TAG=tag)
-    out = "combine_patch_color_output/{CLN}_{PATCHES}_{R}{G}{B}_{TAG}".format(CLN=cln,PATCHES=patches,R=R,G=G,B=B,TAG=tag)
     
     print("Loading FITS image...")
     if os.path.exists(fits_image_filename_1) and os.path.exists(fits_image_filename_2) and os.path.exists(fits_image_filename_3):
@@ -298,10 +300,18 @@ def draw_rgb(R,G,B,patches,tag='deepCoadd',lupton=False):
     else:
         print("Some files could be missing...\nExiting...")
         return False
-    data_1 = (pyfits.getdata(fits_image_filename_1, 0))
-    data_2 = (pyfits.getdata(fits_image_filename_2, 0))
-    data_3 = (pyfits.getdata(fits_image_filename_3, 0))
     
+    if block==0:
+        out = "combine_patch_color_output/{CLN}_{PATCHES}_{R}{G}{B}_{TAG}".format(CLN=cln,PATCHES=patches,R=R,G=G,B=B,TAG=tag)
+        data_1 = (pyfits.getdata(fits_image_filename_1, 0))
+        data_2 = (pyfits.getdata(fits_image_filename_2, 0))
+        data_3 = (pyfits.getdata(fits_image_filename_3, 0))
+    else: 
+        out = "combine_patch_color_output/{CLN}_{PATCHES}_{R}{G}{B}_{TAG}_blocked".format(CLN=cln,PATCHES=patches,R=R,G=G,B=B,TAG=tag)
+        data_1 = block_reduce(pyfits.getdata(fits_image_filename_1, 0), block_size=block, func=np.mean)
+        data_2 = block_reduce(pyfits.getdata(fits_image_filename_2, 0), block_size=block, func=np.mean)
+        data_3 = block_reduce(pyfits.getdata(fits_image_filename_3, 0), block_size=block, func=np.mean)
+
     # for pretty-pictures, -0.1 and 250 seem to work best
     # but for science -0.06 and 190 best showcase our issues with bckg-subtr and colors
     
@@ -379,7 +389,7 @@ if __name__ == '__main__':
     
     data_out.write("read_catalog_all_output/{CLN}_00-1111_all.csv".format(CLN=cln), format="ascii.csv", overwrite=True)
     
-    # by default, let's export fits of 2x2,4x4,6x6, and the 12x12 fov
+    # by default, let's export fits of 2x2,4x4,6x6,10x10 and the 12x12 fov
     # avoid assuming a particular number of patches
     patch_22 = [np.arange(int(xIndex/2)-1,int(xIndex/2)+1),np.arange(int(yIndex/2)-1,int(yIndex/2)+1)]
     ranges_22 = str(min(patch_22[0])) + str(min(patch_22[0])) + '-' + str(max(patch_22[1])) + str(max(patch_22[1]))
@@ -387,16 +397,18 @@ if __name__ == '__main__':
     ranges_44 = str(min(patch_44[0])) + str(min(patch_44[0])) + '-' + str(max(patch_44[1])) + str(max(patch_44[1]))
     patch_66 = [np.arange(int(xIndex/2)-3,int(xIndex/2)+3),np.arange(int(yIndex/2)-3,int(yIndex/2)+3)]
     ranges_66 = str(min(patch_66[0])) + str(min(patch_66[0])) + '-' + str(max(patch_66[1])) + str(max(patch_66[1]))
+    patch_1010 = [np.arange(int(xIndex/2)-5,int(xIndex/2)+5),np.arange(int(yIndex/2)-5,int(yIndex/2)+5)]
+    ranges_1010 = str(min(patch_1010[0])) + str(min(patch_1010[0])) + '-' + str(max(patch_1010[1])) + str(max(patch_1010[1]))
     patch_all = [np.arange(0,xIndex),np.arange(0,yIndex)]
     ranges_all = str(min(patch_all[0])) + str(min(patch_all[0])) + '-' + str(max(patch_all[1])) + str(max(patch_all[1]))
     
-    for patches in [ patch_22, patch_44, patch_66, patch_all ]:
+    for patches in [ patch_22, patch_44, patch_66, patch_1010 ]:
         for band in ['g', 'r', 'i', 'z','u']:
             
             # export patches for each band and deepCoadd
             export_patches(band,patches[0],patches[1],dataset_type='deepCoadd',collection='DECam/processing/coadd_3a')
 
-    for patches in [ patch_22, patch_44, patch_66, patch_all ]:
+    for patches in [ patch_22, patch_44, patch_66, patch_1010 ]:
         for band in ['g', 'r', 'i', 'z']:
         
             # export patches for each band and deepCoadd
@@ -440,3 +452,8 @@ if __name__ == '__main__':
     #draw_rgb('i','r','g',ranges_all,lupton=False)
     #draw_rgb('i','r','g',ranges_all,lupton=True)
 
+    # print 11-1010 (effectively the entire fov), block-reduced (otherwise we run out of memory) color images
+    draw_rgb('i','r','g',ranges_1010,block=2,lupton=True)
+    draw_rgb('i','r','g',ranges_1010,block=2,lupton=False)
+    draw_rgb('i','r','g',ranges_1010,block=2,lupton=True,tag='deepCoadd_skycorr')
+    draw_rgb('i','r','g',ranges_1010,block=2,lupton=False,tag='deepCoadd_skycorr')
