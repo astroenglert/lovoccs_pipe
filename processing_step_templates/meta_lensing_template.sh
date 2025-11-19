@@ -4,9 +4,9 @@
 #SBATCH --mem=250GB
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=20
-#SBATCH -J meta_lensing_output_cluster_name
-#SBATCH -o slurm_outputs/meta_lensing_output_cluster_name-%j.out
-#SBATCH -e slurm_outputs/meta_lensing_output_cluster_name-%j.err
+#SBATCH -J meta_lensing_cluster_name
+#SBATCH -o slurm_outputs/meta_lensing_cluster_name-%j.out
+#SBATCH -e slurm_outputs/meta_lensing_cluster_name-%j.err
 
 # defining variables
 # TEXT REPLACED FOR TEMPLATES

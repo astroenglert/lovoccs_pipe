@@ -986,7 +986,7 @@ meta_processing () {
 # STEP 28: lensing w. metadetect
 meta_lensing () {
 
-	echo "Running STEP 28: meta_processing"
+	echo "Running STEP 28: meta_lensing"
 
 	sed "s/cluster_name/${CLUSTER_NAME}/g" ${TEMPLATE_DIR}/meta_lensing_template.sh > ${PROCESSING_STEP_DIR}/meta_lensing.sh
 	sed -i "s|load_pipeline_path|${LOAD_PIPELINE_PATH}|g;s|cluster_dir|${CLUSTER_DIR}|g;s|py_scripts|${AUTO_PIPELINE_DIR}/python_scripts|g" ${PROCESSING_STEP_DIR}/meta_lensing.sh
@@ -1028,42 +1028,43 @@ gotta_blast () {
 # == RUNNING STEPS == #
 
 # == STEP0 NOTES == # 
-# After copying and pasting run_steps_Gen3 into a directory with the Cluster Name, create_output creates a series of folders and python scripts. This only takes a few seconds to run
+# After copying and pasting run_steps_Gen3 into a directory with the Cluster Name, 
+# create_output creates a series of folders and python scripts. This only takes a few seconds to run.
 
 # == STEP0 COMMAND == #
 #create_output
 
 
 # == STEP1 NOTES == # 
-# This step queries and downloads frames from the NoirLab Science Archive
-# it usually takes a few hours too run, but if there is a lot of traffic or
-# other bandwidth issues it can take as long as 12 hrs
+# This step queries and downloads frames from the NoirLab Science Archive.
+# It usually takes a few hours to run, but if there is a lot of traffic or
+# other bandwidth issues it can take as long as 12 hrs.
 
 # == STEP1 COMMAND == #
 #download_raw
 
 
 # == STEP2 NOTES == #
-# Unfortunately, LSSTPipe has doesn't have any code built to catch errors due to
+# Unfortunately, LSSTPipe doesn't have any code built to catch errors due to
 # missing bits in the fits header or other issues which may corrupt a fits file.
-# As a result we have a step which manually opens checks each file (by opening each file python
-# and checking to see if the script crashes dramatically). This should only take a few minutes to run
+# As a result we have a step which manually checks each file (by opening each file with a python script
+# and checking to see if the script crashes dramatically). This should only take a few minutes to run.
 
 # == STEP2 COMMAND == #
 #check_raws
 
 
 # == STEP3 NOTES == # 
-# Really... STEP2 is one script which I wrapped into a job-array to help things run a bit faster
-# but because of how it was written, the corrupt fits have to be moved to a separate directory in another script.
+# Really... STEP2 is one script which I wrapped into a job-array to help things run a bit faster,
+# but because of how it was written the corrupt fits have to be moved to a separate directory in another script.
 
 # == STEP3 COMMAND == #
 #move_corrupt_raws
 
 
 # == STEP4 NOTES == #
-# To begin LSSTPipe, we need to create a repository which will manage all of the files produced during processing
-# this is a quick process, so like the above steps this is run from the command line rather than with a batch script
+# To begin LSSTPipe, we need to create a repository which will manage all of the files produced during processing.
+# This is a quick process, so like the above steps this is run from the command line rather than with a batch script.
 
 # == STEP4 COMMAND == #
 #initialize_repo
@@ -1080,10 +1081,10 @@ gotta_blast () {
 
 # == STEP6 NOTES == #
 # This technically runs step1 of the Data Release Pipe (DRP), the big steps this includes are:
-# ISR (Instrumental Signal Removal: Crosstalk, Nonlinearity, Bias, Fringe, Flat, Brighter-Fatter)
-# Image Characterization (Initial Measurements, Cosmic-Ray Repair, Background Subtraction, Initial PSF Measurement)
-# Image Calibration (Initial Astrometry & Photometry)
-# Remaining tasks consolidate sources into per-detector tables
+# - ISR (Instrumental Signal Removal: Crosstalk, Nonlinearity, Bias, Fringe, Flat, Brighter-Fatter)
+# - Image Characterization (Initial Measurements, Cosmic-Ray Repair, Background Subtraction, Initial PSF Measurement)
+# - Image Calibration (Initial Astrometry & Photometry)
+# Remaining tasks consolidate sources into per-detector tables.
 #
 # For photometric refcats, the options are:
 # ps1 (g,r,i,z,y), sdss (u-band only), sm_dr4 (g,i,r,u,z), see calib_catalog_repo for coverage
@@ -1096,10 +1097,10 @@ gotta_blast () {
 
 
 # == STEP7+8 NOTES == # 
-# Before moving forward, we check the seeing in each visit/ccd and trim visits which are not "lensing-quality"
+# Before moving forward, we check the seeing in each visit/ccd and trim visits which are not "lensing-quality".
 # We fit a Moffat profile to reference stars for measuring the FWHM and use the second moments to measure the distortion
 # in the psf. Technically there is a function for doing this embedded in LSSTPipe, but we have yet to test it. After selecting
-# the good detectors, a skymap object is created which encloses them
+# the good detectors, a skymap object is created which encloses them.
 # These usually take a few minutes to run each...
 
 # == STEP7+8 COMMAND == #
@@ -1121,9 +1122,9 @@ gotta_blast () {
 # individually, rather than matching to a reference catalog after stacking. This can be done by fully modelling the
 # atmosphere/optics (fgcm) or using an emiprical correction which models variations in brightnesses and positions
 # between exposures (jointcal). Jointcal models variations in positions/brightnesses with a polynomial anchored in
-# refcats and seeks to minimize a joint chi-squared. Ususally this takes about an hour-ish
+# refcats and seeks to minimize a joint chi-squared. Ususally this takes about an hour-ish.
 #
-# Arguments should be IDENTICAL to the arguments used during check_visit, unless you are only trying to calibrate a specific band
+# Arguments should be IDENTICAL to the arguments used during check_visit, unless you are only trying to calibrate a specific band.
 
 # == STEP10 COMMAND == #
 #jointcal sdss,u ps1,g ps1,r ps1,i ps1,z
@@ -1132,7 +1133,7 @@ gotta_blast () {
 # == STEP11 NOTES == # 
 # This runs step2d of DRP. For reasons I can't quite remember, step2c is optional and isn't currently functional on DECam.
 # It includes a final round of calibration which applies the corrections derived from jointcal and creates finalized
-# visit summaries. This takes ~1hr/band with 20-cores
+# visit summaries. This takes ~1hr/band with 20-cores.
 
 # == STEP11 COMMAND == #
 #final_visit_summary u g r i z
@@ -1140,12 +1141,12 @@ gotta_blast () {
 
 # == STEP12-15 NOTES == # 
 # These steps run through step3a,step3b,step3c, and step3d of DRP.
-# step3a runs coaddition, detects sources, and runs the deblender (~3 hours w/ 140-cores)
-# step3b runs measurements on the coadds (~4 hrs/band w/ 20-cores)
-# step3c consolidates everything into tables and runs forced photometry (~5-7 hours w/ 140-cores)
-# step3d runs skycorrection, then makes a skycorrected coadded stack (~1 hour w/ 140-cores)
+# - step3a runs coaddition, detects sources, and runs the deblender (~3 hours w/ 140-cores)
+# - step3b runs measurements on the coadds (~4 hrs/band w/ 20-cores)
+# - step3c consolidates everything into tables and runs forced photometry (~5-7 hours w/ 140-cores)
+# - step3d runs skycorrection, then makes a skycorrected coadded stack (~1 hour w/ 140-cores)
 # Technically 3a,3b,3c can be run together if we disable the refcat matching... but since 3b is prone to errors
-# it may not be very useful to merge them
+# it may not be very useful to merge them.
 
 # == STEP12-15 COMMAND == #
 #coadd_3a
@@ -1156,10 +1157,10 @@ gotta_blast () {
 
 # == STEP16 NOTES == #
 # This step exports all of the data out of LSSTPipe, including:
-# Object catalogs containing shapes and magnitudes
-# Fits images containing the full fov
-# irg-images displaying the data
-# roughly ~1hr to run
+# - Object catalogs containing shapes and magnitudes
+# - Fits images containing the full fov
+# - irg-images displaying the data
+# Roughly ~1hr to run.
 
 # == STEP16 COMMAND == #
 #export_data
@@ -1190,9 +1191,9 @@ gotta_blast () {
 
 
 # == STEP19 NOTES == #
-# By default, run shear calibration using HSC-Y1 calibration
-# in principle this is instrument dependent... but in practice HSC calib can be "good enough"
-# but we've implemented a modifed version of metadetect (later processing steps) to provide a precise calibration
+# By default, run shear calibration using HSC-Y1 calibration.
+# In principle this is instrument dependent... but in practice HSC calib can be "good enough".
+# We've implemented a modified version of metadetect (later processing steps) to provide a precise calibration.
 
 # == STEP19 COMMAND == #
 #shear_calibration
@@ -1227,7 +1228,7 @@ gotta_blast () {
 # == STEP23 NOTES == #
 # Generally, in a cluster the "red-sequence galaxies" are the oldest objects in the cluster and, as a result,
 # effectively trace out the distribution of mass in the cluster. The red-sequence is selected from an HR-diagram
-# of the cluster and smoothed contours representing their number density are produced
+# of the cluster and smoothed contours representing their number density are produced.
 
 # == STEP23 COMMAND == #
 #red_sequence
@@ -1237,11 +1238,11 @@ gotta_blast () {
 
 
 # == STEP24-28 NOTES == #
-# these steps run our implementation of metadetect
-# meta_4a runs the shears on our coadds
-# and meta_4b runs detect/deblend/measure on them, which we can use to build a robust calibration
-# meta_export collects all of the outputs from the 5 different versions of our coadds
-# meta_processing/meta_lensing finally process those coadds and run the lensing portion (including shear-calibration!)
+# These steps run our implementation of metadetect.
+# - meta_4a runs the shears on our coadds
+# - meta_4b runs detect/deblend/measure on them, which we can use to build a robust calibration
+# - meta_export collects all of the outputs from the 5 different versions of our coadds
+# - meta_processing/meta_lensing finally process those coadds and run the lensing portion (including shear-calibration!)
 
 # STEP24-28 COMMAND == #
 #meta_4a
@@ -1252,7 +1253,7 @@ gotta_blast () {
 
 
 # == STEP29 NOTES == #
-# blast intermediate collections and other datasets, then zip the submit-directory
+# Blast intermediate collections and other datasets, then zip the submit-directory.
 
 # == STEP29 COMMAND == #
 #gotta_blast
