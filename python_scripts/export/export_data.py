@@ -428,19 +428,19 @@ if __name__ == '__main__':
     # suffer from an alternate problem where bright pixels tend to be "whiten" despite having a distinct color
     # these are best for outreach/presentation
     
-    draw_rgb('i','r','g',ranges_22,lupton=True)
-    draw_rgb('i','r','g',ranges_44,lupton=True)
-    draw_rgb('i','r','g',ranges_66,lupton=True)
-    draw_rgb('i','r','g',ranges_22,lupton=False)
-    draw_rgb('i','r','g',ranges_44,lupton=False)
-    draw_rgb('i','r','g',ranges_66,lupton=False)
+    #draw_rgb('i','r','g',ranges_22,block=2,lupton=True)
+    #draw_rgb('i','r','g',ranges_44,block=2,lupton=True)
+    #draw_rgb('i','r','g',ranges_66,block=2,lupton=True)
+    draw_rgb('i','r','g',ranges_22,block=2,lupton=False)
+    draw_rgb('i','r','g',ranges_44,block=2,lupton=False)
+    draw_rgb('i','r','g',ranges_66,block=2,lupton=False)
     
-    draw_rgb('i','r','g',ranges_22,lupton=True,tag='deepCoadd_skycorr')
-    draw_rgb('i','r','g',ranges_44,lupton=True,tag='deepCoadd_skycorr')
-    draw_rgb('i','r','g',ranges_66,lupton=True,tag='deepCoadd_skycorr')
-    draw_rgb('i','r','g',ranges_22,lupton=False,tag='deepCoadd_skycorr')
-    draw_rgb('i','r','g',ranges_44,lupton=False,tag='deepCoadd_skycorr')
-    draw_rgb('i','r','g',ranges_66,lupton=False,tag='deepCoadd_skycorr')
+    #draw_rgb('i','r','g',ranges_22,block=2,lupton=True,tag='deepCoadd_skycorr')
+    #draw_rgb('i','r','g',ranges_44,block=2,lupton=True,tag='deepCoadd_skycorr')
+    #draw_rgb('i','r','g',ranges_66,block=2,lupton=True,tag='deepCoadd_skycorr')
+    draw_rgb('i','r','g',ranges_22,block=2,lupton=False,tag='deepCoadd_skycorr')
+    draw_rgb('i','r','g',ranges_44,block=2,lupton=False,tag='deepCoadd_skycorr')
+    draw_rgb('i','r','g',ranges_66,block=2,lupton=False,tag='deepCoadd_skycorr')
     
     
     # zir is sometimes useful... so create these just-in-case
@@ -453,7 +453,7 @@ if __name__ == '__main__':
     #draw_rgb('i','r','g',ranges_all,lupton=True)
 
     # print 11-1010 (effectively the entire fov), block-reduced (otherwise we run out of memory) color images
-    draw_rgb('i','r','g',ranges_1010,block=2,lupton=True)
+    #draw_rgb('i','r','g',ranges_1010,block=2,lupton=True)
     draw_rgb('i','r','g',ranges_1010,block=2,lupton=False)
-    draw_rgb('i','r','g',ranges_1010,block=2,lupton=True,tag='deepCoadd_skycorr')
+    #draw_rgb('i','r','g',ranges_1010,block=2,lupton=True,tag='deepCoadd_skycorr')
     draw_rgb('i','r','g',ranges_1010,block=2,lupton=False,tag='deepCoadd_skycorr')
