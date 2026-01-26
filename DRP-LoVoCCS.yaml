@@ -40,6 +40,7 @@ tasks:
       python : |
         config.doMatchSources=False
         config.doWriteMatchesDenormalized=False
+        config.measurement.plugins['ext_shapeHSM_HsmShapeRegauss'].deblendNChild=None
   calibrate:
     class: custom_pipetasks.calibrate.CalibrateTask
     config:
@@ -140,6 +141,7 @@ tasks:
         config.multibandDeblend.maxFootprintSize=-1
         config.multibandDeblend.minFootprintAxisRatio=-1
         config.multibandDeblend.maxSpectrumCutoff=-1
+        config.multibandDeblend.maxNumberOfPeaks=-1
   jointcal:
     class: lsst.jointcal.JointcalTask
     config:
