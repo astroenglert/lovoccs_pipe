@@ -20,6 +20,7 @@ def schirmer_filter(radius,aperture_size=8000,x_cut=0.15,a=6,b=150,c=47,d=50,*_)
     
     x = radius/aperture_size
     Q = ( 1/( 1 + np.exp(a - b*x) + np.exp(-c + d*x)) )*( np.tanh(x/x_cut)/(x/x_cut) )
+    Q = Q/(np.pi * aperture_size**2)
     
     return Q
 
