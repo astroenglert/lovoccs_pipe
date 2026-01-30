@@ -308,14 +308,21 @@ class ShearCoaddTask(PipelineTask):
         
         # fifth run the shear algorithm from metadetect (shear_exp)
         shear_exp, shear_noise_exp = create_shear_exp(coadd, noise_image)
+
+        # add original PSF back to metadetect coadds
+        final_exp = {}
+        for s in shear_exp.keys():
+            c = afwImage.ExposureF(src=shear_exp[s],deep=True)
+            c.setPsf(coadd.getPsf())
+            final_exp[s] = c
         
-        # lastyle unpack and round to ExposureF objects
+        # lastly return the outputs
         return Struct(
-            coadd_noshear = afwImage.ExposureF(src=shear_exp['noshear'],deep=True),
-            coadd_1p = afwImage.ExposureF(src=shear_exp['1p'],deep=True),
-            coadd_2p = afwImage.ExposureF(src=shear_exp['2p'],deep=True),
-            coadd_1m = afwImage.ExposureF(src=shear_exp['1m'],deep=True),
-            coadd_2m = afwImage.ExposureF(src=shear_exp['2m'],deep=True),
+            coadd_noshear = final_exp['noshear'],
+            coadd_1p = final_exp['1p'],
+            coadd_2p = final_exp['2p'],
+            coadd_1m = final_exp['1m'],
+            coadd_2m = final_exp['2m'],
         )
         
         
