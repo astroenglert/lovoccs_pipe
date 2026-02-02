@@ -141,7 +141,7 @@ tasks:
         config.multibandDeblend.maxFootprintSize=-1
         config.multibandDeblend.minFootprintAxisRatio=-1
         config.multibandDeblend.maxSpectrumCutoff=-1
-        config.multibandDeblend.maxNumberOfPeaks=-1
+        config.multibandDeblend.maxNumberOfPeaks=500
   jointcal:
     class: lsst.jointcal.JointcalTask
     config:
