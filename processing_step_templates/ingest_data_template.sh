@@ -28,7 +28,7 @@ export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 # import reference calibs, using symlink to avoid fussing over calibration dates
 
 echo "Importing calibration frames!"
-butler import --transfer direct repo/repo "${CALIB_CATALOG_REPO}"/import_ready_calibs_6
+butler import --transfer direct repo/repo "${CALIB_CATALOG_REPO}"/import_ready_calibs_7
 
 #2024-09 AE: Consolidated calibrations into a single collection, no need to import these separately anymore
 
