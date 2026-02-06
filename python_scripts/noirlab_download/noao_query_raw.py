@@ -221,7 +221,7 @@ if __name__ == '__main__':
     print('%s: ra_cl, dec_cl, redshift_cl: '%cluster_name, ra_cl, dec_cl, redshift_cl)
     
     #TODO update caldate-max once calibrations are done
-    df = query_raws('2012-01-01','2025-07-30',ra_cl,dec_cl)
+    df = query_raws('2012-01-01','2026-01-30',ra_cl,dec_cl)
     df.to_csv('query_result_%s.csv'%cluster_name)
     
     make_download_config(table=df)
