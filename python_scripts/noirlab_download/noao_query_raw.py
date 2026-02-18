@@ -171,9 +171,10 @@ def make_download_config(table=None,urls=None,filename=None,download_config='raw
     
     print(iter_me)
     # download config file
-    # create 8 files, store them in an array and cycle through them appending commands
+    # create files, store them in an array and cycle through them appending commands
     dl_files = []
-    for i in range(8):
+    num = 200 # faster (for some reason) to send many separate queries and let them fight for the 8-ish ports
+    for i in range(num):
         dl_files.append(open(download_config + f'_{i}.sh','a'))
         
         # delay the start of each script just a little and add preamble for slurm
@@ -192,10 +193,10 @@ def make_download_config(table=None,urls=None,filename=None,download_config='raw
         # retry downloads 5 times with 30s delay
         # and wait 5s between downloads to avoid conflicts/resource limits
         
-        dl_files[i%8].write('echo Now downloading %s\n'%(filename[index].split('/')[-1]))
+        dl_files[i%num].write('echo Now downloading %s\n'%(filename[index].split('/')[-1]))
         line = 'curl --remove-on-error --retry 0 --retry-delay 5 --retry-connrefused --speed-limit 200000 --speed-time 5 -o %s %s\n'%(filename[index].split('/')[-1], urls[index])
-        dl_files[i%8].write(line)
-        dl_files[i%8].write('sleep 5s\n')
+        dl_files[i%num].write(line)
+        dl_files[i%num].write('sleep 5s\n')
         
     # close the txt file
     for i,file in enumerate(dl_files):
