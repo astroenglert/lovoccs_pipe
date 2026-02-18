@@ -173,7 +173,7 @@ def make_download_config(table=None,urls=None,filename=None,download_config='raw
     # download config file
     # create files, store them in an array and cycle through them appending commands
     dl_files = []
-    num = 200 # faster (for some reason) to send many separate queries and let them fight for the 8-ish ports
+    num = 8 # faster (for some reason) to send many separate queries and let them fight for the 8-ish ports; but that can lead to throttling so for consistency use 8 by default
     for i in range(num):
         dl_files.append(open(download_config + f'_{i}.sh','a'))
         
