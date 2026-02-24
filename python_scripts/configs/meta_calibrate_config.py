@@ -21,6 +21,7 @@ quality_cuts = [
                 ('z_phot','<',1.5),
                 (f'{shape_type}_flag','==','False'), # catches any unphysical moments/shears
                 (f'{shape_type}_res','>',0.3), # catches unresolved objects
+                (f'{shape_type}_res','<',0.9), # weird class of objects have a large res but not good shears, cull these
                ]
 
 
