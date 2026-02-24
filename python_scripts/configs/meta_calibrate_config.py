@@ -27,5 +27,5 @@ quality_cuts = [
 
 # color-cuts to apply; this is exclusive to metadetect generally
 # this applies cuts |color_cuts[0] - color_cuts[1]| < 5
-color_cuts = [('g_cmodel_mag','r_cmodel_mag',10)]
+color_cuts = [('r_cmodel_mag','i_cmodel_mag',10)]
 
