@@ -284,7 +284,18 @@ if __name__ == '__main__':
             select = (select) & (np.abs(tab[cut[0]] - tab[cut[1]]) < cut[2])
         tab = tab[select]
         
-        catalogs[key] = tab
+        # final round of cuts that don't fit nicely anywhere else
+        T = cat['sdss_xx'] + cat['sdss_yy']
+        T_cut = (T > 1) & (T < 40)
+        
+        e = np.sqrt( tab['sdss_e1']**2 + tab['sdss_e2']**2 )
+        e1_err = tab['sdss_e1_err'] * tab['sdss_e1'] / e
+        e2_err = tab['sdss_e2_err'] * tab['sdss_e2'] / e
+        e_err = np.sqrt(e1_err**2 + e2_err**2)
+        shape_cut = np.isfinite(e)
+        shape_cut &= np.abs(e_err)/T < 0.02
+        
+        catalogs[key] = tab[shape_cut & T_cut]
     
     # compute the repsonsivity
     # Try by default to do 3 bins, but if the statistics don't support it decrease the bin number until Rii/Rii_err > 5 for all bins (or only one bin is left)
@@ -319,10 +330,13 @@ if __name__ == '__main__':
     # for the time being, do not apply any per-object weights
     tab['g1'] = g1
     tab['g2'] = g2
-    tab['shape_weight'] = np.ones(len(tab))/(0.365**2)
+    tab['shape_weight'] = np.ones(len(tab))/(0.365**2)    
+    
+    # one last check to prune crazy g1/g2
+    good_shears = np.sqrt(g1**2 + g2**2) < 2
+    tab = tab[good_shears]
     
     quality_check(tab,output_directory=output_directory)
-
     
     # and finally save this table!
     basename = Path(files['noshear']).stem
