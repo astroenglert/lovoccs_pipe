@@ -122,6 +122,29 @@ done
 
 }
 
+# if you want to take a chance and submit the coadd steps in a chain, you can
+# but I won't list it below as generally these steps have OOM errors that need some careful management
+chain_coadd () {
+
+# format all the bash scripts
+coadd_3a_format
+coadd_3b_format
+coadd_3c_format
+coadd_3d_format
+
+# now submit them in a dependency chain
+for TASK in "coadd_3a" "coadd_3b" "coadd_3c" "coadd_3d"; do
+	if [ -z "$JOBID" ]; then
+		JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/${TASK}.sh)
+		echo "Submitted ${TASK} with ${JOBID}"
+	else
+		JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/${TASK}.sh)
+		echo "Submitted ${TASK} with ${JOBID}"
+	fi
+done
+
+}
+
 # when using chains, the refcats/bands have to be edited above
 # line numbers are provided to point you to the code that you need to edit
 # otherwise its the same as run-steps, comment and un-comment as needed to run each step
