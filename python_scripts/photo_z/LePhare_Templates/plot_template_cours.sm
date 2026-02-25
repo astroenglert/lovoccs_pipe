@@ -1,0 +1,48 @@
+#
+#plot_template 
+plot_template erase
+
+          expand 1.3 lweight 3 ltype 0 
+          location 4500 31500 3500 31500
+
+          window 1 1 1 1 
+          limits 500 25000 0 1.2  box 
+ 
+          ltype 0  ctype red     sed_sub   CWW_E_ext.sed   0
+          ltype 0  ctype magenta sed_sub   CWW_Sbc_ext.sed 0
+          ltype 0  ctype green   sed_sub   CWW_Scd_ext.sed 0
+          ltype 0  ctype blue    sed_sub   CWW_Im_ext.sed  0
+
+
+          ctype blue filt_sub "../../../filt/galex/NUV.lowres"
+          ctype red filt_sub "../../../filt/cosmos/r_subaru.lowres"
+          ctype black filt_sub "../../../filt/cosmos/K_wircam.lowres"
+
+          expand 1.5 lweight 3 ltype 0
+          window 1 1 1 1
+          xlabel \lambda  in \AA
+          ylabel flux 
+
+ 
+end             
+
+sed_sub      2
+              data $1 read {l 1 f 2}
+              set fm=f if(l>1000 ) 
+              #smooth f fs $2
+              vecminmax fm min max
+              #define max (sum(fm))
+              #connect (lg(l)) (lg(f/$max)+$2) ctype black
+              connect l (f/$max) ctype black
+end
+
+
+
+filt_sub 1
+
+          data $1
+          read {l 1 t 2}
+          vecminmax t min max
+          ctype black lweight 5 connect l (t/$max*1.1) 
+          lweight 3
+end

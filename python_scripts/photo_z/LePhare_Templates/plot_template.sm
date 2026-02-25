@@ -1,0 +1,44 @@
+#
+#plot_template 
+plot_template erase
+
+          expand 1.3 lweight 3 ltype 0 
+          location 4500 31500 3500 31500
+
+          window -2 1 1 1 
+          limits $(lg(900)) $(lg(25000)) -4.1 -1.8 box 
+ 
+          ltype 0  ctype red     sed_sub   CWW_E_ext.sed   0
+          ltype 0  ctype magenta sed_sub   CWW_Sbc_ext.sed 0
+          ltype 0  ctype green   sed_sub   CWW_Scd_ext.sed 0
+          ltype 0  ctype blue    sed_sub   CWW_Im_ext.sed  0
+
+
+          window -2 1 2 1 
+          box 1 0 0 0
+ 
+          ltype 0  ctype red      sed_sub   KIN_SB1_ext.sed 0.5
+          ltype 0  ctype green    sed_sub   KIN_SB3_ext.sed 0.5
+          ltype 0  ctype blue     sed_sub   KIN_SB6_ext.sed 0.5
+
+          expand 1.5 lweight 3 ltype 0
+          window 1 1 1 1
+          xlabel log(\lambda  in \AA)
+          ylabel log(flux) without unity
+
+          relocate (12000 7000) putlabel 6 \r CWW
+          relocate (24000 7000) putlabel 6 \r Kinney
+
+end             
+
+sed_sub      2
+              data $1 read {l 1 f 2}
+              set fm=f if(l>2000 ) 
+              #smooth f fs $2
+              vecminmax fm min max
+              define max (sum(fm))
+              connect (lg(l)) (lg(f/$max)+$2) ctype black
+end
+
+
+
