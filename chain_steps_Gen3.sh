@@ -108,9 +108,8 @@ chain_5 () {
 
 meta_export_format
 meta_processing_format
-meta_lensing_format
 
-for TASK in "meta_export" "meta_processing" "meta_lensing"; do
+for TASK in "meta_export"; do
 	if [ -z "$JOBID" ]; then
 		JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/${TASK}.sh)
 		echo "Submitted ${TASK} with ${JOBID}"
@@ -118,6 +117,12 @@ for TASK in "meta_export" "meta_processing" "meta_lensing"; do
 		JOBID=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/${TASK}.sh)
 		echo "Submitted ${TASK} with ${JOBID}"
 	fi
+done
+
+# these can neatly run in parallel 
+for TASK in "meta_processing_noshear" "meta_processing_1p" "meta_processing_1m" "meta_processing_2p" "meta_processing_2m"; do
+	JOBIDNEW=$(sbatch --parsable --dependency=afterany:${JOBID} ${PROCESSING_STEP_DIR}/${TASK}.sh)
+	echo "Submitted ${TASK} with ${JOBIDNEW}"
 done
 
 }
@@ -212,11 +217,14 @@ done
 
 
 # == CHAIN5 NOTES == #
-# meta_export, meta_processing, meta_lensing
+# meta_export, meta_processing
 
 # == CHAIN5 COMMAND == #
 #chain_5
 
+
+# == STEP28 == #
+#meta_lensing
 
 # == STEP29 == #
 #gotta_blast
