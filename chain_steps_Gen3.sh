@@ -13,7 +13,7 @@ check_raws_format
 move_corrupt_raws_format
 
 # now submit them in a dependency chain
-for TASK in "download_raw" "check_raws" "move_corrupt_raws"; do
+for TASK in "noao_download_manager" "check_raws" "move_corrupt_raws"; do
 	if [ -z "$JOBID" ]; then
 		JOBID=$(sbatch --parsable ${PROCESSING_STEP_DIR}/${TASK}.sh)
 		echo "Submitted ${TASK} with ${JOBID}"
