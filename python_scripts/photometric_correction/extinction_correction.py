@@ -4,6 +4,7 @@ import sys
 import numpy as np
 
 import astropy.io.fits as fits
+import healpy as hp
 from astropy.wcs import WCS
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
@@ -12,7 +13,7 @@ from astropy.coordinates import SkyCoord
 from .color_terms import get_instrument_headers
 from ..configs.photometric_correction_config import ebv_dictionary
 
-def get_extinction(ext_img,coords,catalog,ext_map='IRSA_EBV'):
+def get_extinction(ext_img,coords,catalog,ext_map):
     '''
     This loads an extinction from some database. For the time being, it's setup to work for our IRSA_EBV extinction maps, but we need to configure this further in the future
     
@@ -25,6 +26,7 @@ def get_extinction(ext_img,coords,catalog,ext_map='IRSA_EBV'):
     Returns:
         cut_catalog: A cut version of the catalog within the FOV of the extinction map ext_img
         ebv: The BV of every source in cut_catalog
+        ebv_error: [opt] fetched error of BV
     
     '''
     
@@ -52,14 +54,39 @@ def get_extinction(ext_img,coords,catalog,ext_map='IRSA_EBV'):
             index = ( index0[select], index1[select] )
             
             ebv = hdul[ext].data[index]
+            ebv_err = None
 
         cut_catalog = catalog[select]
     
+    if ext_map=='PLANCK2016':
+        ext=1
+        with fits.open(ext_img) as hdul:
+            data = hdul[ext].data  
+            tau353 = data["TAU353"]
+            err_tau = data["ERR_TAU"]
+            ebv_map = tau353 * 1.49e4
+            ebv_err_map = err_tau * 1.49e4
+            nside = hp.npix2nside(len(ebv_map))
+            
+            theta = 0.5 * np.pi - coords.dec.radian   # colatitude
+            phi = coords.ra.radian                    # longitude
+            pix = hp.ang2pix(nside, theta, phi)
+
+            # Interpolate E(B–V) at each coordinate
+            ebv = hp.get_interp_val(ebv_map, theta, phi)
+            # ebv_err = hp.get_interp_val(ebv_err_map, theta, phi)
+
+            # propagating interpolation error with ebv_err
+            ebv_var_map = ebv_err_map**2
+            tiles, weights = hp.get_interp_weights(nside,theta,phi=phi)
+            ebv_err = np.sqrt(np.sum(ebv_var_map[tiles] * weights**2, axis=0))
+        cut_catalog = catalog.copy()
+
     # returns the cut catalog and EBV to be applied to each coordinate
-    return cut_catalog,ebv
+    return cut_catalog,ebv,ebv_err
 
 
-def load_extinction_transformation(instrument,band,ext_map='IRSA_EBV'):
+def load_extinction_transformation(instrument,band,ext_map):
     '''
     To apply an extinction correction, we have to transform the EBV into the correct term for a given band. Eventually we'll set this function up so that it loads from a proper config file, rather than the harcoded coefficients below.
     
@@ -73,7 +100,7 @@ def load_extinction_transformation(instrument,band,ext_map='IRSA_EBV'):
     
     '''
     
-    if ext_map == 'IRSA_EBV':
+    if ext_map in ['IRSA_EBV','PLANCK2016']:
         extinction_coefficient = ebv_dictionary[instrument][band]
     else:
         raise Exception(f'No map {exp_map}')
@@ -81,7 +108,7 @@ def load_extinction_transformation(instrument,band,ext_map='IRSA_EBV'):
     return extinction_coefficient
     
 # apply the extinction correction to a catalog and return the dereddened version
-def apply_extinction(catalog,catalog_name,ext_img,ext_map='IRSA_EBV'):
+def apply_extinction(catalog,catalog_name,ext_img,ext_map):
     '''
     Applies the extinction correction to catalog, 
     
@@ -105,7 +132,7 @@ def apply_extinction(catalog,catalog_name,ext_img,ext_map='IRSA_EBV'):
     coords = SkyCoord(catalog_copy[headers['ra_name']],catalog_copy[headers['dec_name']],frame='icrs',unit='deg')
     
     # get the extinction correction for this cluster
-    cut_catalog, ebv = get_extinction(ext_img,coords,catalog_copy,ext_map=ext_map)
+    cut_catalog, ebv, ebv_err = get_extinction(ext_img,coords,catalog_copy,ext_map)
     
     # create a list of the mags which exist for this catalog
     keys = list(headers.keys())
@@ -124,11 +151,14 @@ def apply_extinction(catalog,catalog_name,ext_img,ext_map='IRSA_EBV'):
         if magh == None:
             continue
         
-        trans = load_extinction_transformation(catalog_name,mag,ext_map='IRSA_EBV')
+        trans = load_extinction_transformation(catalog_name,mag,ext_map)
         
         # if this mag is in the input table, apply the correction
         if magh in cut_catalog.colnames:
+            errh = magh + 'err'
             cut_catalog[magh] -= (ebv*trans)
+            if errh in cut_catalog.colnames:
+                cut_catalog[errh] = np.sqrt(cut_catalog[errh]**2 + ebv_err**2*trans**2)
 
     # return the dereddened catalog
     return cut_catalog
@@ -145,8 +175,8 @@ if __name__=='__main__':
     catalog_name = sys.argv[4]
     dereddened_filename = sys.argv[3]
     catalog = Table.read(catalog,format='ascii.csv')
-    
+    ext_map_choice = 'PLANCK2016'
     # deredding
-    dered_cat = apply_extinction(catalog,catalog_name,ext_img,ext_map='IRSA_EBV')
+    dered_cat = apply_extinction(catalog,catalog_name,ext_img,ext_map=ext_map_choice)
     dered_cat.write(dereddened_filename, format="ascii.csv", overwrite=True)
 

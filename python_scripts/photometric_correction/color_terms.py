@@ -7,6 +7,7 @@ import os
 from astropy.table import Table
 
 import numpy as np
+from scipy.stats import sigmaclip
 
 import matplotlib
 matplotlib.use("Agg")
@@ -358,9 +359,12 @@ if __name__ == '__main__':
         fig.savefig("%s_%s_bias_hist.png"%(os.path.splitext(residual_filename)[0], filters[i]),bbox_inches='tight' )
 
         # update the residuals table
+        final_residuals = final_residuals[np.isfinite(final_residuals)]
+        final_residuals, _, _ = sigmaclip(final_residuals, 5, 5)
         median_bias = np.nanmedian(final_residuals)
-        std_bias = np.nanstd(final_residuals)/np.sqrt(np.sum(np.isfinite(final_residuals)))
-        
+        # std_bias = np.nanstd(final_residuals)/np.sqrt(np.sum(np.isfinite(final_residuals)))
+        std_bias = np.nanstd(final_residuals)
+
         print(f'Median Bias: {median_bias:.3f}, Std Bias: {std_bias:.3f}')
         residual_table[filters[i]] = [median_bias,std_bias]
     

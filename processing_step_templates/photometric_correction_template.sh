@@ -38,7 +38,8 @@ mkdir photometric_correction_output
 
 # first, de-redden catalog and refcat
 # TODO how the filepaths here should come from a config rather than being hard-coded here
-EXT_IMAGE="${EXT_DB}/${CLN}.fits"
+# EXT_IMAGE="${EXT_IRSA}/${CLN}.fits"
+EXT_IMAGE="${EXT_PLANCK}"
 INPUT_CAT="read_catalog_all_output/${CLN}_00-1111_all.csv"
 REF_CAT="${CAT_DB}/${CLN}/${PHOTOM}_${PHOTOM_TAG}_${CLN}.csv"
 

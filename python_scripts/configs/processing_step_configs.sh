@@ -13,8 +13,12 @@ INSTRUMENTS=("des" "legacy" "ps1" "sm")
 # filepath to refcats, assumes refcat for a given cluster is stored in ${CAT_DB}/${CLN}/...
 CAT_DB='/gpfs/data/idellant/Clusters/calib_catalog_repo/catalogs_new'
 
-# filepath to extinction; assumes fits w. extinction is stored in ${EXT_DB}/${CLN}.fits
-EXT_DB='/gpfs/data/idellant/Clusters/galactic_extinction_database/data_extinction_irsa'
+# filepath to extinction (IRSA); assumes fits w. extinction is stored in ${EXT_DB}/${CLN}.fits
+EXT_IRSA='/gpfs/data/idellant/Clusters/galactic_extinction_database/data_extinction_irsa'
+
+# filepath to master extinction fits (PLANCK 2016), then photometric_correction retrieves by cluster
+# TODO: photometric_correction should select ext_map, then autolink EXT_DB with data handling 
+EXT_PLANCK='/gpfs/data/idellant/Clusters/dustmaps/planck/COM_CompMap_Dust-GNILC-Model-Opacity_2048_R2.01.fits'
 
 
 # == bash configurables for photo_z.sh == #
