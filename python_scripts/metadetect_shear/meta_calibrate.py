@@ -285,7 +285,7 @@ if __name__ == '__main__':
         tab = tab[select]
         
         # final round of cuts that don't fit nicely anywhere else
-        T = cat['sdss_xx'] + cat['sdss_yy']
+        T = tab['sdss_xx'] + tab['sdss_yy']
         T_cut = (T > 1) & (T < 40)
         
         e = np.sqrt( tab['sdss_e1']**2 + tab['sdss_e2']**2 )
