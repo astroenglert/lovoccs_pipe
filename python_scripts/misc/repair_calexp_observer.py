@@ -38,13 +38,13 @@ def repair_headers(butler,dataset_type='calexp',collection='DECam/processing/cal
         
         if "'" in obs:
             print(f'Updating observer for {filepath}')
-            fits.setval(filepath.path,keyword='OBSERVER',value=obs.replace("'",""))
+            fits.setval(filepath.ospath,keyword='OBSERVER',value=obs.replace("'",""))
         if "'" in prp:
             print(f'Updating proposer for {filepath}')
-            fits.setval(filepath.path,keyword='PROPOSER',value=prp.replace("'",""))
+            fits.setval(filepath.ospath,keyword='PROPOSER',value=prp.replace("'",""))
         if "'" in dtp:
             print(f'Updating drpi for {filepath}')
-            fits.setval(filepath.path,keyword='DRPI',value=dtp.replace("'",""))
+            fits.setval(filepath.ospath,keyword='DRPI',value=dtp.replace("'",""))
         
     return
 
