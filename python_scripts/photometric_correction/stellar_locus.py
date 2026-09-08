@@ -5,6 +5,7 @@ import sys
 import os
 
 import numpy as np
+from scipy.stats import sigmaclip
 
 import matplotlib.pyplot as pl
 
@@ -239,10 +240,14 @@ if __name__ == '__main__':
     obs_xdata = ( star_catalog[headers[color_x_0]] - star_catalog[headers[color_x_1]] )[select_bias]
     obs_ydata = ( star_catalog[headers[color_y_0]] - star_catalog[headers[color_y_1]] )[select_bias]
     bias = obs_ydata - func(obs_xdata, *popt)
-    
+
     # update the residuals table
+    bias = bias[np.isfinite(bias)]
+    bias, _, _ = sigmaclip(bias, 5, 5)
     median_bias = np.nanmedian(bias)
-    std_bias = np.nanstd(bias)/np.sqrt(np.sum(np.isfinite(bias)))
+    # changed to SD to reflect truthful systematic bias
+    # std_bias = np.nanstd(bias)/np.sqrt(np.sum(np.isfinite(bias)))
+    std_bias = np.nanstd(bias)
         
     print(f'Median Bias: {median_bias:.3f}, Std Bias: {std_bias:.3f}')
     residual_table = Table()
