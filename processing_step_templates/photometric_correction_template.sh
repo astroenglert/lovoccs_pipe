@@ -37,15 +37,14 @@ mkdir photometric_correction_output
 
 
 # first, de-redden catalog and refcat
-# TODO how the filepaths here should come from a config rather than being hard-coded here
-# EXT_IMAGE="${EXT_IRSA}/${CLN}.fits"
+#EXT_IMAGE="${EXT_IRSA}/${CLN}.fits"
 EXT_IMAGE="${EXT_PLANCK}"
 INPUT_CAT="read_catalog_all_output/${CLN}_00-1111_all.csv"
 REF_CAT="${CAT_DB}/${CLN}/${PHOTOM}_${PHOTOM_TAG}_${CLN}.csv"
 
 echo "Running the extinction correction!"
-python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${INPUT_CAT} "photometric_correction_output/${CLN}_dered.csv" "decam"
-python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${REF_CAT} "photometric_correction_output/${CLN}_${PHOTOM}_dered.csv" "${PHOTOM}"
+python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${INPUT_CAT} "photometric_correction_output/${CLN}_dered.csv" "decam" "PLANCK2016"
+python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${REF_CAT} "photometric_correction_output/${CLN}_${PHOTOM}_dered.csv" "${PHOTOM}" "PLANCK2016"
 
 
 # second, separate the stars and galaxies in our observations
@@ -91,7 +90,7 @@ for DEX in ${!POSSIBLE_CATALOGS[@]}; do
     #if [ ! -f ${CAT_PATH} ]; then continue; fi
     
     # dered and match each refcat 
-    python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${CAT_PATH} "photometric_correction_output/${CAT}_dered.csv" "${INS}"
+    python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${CAT_PATH} "photometric_correction_output/${CAT}_dered.csv" "${INS}" "PLANCK2016"
     
     python -m python_scripts.misc.match_catalogs "photometric_correction_output/${CAT}_dered.csv" "${INS}" "_ref" "photometric_correction_output/${CLN}_dered_dezp_stars.csv" "decam" "_cat" "photometric_correction_output/${CLN}_dered_stars_matched_${CAT}.csv" "0.2"
     

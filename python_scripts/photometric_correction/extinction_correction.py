@@ -54,7 +54,7 @@ def get_extinction(ext_img,coords,catalog,ext_map):
             index = ( index0[select], index1[select] )
             
             ebv = hdul[ext].data[index]
-            ebv_err = None
+            ebv_err = 0.1*hdul[ext].data[index]
 
         cut_catalog = catalog[select]
     
@@ -68,8 +68,9 @@ def get_extinction(ext_img,coords,catalog,ext_map):
             ebv_err_map = err_tau * 1.49e4
             nside = hp.npix2nside(len(ebv_map))
             
-            theta = 0.5 * np.pi - coords.dec.radian   # colatitude
-            phi = coords.ra.radian                    # longitude
+            galcoord = coords.transform_to('galactic')
+            theta = 0.5 * np.pi - galcoord.b.radian  # colatitude
+            phi = galcoord.l.radian                   # longitude
             pix = hp.ang2pix(nside, theta, phi)
 
             # Interpolate E(B–V) at each coordinate
@@ -165,7 +166,7 @@ def apply_extinction(catalog,catalog_name,ext_img,ext_map):
     
 if __name__=='__main__':
 
-    if len(sys.argv)!=5:
+    if len(sys.argv)!=6:
         print("python this.py ebv_image_filename catalog_csv_input_filename catalog_csv_output_filename instrument")
         raise Exception("Improper usage! Correct usage is python this.py ebv_image_filename catalog_csv_input_filename catalog_csv_output_filename instrument")
     
@@ -174,8 +175,9 @@ if __name__=='__main__':
     catalog = sys.argv[2]
     catalog_name = sys.argv[4]
     dereddened_filename = sys.argv[3]
+    ext_map_choice = sys.argv[5]
     catalog = Table.read(catalog,format='ascii.csv')
-    ext_map_choice = 'PLANCK2016'
+    
     # deredding
     dered_cat = apply_extinction(catalog,catalog_name,ext_img,ext_map=ext_map_choice)
     dered_cat.write(dereddened_filename, format="ascii.csv", overwrite=True)
