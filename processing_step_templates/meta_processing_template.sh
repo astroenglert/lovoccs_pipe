@@ -28,7 +28,7 @@ export PYTHONPATH="${PYTHONPATH}:${PY_SCRIPTS}"
 # load in configs
 source python_scripts/configs/processing_step_configs.sh
 
-EXT_IMAGE="${EXT_DB}/${CLN}.fits"
+EXT_IMAGE="${EXT_PLANCK}"
 
 # create an output
 mkdir metadetect_processing
