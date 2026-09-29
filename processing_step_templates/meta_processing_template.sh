@@ -42,7 +42,7 @@ INPUT_CAT="metadetect_export/${CLN}_metadetect_${SHEARTYPE}.csv"
 
 # first run the extinction correction
 echo "Running the extinction correction!"
-python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${INPUT_CAT} "metadetect_processing/${CLN}_${SHEARTYPE}_dered.csv" "decam"
+python -m python_scripts.photometric_correction.extinction_correction ${EXT_IMAGE} ${INPUT_CAT} "metadetect_processing/${CLN}_${SHEARTYPE}_dered.csv" "decam" "PLANCK2016"
 
 # star-galaxy separation
 echo "Separating stars and galaxies!"
