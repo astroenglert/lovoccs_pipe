@@ -95,42 +95,44 @@ def plot_histograms(visit_dict,fwhm_cut,ellip_cut,good_visits=None,res=120):
                 ellip_hist.append(visit_dict[visit][1:][i][4])
         
         # create and save histograms+cuts
-        pl.figure(1)
-        pl.hist(det_star,bins='auto',histtype='step')
-        pl.xlabel("Number of psf stars (calib_psf_used)")
-        pl.ylabel("Count")
-        pl.title("Distribution of PSF-Stars (per-detector)")
-        pl.savefig("check_visit/band_summary_plots/{band}_psf_det_hist.png".format(band=band),dpi=res)
-        pl.close(1)
-        
-        # create and save histograms+cuts
-        pl.figure(2)
-        pl.hist(fwhm_hist,bins='auto',histtype='step')
-        pl.xlabel("FWHM (px)")
-        pl.ylabel("Count")
-        pl.title("Distribution of FWHM")
-        pl.axvline(fwhm_cut,color='Grey',linestyle='--')
-        pl.savefig("check_visit/band_summary_plots/{band}_fwhm_hist.png".format(band=band),dpi=res)
-        pl.close(2)
-
-        # create and save histograms+cuts
-        pl.figure(3)
-        pl.hist(ellip_hist,bins='auto',histtype='step')
-        pl.xlabel("Ellipticity")
-        pl.ylabel("Count")
-        pl.title("Distribution of Ellipticities")
-        pl.axvline(ellip_cut,color='Grey',linestyle='--')
-        pl.savefig("check_visit/band_summary_plots/{band}_ellip_hist.png".format(band=band),dpi=res)
-        pl.close(3)
-        
-        pl.figure(4)
-        pl.hist(visit_star,bins='auto',histtype='step')
-        pl.xlabel("Number of psf stars (calib_psf_used)")
-        pl.ylabel("Count")
-        pl.title("Distribution of PSF-Stars (per-visit)")
-        pl.savefig("check_visit/band_summary_plots/{band}_psf_visit_hist.png".format(band=band),dpi=res)
-        pl.close(4)
-        
+        try:
+            pl.figure(1)
+            pl.hist(det_star,bins='auto',histtype='step')
+            pl.xlabel("Number of psf stars (calib_psf_used)")
+            pl.ylabel("Count")
+            pl.title("Distribution of PSF-Stars (per-detector)")
+            pl.savefig("check_visit/band_summary_plots/{band}_psf_det_hist.png".format(band=band),dpi=res)
+            pl.close(1)
+            
+            # create and save histograms+cuts
+            pl.figure(2)
+            pl.hist(fwhm_hist,bins='auto',histtype='step')
+            pl.xlabel("FWHM (px)")
+            pl.ylabel("Count")
+            pl.title("Distribution of FWHM")
+            pl.axvline(fwhm_cut,color='Grey',linestyle='--')
+            pl.savefig("check_visit/band_summary_plots/{band}_fwhm_hist.png".format(band=band),dpi=res)
+            pl.close(2)
+    
+            # create and save histograms+cuts
+            pl.figure(3)
+            pl.hist(ellip_hist,bins='auto',histtype='step')
+            pl.xlabel("Ellipticity")
+            pl.ylabel("Count")
+            pl.title("Distribution of Ellipticities")
+            pl.axvline(ellip_cut,color='Grey',linestyle='--')
+            pl.savefig("check_visit/band_summary_plots/{band}_ellip_hist.png".format(band=band),dpi=res)
+            pl.close(3)
+            
+            pl.figure(4)
+            pl.hist(visit_star,bins='auto',histtype='step')
+            pl.xlabel("Number of psf stars (calib_psf_used)")
+            pl.ylabel("Count")
+            pl.title("Distribution of PSF-Stars (per-visit)")
+            pl.savefig("check_visit/band_summary_plots/{band}_psf_visit_hist.png".format(band=band),dpi=res)
+            pl.close(4)
+        except:
+            print('unable to render statistics raw statistics!')
     else:
     
         # statistics of interest
@@ -158,39 +160,43 @@ def plot_histograms(visit_dict,fwhm_cut,ellip_cut,good_visits=None,res=120):
                 ellip_hist.append(visit_dict[visit][1:][i][4])
         
         # create and save histograms+cuts
-        pl.figure(1)
-        pl.hist(det_star,bins='auto',histtype='step')
-        pl.xlabel("Number of psf stars (calib_psf_used)")
-        pl.ylabel("Count")
-        pl.title("Cut Distribution of PSF-Stars (per-detector)")
-        pl.savefig("check_visit/band_summary_plots/{band}_cut_psf_det_hist.png".format(band=band),dpi=res)
-        pl.close(1)
+        try:
+            pl.figure(1)
+            pl.hist(det_star,bins='auto',histtype='step')
+            pl.xlabel("Number of psf stars (calib_psf_used)")
+            pl.ylabel("Count")
+            pl.title("Cut Distribution of PSF-Stars (per-detector)")
+            pl.savefig("check_visit/band_summary_plots/{band}_cut_psf_det_hist.png".format(band=band),dpi=res)
+            pl.close(1)
+            
+            # create and save histograms+cuts
+            pl.figure(2)
+            pl.hist(fwhm_hist,bins='auto',histtype='step')
+            pl.xlabel("FWHM (px)")
+            pl.ylabel("Count")
+            pl.title("Cut Distribution of FWHM")
+            pl.savefig("check_visit/band_summary_plots/{band}_cut_fwhm_hist.png".format(band=band),dpi=res)
+            pl.close(2)
+    
+            # create and save histograms+cuts
+            pl.figure(3)
+            pl.hist(ellip_hist,bins='auto',histtype='step')
+            pl.xlabel("Ellipticity")
+            pl.ylabel("Count")
+            pl.title("Cut Distribution of Ellipticities")
+            pl.savefig("check_visit/band_summary_plots/{band}_cut_ellip_hist.png".format(band=band),dpi=res)
+            pl.close(3)
+            
+            pl.figure(4)
+            pl.hist(visit_star,bins='auto',histtype='step')
+            pl.xlabel("Number of psf stars (calib_psf_used)")
+            pl.ylabel("Count")
+            pl.title("Cut Distribution of PSF-Stars (per-visit)")
+            pl.savefig("check_visit/band_summary_plots/{band}_cut_psf_visit_hist.png".format(band=band),dpi=res)
+            pl.close(4)
+        except:
+            print('unable to render cut statistics!')
         
-        # create and save histograms+cuts
-        pl.figure(2)
-        pl.hist(fwhm_hist,bins='auto',histtype='step')
-        pl.xlabel("FWHM (px)")
-        pl.ylabel("Count")
-        pl.title("Cut Distribution of FWHM")
-        pl.savefig("check_visit/band_summary_plots/{band}_cut_fwhm_hist.png".format(band=band),dpi=res)
-        pl.close(2)
-
-        # create and save histograms+cuts
-        pl.figure(3)
-        pl.hist(ellip_hist,bins='auto',histtype='step')
-        pl.xlabel("Ellipticity")
-        pl.ylabel("Count")
-        pl.title("Cut Distribution of Ellipticities")
-        pl.savefig("check_visit/band_summary_plots/{band}_cut_ellip_hist.png".format(band=band),dpi=res)
-        pl.close(3)
-        
-        pl.figure(4)
-        pl.hist(visit_star,bins='auto',histtype='step')
-        pl.xlabel("Number of psf stars (calib_psf_used)")
-        pl.ylabel("Count")
-        pl.title("Cut Distribution of PSF-Stars (per-visit)")
-        pl.savefig("check_visit/band_summary_plots/{band}_cut_psf_visit_hist.png".format(band=band),dpi=res)
-        pl.close(4)
         
 # this function actually applies the cuts we're interested in
 # it returns visits in a dictionary followed by an array of the good detectors
